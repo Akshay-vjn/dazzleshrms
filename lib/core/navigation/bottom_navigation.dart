@@ -1,0 +1,188 @@
+import 'package:dazzleshrms/features/profile/profile_screen/profile_screen.dart';
+import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:flutter/material.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/notifications/notification_screen.dart';
+import '../../features/announcements/announcement_screen.dart';
+
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation>
+    with SingleTickerProviderStateMixin {
+  int _currentIndex = 0;
+
+  late final AnimationController _controller;
+
+  final _screens = const [
+    DashboardScreen(),
+    NotificationScreen(),
+    AnnouncementScreen(),
+    ProfileScreen()
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTap(int index) {
+    setState(() {
+      _currentIndex = index;
+      _controller.forward(from: 0);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 64,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: theme.brightness == Brightness.dark
+                ? AppTheme.surfaceDark
+                : AppTheme.surfaceLight,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: (theme.brightness == Brightness.dark
+                    ? AppTheme.shadowDark
+                    : AppTheme.shadowLight).withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home,
+                label: "Home",
+                isActive: _currentIndex == 0,
+                animation: _controller,
+                onTap: () => _onTap(0),
+                activeColor: AppTheme.navIconSelected,
+              ),
+              _NavItem(
+                icon: Icons.notification_add_outlined,
+                label: "Notification",
+                isActive: _currentIndex == 1,
+                animation: _controller,
+                onTap: () => _onTap(1),
+                activeColor: AppTheme.navIconSelected,
+              ),
+              _NavItem(
+                icon: Icons.campaign_outlined,
+                label: "Announcement",
+                isActive: _currentIndex == 2,
+                animation: _controller,
+                onTap: () => _onTap(2),
+                activeColor: AppTheme.navIconSelected,
+              ),
+              _NavItem(
+                icon: Icons.person_outline,
+                label: "Profile",
+                isActive: _currentIndex == 3,
+                animation: _controller,
+                onTap: () => _onTap(3),
+                activeColor: AppTheme.navIconSelected,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= NAV ITEM =================
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final Animation<double> animation;
+  final VoidCallback onTap;
+  final Color activeColor;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.animation,
+    required this.onTap,
+    required this.activeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final inactiveColor = theme.brightness == Brightness.dark
+        ? AppTheme.navIconInactiveDark.withOpacity(0.6)
+        : AppTheme.navIconInactiveLight.withOpacity(0.6);
+
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final scale = isActive ? 1.15 : 1.0;
+            final opacity = isActive ? 1.0 : 0.6;
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedScale(
+                  scale: scale,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutBack,
+                  child: Icon(
+                    icon,
+                    color: isActive ? activeColor : inactiveColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedOpacity(
+                  opacity: opacity,
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                      color: isActive ? activeColor : inactiveColor,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
