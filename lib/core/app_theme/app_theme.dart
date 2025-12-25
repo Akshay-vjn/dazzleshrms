@@ -106,6 +106,49 @@ class AppTheme {
     scaffoldBackgroundColor: bgLight,
     inputDecorationTheme: inputTheme(Brightness.light),
 
+    //buttons
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: PrimaryColor,
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: GoogleFonts.outfit(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        elevation: 0,
+      ),
+    ),
+
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        side: const BorderSide(color: borderLight),
+        foregroundColor: textBodyLight,
+        textStyle: GoogleFonts.outfit(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: PrimaryColor,
+        textStyle: GoogleFonts.outfit(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
+
     colorScheme: ColorScheme.fromSeed(
       seedColor: PrimaryColor,
       brightness: Brightness.light,
@@ -156,6 +199,48 @@ class AppTheme {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: bgDark,
     inputDecorationTheme: inputTheme(Brightness.dark),
+
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: PrimaryColor,
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: GoogleFonts.outfit(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        elevation: 0,
+      ),
+    ),
+
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        side: const BorderSide(color: borderDark),
+        foregroundColor: textBodyDark,
+        textStyle: GoogleFonts.outfit(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: PrimaryColor,
+        textStyle: GoogleFonts.outfit(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+
 
     colorScheme: ColorScheme.fromSeed(
       seedColor: PrimaryColor,

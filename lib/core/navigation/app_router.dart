@@ -8,7 +8,7 @@ import 'package:dazzleshrms/features/auth/presentation/splashscreen.dart';
 import 'package:dazzleshrms/core/navigation/bottom_navigation.dart';
 import 'package:dazzleshrms/core/navigation/navigation_keys.dart';
 
-import '../../features/attendance/attendance_screen.dart';
+import '../../features/attendance/presentation/attendance_screen.dart';
 import '../../features/leave/leave_apply_screen.dart';
 
 /// Central app router configuration using go_router.

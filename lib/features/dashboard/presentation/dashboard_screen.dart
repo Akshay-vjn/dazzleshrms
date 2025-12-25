@@ -244,7 +244,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     theme,
                     "Total",
                     data.totalLeaves.toString(),
-                    Icons.calendar_today_rounded,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -253,7 +252,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     theme,
                     "Used",
                     data.usedLeaves.toString(),
-                    Icons.event_busy_rounded,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -262,7 +260,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     theme,
                     "Available",
                     data.availableLeaves.toString(),
-                    Icons.event_available_rounded,
                   ),
                 ),
               ],
@@ -277,7 +274,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ThemeData theme,
       String label,
       String value,
-      IconData icon,
       ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -291,11 +287,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Colors.black.withOpacity(0.85),
-          ),
           const SizedBox(height: 6),
           Text(
             value,

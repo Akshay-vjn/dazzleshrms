@@ -14,7 +14,7 @@ class ProfileRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? 'Failed to fetch profile';
-      throw Exception(message);
+      throw (message);
     }
   }
 }
