@@ -21,6 +21,12 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  String formatLeave(double value) {
+    if (value % 1 == 0) {
+      return value.toInt().toString(); // 4.0 → 4
+    }
+    return value.toStringAsFixed(1); // 3.5 → 3.5
+  }
 
   @override
   void initState() {
@@ -125,6 +131,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildJobCard(ThemeData theme, DashboardData data) {
+    // Adaptive colors based on theme brightness
+    final isDark = theme.brightness == Brightness.dark;
+
+    final cardGradientStart = isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
+    final cardGradientEnd = isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
+    final iconBgColor = isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.2);
+    final iconColor = isDark ? AppTheme.PrimaryColor : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.white;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.15);
+    final statCardBg = isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.15);
+    final statCardBorder = isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.25);
+
     return FadeSlideItem(
       animation: _controller,
       intervalStart: 0.1,
@@ -133,8 +151,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTheme.PrimaryColor,
-              AppTheme.PrimaryColor.withOpacity(0.85),
+              cardGradientStart,
+              cardGradientEnd,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -142,7 +160,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.PrimaryColor.withOpacity(0.25),
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -158,12 +176,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: iconBgColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.workspace_premium,
-                    color: Colors.black,
+                    color: iconColor,
                     size: 28,
                   ),
                 ),
@@ -176,7 +194,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         data.role.isNotEmpty ? data.role : "N/A",
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: textColor,
                           height: 1.2,
                         ),
                       ),
@@ -186,17 +204,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           Text(
                             "Store :",
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.black.withOpacity(0.85),
+                              color: textColor.withOpacity(0.85),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               data.store.isNotEmpty ? data.store : 'N/A',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.black.withOpacity(0.85),
+                                color: textColor.withOpacity(0.85),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -217,8 +234,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.1),
-                    Colors.black.withOpacity(0.05),
+                    dividerColor,
+                    dividerColor.withOpacity(0.5),
                     Colors.transparent,
                   ],
                 ),
@@ -231,7 +248,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             Text(
               "Leave Balance",
               style: theme.textTheme.labelLarge?.copyWith(
-                color: Colors.black.withOpacity(0.8),
+                color: textColor.withOpacity(0.9),
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
               ),
@@ -243,15 +260,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   child: _buildLeaveStatCard(
                     theme,
                     "Total",
-                    data.totalLeaves.toString(),
+                    formatLeave(data.totalLeaves),
+                    isDark,
+                    statCardBg,
+                    statCardBorder,
+                    textColor,
                   ),
+
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildLeaveStatCard(
                     theme,
                     "Used",
-                    data.usedLeaves.toString(),
+                    formatLeave(data.usedLeaves),
+                    isDark,
+                    statCardBg,
+                    statCardBorder,
+                    textColor,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -259,7 +285,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   child: _buildLeaveStatCard(
                     theme,
                     "Available",
-                    data.availableLeaves.toString(),
+                    formatLeave(data.availableLeaves),
+                    isDark,
+                    statCardBg,
+                    statCardBorder,
+                    textColor,
                   ),
                 ),
               ],
@@ -274,14 +304,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ThemeData theme,
       String label,
       String value,
+      bool isDark,
+      Color bgColor,
+      Color borderColor,
+      Color textColor,
       ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.25),
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -292,7 +326,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             value,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: textColor,
               height: 1,
             ),
           ),
@@ -300,7 +334,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.black.withOpacity(0.8),
+              color: textColor.withOpacity(0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -308,6 +342,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
     );
   }
+
+
   Widget _buildGrid() {
     return DashboardGrid(
       animation: _controller,

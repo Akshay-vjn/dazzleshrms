@@ -15,6 +15,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  late final PageController _pageController;
 
   late final AnimationController _controller;
 
@@ -28,6 +29,7 @@ class _MainNavigationState extends State<MainNavigation>
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -37,15 +39,32 @@ class _MainNavigationState extends State<MainNavigation>
 
   @override
   void dispose() {
+    _pageController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _onTap(int index) {
-    setState(() {
-      _currentIndex = index;
-      _controller.forward(from: 0);
-    });
+    if (_currentIndex != index) {
+      setState(() {
+        _currentIndex = index;
+        _controller.forward(from: 0);
+      });
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _onPageChanged(int index) {
+    if (_currentIndex != index) {
+      setState(() {
+        _currentIndex = index;
+        _controller.forward(from: 0);
+      });
+    }
   }
 
   @override
@@ -53,7 +72,11 @@ class _MainNavigationState extends State<MainNavigation>
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        children: _screens,
+      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           height: 64,

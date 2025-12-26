@@ -172,24 +172,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                // ================= SETTINGS =================
-                Text(
-                  "Settings",
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
 
-                ActionTile(
-                  icon: Icons.edit_outlined,
-                  title: "Edit Profile",
-                  onTap: () {},
-                ),
-
-                ActionTile(
-                  icon: Icons.notifications_outlined,
-                  title: "Notifications",
-                  onTap: () {},
-                ),
 
                 const SizedBox(height: 32),
 

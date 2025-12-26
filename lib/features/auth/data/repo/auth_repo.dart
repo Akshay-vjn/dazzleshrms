@@ -2,6 +2,7 @@ import 'package:dazzleshrms/core/api_config/api_config.dart';
 import 'package:dazzleshrms/core/api_constants/api_constants.dart';
 import 'package:dazzleshrms/features/auth/data/models/send_otp_model.dart';
 import 'package:dazzleshrms/features/auth/data/models/verify_otp_model.dart';
+import 'package:dazzleshrms/features/auth/data/models/refresh_token_model.dart';
 import 'package:dio/dio.dart';
 
 
@@ -46,6 +47,26 @@ class AuthRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? "OTP verification failed";
+      throw Exception(message);
+    }
+  }
+
+  /// ================= REFRESH TOKEN =================
+  Future<RefreshTokenModel> refreshToken({
+    required String refreshToken,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.refreshToken,
+        data: {
+          "refreshToken": refreshToken,
+        },
+      );
+
+      return RefreshTokenModel.fromJson(response.data);
+    } on DioException catch (e) {
+      final message =
+          e.response?.data?['message'] ?? "Token refresh failed";
       throw Exception(message);
     }
   }

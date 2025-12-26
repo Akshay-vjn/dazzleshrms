@@ -1,10 +1,10 @@
+import 'package:dazzleshrms/features/attendance/presentation/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/app_theme/app_theme.dart';
 import '../data/models/attendance_model.dart';
 import '../data/providers/attendance_provider.dart';
-
 
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});
@@ -26,27 +26,35 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   void initState() {
     super.initState();
 
-    /// 🔥 API CALL #1 (INITIAL LOAD)
-    /// This calls `/attendance?page=1&limit=10`
-    ref.read(attendanceProvider.notifier).loadAttendance(
-      page: _currentPage,
-      limit: _limit,
-    );
-
-    /// 🔥 LISTENER FOR PAGINATION
     _scrollController.addListener(_onScroll);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      /// Reset provider & local state
+      ref.read(attendanceProvider.notifier).reset();
+      _items.clear();
+      _currentPage = 1;
+      _isLoadingMore = false;
+
+      /// INITIAL API CALL
+      ref.read(attendanceProvider.notifier).loadAttendance(
+        page: _currentPage,
+        limit: _limit,
+        forceRefresh: true,
+      );
+    });
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 100 &&
+        _scrollController.position.maxScrollExtent - 120 &&
         !_isLoadingMore) {
       final state = ref.read(attendanceProvider);
 
       state.whenOrNull(
         data: (data) {
           if (data == null) return;
-
           if (_currentPage < data.totalPages) {
             _loadNextPage();
           }
@@ -55,9 +63,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     }
   }
 
-  /// 🔥 API CALL #2 (NEXT PAGE LOAD)
   Future<void> _loadNextPage() async {
-    _isLoadingMore = true;
+    if (_isLoadingMore) return;
+
+    setState(() {
+      _isLoadingMore = true; // 🔥 SHOW SHIMMER
+    });
+
     _currentPage++;
 
     await ref.read(attendanceProvider.notifier).loadAttendance(
@@ -65,17 +77,23 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       limit: _limit,
     );
 
-    _isLoadingMore = false;
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingMore = false; // 🔥 HIDE SHIMMER
+    });
   }
 
-  /// 🔄 PULL TO REFRESH
   Future<void> _onRefresh() async {
     _currentPage = 1;
     _isLoadingMore = false;
     _items.clear();
+    await Future.delayed(const Duration(milliseconds: 300));
+
     await ref.read(attendanceProvider.notifier).loadAttendance(
       page: _currentPage,
       limit: _limit,
+      forceRefresh: true,
     );
   }
 
@@ -101,36 +119,26 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       appBar: AppBar(
         title: const Text("Attendance"),
       ),
-
       body: attendanceState.when(
-        /// 🔄 LOADING STATE
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-
-        /// ❌ ERROR STATE
         error: (error, _) => Center(
           child: Text(
             error.toString(),
             style: const TextStyle(color: Colors.red),
           ),
         ),
-
-        /// ✅ DATA STATE
         data: (attendanceData) {
           if (attendanceData == null) {
             return const Center(child: Text("No data found"));
           }
 
-          /// 🔥 APPEND DATA (important for pagination)
-          // Reset items if we're on page 1 (refresh scenario)
-          if (attendanceData.currentPage == 1) {
-            _items.clear();
-          }
-          // Append new records if not already added
-          if (_items.length <
-              attendanceData.currentPage * _limit) {
-            _items.addAll(attendanceData.records);
+          /// Append only new records (NO CLEAR, NO DUPLICATES)
+          for (final item in attendanceData.records) {
+            if (!_items.any((e) => e.date == item.date)) {
+              _items.add(item);
+            }
           }
 
           return RefreshIndicator(
@@ -138,123 +146,107 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             child: ListView.separated(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount:
-              _items.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, __) =>
-              const SizedBox(height: 12),
+              itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                /// 🔥 SHIMMER FOOTER (NO SCROLL RESET)
+                if (index == _items.length) {
+                  return const AttendanceShimmerItem();
+                }
 
-            itemBuilder: (context, index) {
-              if (index == _items.length) {
-                /// 🔄 BOTTOM LOADER (pagination)
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              }
+                final item = _items[index];
+                final statusColor = _statusColor(item.status);
 
-              final item = _items[index];
-              final statusColor = _statusColor(item.status);
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Theme.of(context)
-                        .dividerColor
-                        .withOpacity(0.2),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
                       color: Theme.of(context)
-                          .shadowColor
-                          .withOpacity(0.08),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+                          .dividerColor
+                          .withOpacity(0.2),
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    /// 🔹 STATUS STRIP
-                    Container(
-                      width: 6,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .shadowColor
+                            .withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            bottomLeft: Radius.circular(12),
+                          ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    /// 🔹 CONTENT
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 4,
-                        ),
-                        child: Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
-                          children: [
-                            /// DATE
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 16,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outline,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 4,
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 16,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    item.date,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 6,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  item.date,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                decoration: BoxDecoration(
+                                  color:
+                                  statusColor.withOpacity(0.15),
+                                  borderRadius:
+                                  BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  item.status,
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ],
-                            ),
-
-                            /// STATUS BADGE
-                            Container(
-                              padding:
-                              const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
                               ),
-                              decoration: BoxDecoration(
-                                color:
-                                statusColor.withOpacity(0.15),
-                                borderRadius:
-                                BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                item.status,
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                    ],
+                  ),
+                );
+              },
             ),
           );
         },

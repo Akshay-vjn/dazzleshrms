@@ -1,20 +1,17 @@
-import 'package:dio/dio.dart';
 
+import 'package:dio/dio.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
-import '../models/attendance_model.dart';
+import '../models/leave_model.dart';
 
-
-class AttendanceRepository {
-  final Dio _dio = ApiConfig.dio;
-
-  Future<AttendanceApiResponse> fetchAttendance({
+class LeaveRepository {
+  Future<LeaveModel> fetchLeaves({
     required int page,
     required int limit,
     CancelToken? cancelToken,
   }) async {
-    final response = await _dio.get(
-      ApiConstants.attendance,
+    final response = await ApiConfig.dio.get(
+      ApiConstants.leave,
       queryParameters: {
         "page": page,
         "limit": limit,
@@ -22,6 +19,6 @@ class AttendanceRepository {
       cancelToken: cancelToken,
     );
 
-    return AttendanceApiResponse.fromJson(response.data);
+    return LeaveModel.fromJson(response.data);
   }
 }

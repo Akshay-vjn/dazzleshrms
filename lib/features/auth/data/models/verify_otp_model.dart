@@ -23,16 +23,19 @@ class VerifyOtpModel {
 
 class VerifyOtpData {
   final String token;
+  final String? refreshToken;
   final Employee employee;
 
   VerifyOtpData({
     required this.token,
+    this.refreshToken,
     required this.employee,
   });
 
   factory VerifyOtpData.fromJson(Map<String, dynamic> json) {
     return VerifyOtpData(
       token: json['token'],
+      refreshToken: json['refreshToken'],
       employee: Employee.fromJson(json['employee']),
     );
   }

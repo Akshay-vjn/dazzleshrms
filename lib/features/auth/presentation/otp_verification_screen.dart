@@ -60,6 +60,7 @@ class _OtpVerificationScreenState
           if (res != null && res.error == false) {
             await SessionStorage.saveSession(
               token: res.data.token,
+              refreshToken: res.data.refreshToken,
               employeeId: res.data.employee.employeeId,
               employeeName: res.data.employee.employeeName,
               storeId: res.data.employee.storeId,

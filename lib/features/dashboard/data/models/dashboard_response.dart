@@ -25,9 +25,9 @@ class DashboardData {
   final String name;
   final String role;
   final String store;
-  final int totalLeaves;
-  final int usedLeaves;
-  final int availableLeaves;
+  final double totalLeaves;
+  final double usedLeaves;
+  final double availableLeaves;
 
   DashboardData({
     required this.name,
@@ -39,16 +39,20 @@ class DashboardData {
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
-    int _parseInt(dynamic value) =>
-        int.tryParse(value?.toString() ?? '') ?? 0;
+    double _parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is int) return value.toDouble();
+      if (value is double) return value;
+      return double.tryParse(value.toString()) ?? 0.0;
+    }
 
     return DashboardData(
-      name: json['name'] as String? ?? '',
-      role: json['role'] as String? ?? '',
-      store: json['store'] as String? ?? '',
-      totalLeaves: _parseInt(json['totalLeaves']),
-      usedLeaves: _parseInt(json['usedLeaves']),
-      availableLeaves: _parseInt(json['availableLeaves']),
+      name: json['name'] ?? '',
+      role: json['role'] ?? '',
+      store: json['store'] ?? '',
+      totalLeaves: _parseDouble(json['totalLeaves']),
+      usedLeaves: _parseDouble(json['usedLeaves']),
+      availableLeaves: _parseDouble(json['availableLeaves']),
     );
   }
 }

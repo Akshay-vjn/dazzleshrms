@@ -1,26 +1,56 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ApplyLeaveFormSheet extends StatefulWidget {
+import '../../../../core/app_theme/app_theme.dart';
+import 'data/models/apply_leave_model.dart';
+import 'data/models/leave_type_model.dart';
+import 'data/providers/apply_leave_provider.dart';
+import 'data/providers/leave_type_provider.dart';
+
+class ApplyLeaveFormSheet extends ConsumerStatefulWidget {
   const ApplyLeaveFormSheet({super.key});
 
   @override
-  State<ApplyLeaveFormSheet> createState() => _ApplyLeaveFormSheetState();
+  ConsumerState<ApplyLeaveFormSheet> createState() =>
+      _ApplyLeaveFormSheetState();
 }
 
-class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
+class _ApplyLeaveFormSheetState
+    extends ConsumerState<ApplyLeaveFormSheet> {
   final TextEditingController reasonCtrl = TextEditingController();
 
-  String? selectedLeaveType;
+  int? selectedLeaveTypeId;
   DateTime? fromDate;
   DateTime? toDate;
 
-  final leaveTypes = [
-    "Casual Leave",
-    "Sick Leave",
-    "Earned Leave",
-    "Work From Home",
-  ];
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔹 Load leave types when sheet opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(leaveTypeProvider.notifier).loadLeaveTypes();
+    });
+  }
+
+  // ===================== HELPERS =====================
+
+  void _showSheetSnackBar(
+      String message, {
+        bool isError = true,
+      }) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor:
+          isError ? AppTheme.statusError : AppTheme.statusSuccess,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+  }
 
   Future<void> _pickDate({required bool isFrom}) async {
     final picked = await showDatePicker(
@@ -37,23 +67,53 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
     }
   }
 
+  String _formatDate(DateTime date) =>
+      date.toIso8601String().split('T').first;
+
   void _submitLeave() {
-    if (selectedLeaveType == null ||
+    if (selectedLeaveTypeId == null ||
         fromDate == null ||
         toDate == null ||
-        reasonCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+        reasonCtrl.text.trim().isEmpty) {
+      _showSheetSnackBar("Please fill all fields");
       return;
     }
 
-    Navigator.pop(context);
+    ref.read(applyLeaveProvider.notifier).applyLeave(
+      leaveTypeId: selectedLeaveTypeId!,
+      fromDate: _formatDate(fromDate!),
+      toDate: _formatDate(toDate!),
+      note: reasonCtrl.text.trim(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final leaveTypeState = ref.watch(leaveTypeProvider);
+    final applyLeaveState = ref.watch(applyLeaveProvider);
+
+    /// ✅ SINGLE LISTENER – CORRECT PLACE
+    ref.listen<AsyncValue<ApplyLeaveResponse?>>(
+      applyLeaveProvider,
+          (previous, next) {
+        next.whenOrNull(
+          error: (error, _) {
+            _showSheetSnackBar(error.toString());
+          },
+          data: (_) {
+            _showSheetSnackBar(
+              "Leave applied successfully",
+              isError: false,
+            );
+
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) Navigator.pop(context);
+            });
+          },
+        );
+      },
+    );
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 250),
@@ -62,14 +122,16 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.6, // ✅ ONE PLACE
+        height: MediaQuery.of(context).size.height * 0.6,
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
         ),
         child: Column(
           children: [
-            // Drag indicator
+            // ================= DRAG INDICATOR =================
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Container(
@@ -82,35 +144,61 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
               ),
             ),
 
-            // Scrollable content
+            // ================= FORM =================
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(child: Text("New Leave Request", style: theme.textTheme.titleMedium)),
+                    Center(
+                      child: Text(
+                        "New Leave Request",
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
+                    // ---------- LEAVE TYPE ----------
                     Text("Leave Type", style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedLeaveType,
-                      hint: const Text("Select leave type"),
-                      items: leaveTypes
-                          .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => selectedLeaveType = v),
+
+                    leaveTypeState.when(
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      error: (e, _) => Text(
+                        e.toString(),
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      data: (types) {
+                        return DropdownButtonFormField<int>(
+                          value: selectedLeaveTypeId,
+                          hint: const Text("Select leave type"),
+                          items: types
+                              .map(
+                                (LeaveType e) => DropdownMenuItem<int>(
+                              value: e.leaveId,
+                              child: Text(e.leaveType),
+                            ),
+                          )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => selectedLeaveTypeId = v),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 20),
 
-                    Text("Leave Duration", style: theme.textTheme.titleMedium),
+                    // ---------- DATE RANGE ----------
+                    Text("Leave Duration",
+                        style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
+
                     Row(
                       children: [
                         Expanded(
@@ -119,7 +207,7 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
                             child: Text(
                               fromDate == null
                                   ? "From Date"
-                                  : "${fromDate!.day}/${fromDate!.month}/${fromDate!.year}",
+                                  : _formatDate(fromDate!),
                             ),
                           ),
                         ),
@@ -130,7 +218,7 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
                             child: Text(
                               toDate == null
                                   ? "To Date"
-                                  : "${toDate!.day}/${toDate!.month}/${toDate!.year}",
+                                  : _formatDate(toDate!),
                             ),
                           ),
                         ),
@@ -139,30 +227,40 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
 
                     const SizedBox(height: 20),
 
+                    // ---------- REASON ----------
                     Text("Reason", style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
+
                     TextField(
                       controller: reasonCtrl,
                       maxLines: 2,
                       decoration:
                       const InputDecoration(hintText: "Enter reason"),
                     ),
-
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
 
-            // Fixed submit button
+            // ================= SUBMIT BUTTON =================
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: FilledButton(
-                  onPressed: _submitLeave,
-                  child: const Text("Submit Leave"),
+                  onPressed:
+                  applyLeaveState.isLoading ? null : _submitLeave,
+                  child: applyLeaveState.isLoading
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.black,
+                    ),
+                  )
+                      : const Text("Submit Leave"),
                 ),
               ),
             ),
@@ -170,5 +268,11 @@ class _ApplyLeaveFormSheetState extends State<ApplyLeaveFormSheet> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    reasonCtrl.dispose();
+    super.dispose();
   }
 }

@@ -14,7 +14,7 @@ class DashboardRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? 'Failed to fetch dashboard';
-      throw Exception(message);
+      throw (message);
     }
   }
 }
