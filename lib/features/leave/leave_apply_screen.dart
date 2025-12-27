@@ -1,4 +1,3 @@
-
 import 'package:dazzleshrms/features/leave/widgets/balance_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,19 +23,27 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
     // Reset state and load data when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        // Reset provider state to ensure fresh load
-        ref.read(leaveProvider.notifier).reset();
-        // Reset local state
-        _page = 1;
-        
-        /// 🔥 API CALL
-        ref.read(leaveProvider.notifier).loadLeaves(
-          page: _page,
-          limit: _limit,
-          forceRefresh: true,
-        );
+        _loadData();
       }
     });
+  }
+
+  Future<void> _loadData() async {
+    // Reset provider state to ensure fresh load
+    ref.read(leaveProvider.notifier).reset();
+    // Reset local state
+    _page = 1;
+
+    /// 🔥 API CALL
+    await ref.read(leaveProvider.notifier).loadLeaves(
+      page: _page,
+      limit: _limit,
+      forceRefresh: true,
+    );
+  }
+
+  Future<void> _refresh() async {
+    await _loadData();
   }
 
   Color _statusColor(String status) {
@@ -83,190 +90,221 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
       body: leaveState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
 
-        error: (e, _) => Center(
-          child: Text(
-            e.toString(),
-            style: const TextStyle(color: Colors.red),
+        error: (e, _) => RefreshIndicator(
+          onRefresh: _refresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      e.toString(),
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _refresh,
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
 
         data: (leaveData) {
           if (leaveData == null) {
-            return const Center(child: Text("No leave data"));
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              /// ================= LEAVE BALANCE =================
-              Center(
-                child: Text(
-                  "Leave Balance",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+            return RefreshIndicator(
+              onRefresh: _refresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: const Center(child: Text("No leave data")),
                 ),
               ),
-              const SizedBox(height: 12),
+            );
+          }
 
-              Row(
-                children: [
-                  BalanceBox(
-                    label: "Total",
-                    value: leaveData.summary.totalLeaves.toString(),
-                  ),
-                  const SizedBox(width: 12),
-                  BalanceBox(
-                    label: "Used",
-                    value: leaveData.summary.usedLeaves.toString(),
-                  ),
-                  const SizedBox(width: 12),
-                  BalanceBox(
-                    label: "Balance",
-                    value: leaveData.summary.availableLeaves.toString(),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-              Divider(
-                color: Theme.of(context).dividerColor.withOpacity(0.2),
-              ),
-              const SizedBox(height: 12),
-
-              /// ================= HEADER =================
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Leaves Applied",
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                /// ================= LEAVE BALANCE =================
+                Center(
+                  child: Text(
+                    "Leave Balance",
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: "all", child: Text("Show All")),
-                      PopupMenuItem(
-                          value: "date", child: Text("Filter by Date")),
-                    ],
-                    child: TextButton.icon(
-                      onPressed: null,
-                      icon: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color:
-                        Theme.of(context).textTheme.titleMedium?.color,
-                      ),
-                      label: Text(
-                        "Show All",
-                        style:
-                        Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    BalanceBox(
+                      label: "Total",
+                      value: leaveData.summary.totalLeaves.toString(),
+                    ),
+                    const SizedBox(width: 12),
+                    BalanceBox(
+                      label: "Used",
+                      value: leaveData.summary.usedLeaves.toString(),
+                    ),
+                    const SizedBox(width: 12),
+                    BalanceBox(
+                      label: "Balance",
+                      value: leaveData.summary.availableLeaves.toString(),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                Divider(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
+                const SizedBox(height: 12),
+
+                /// ================= HEADER =================
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Leaves Applied",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-              Divider(
-                color: Theme.of(context).dividerColor.withOpacity(0.2),
-              ),
-              const SizedBox(height: 12),
-
-              /// ================= LEAVE LIST =================
-              if (leaveData.records.isEmpty)
-                const Center(child: Text("No leaves applied")),
-
-              ...leaveData.records.map((leave) {
-                final color = _statusColor(leave.status);
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .shadowColor
-                            .withOpacity(0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            bottomLeft: Radius.circular(12),
-                          ),
+                    PopupMenuButton<String>(
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: "all", child: Text("Show All")),
+                        PopupMenuItem(
+                            value: "date", child: Text("Filter by Date")),
+                      ],
+                      child: TextButton.icon(
+                        onPressed: null,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Theme.of(context).textTheme.titleMedium?.color,
+                        ),
+                        label: Text(
+                          "Show All",
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 4,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+                Divider(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
+                const SizedBox(height: 12),
+
+                /// ================= LEAVE LIST =================
+                if (leaveData.records.isEmpty)
+                  const Center(child: Text("No leaves applied")),
+
+                ...leaveData.records.map((leave) {
+                  final color = _statusColor(leave.status);
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .shadowColor
+                              .withOpacity(0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              bottomLeft: Radius.circular(12),
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                leave.leaveType,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 4,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  leave.leaveType,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    "${leave.fromDate} → ${leave.toDate}",
-                                    style: TextStyle(
-                                      fontSize: 14,
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 16,
                                       color: Theme.of(context)
                                           .colorScheme
-                                          .outline
-                                          .withOpacity(0.8),
+                                          .outline,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "${leave.fromDate} → ${leave.toDate}",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Text(
-                          leave.status,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: color,
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: Text(
+                            leave.status,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ],
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
           );
         },
       ),

@@ -88,7 +88,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     _currentPage = 1;
     _isLoadingMore = false;
     _items.clear();
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(seconds: 1));
 
     await ref.read(attendanceProvider.notifier).loadAttendance(
       page: _currentPage,

@@ -35,21 +35,6 @@ class NotificationScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // ================= EARLIER =================
-          Text(
-            "Earlier",
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-
-
-          const NotificationTile(
-            icon: Icons.info_outline,
-            title: "HR Announcement",
-            message: "Company meeting on Friday at 4 PM",
-            time: "12 Sep",
-            isUnread: false,
-          ),
         ],
       ),
     );

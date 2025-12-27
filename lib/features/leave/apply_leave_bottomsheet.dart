@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
 import 'data/models/apply_leave_model.dart';
 import 'data/models/leave_type_model.dart';
+import 'data/models/blocked_date_model.dart';
 import 'data/providers/apply_leave_provider.dart';
 import 'data/providers/leave_type_provider.dart';
+import 'data/providers/blocked_date_provider.dart';
 
 class ApplyLeaveFormSheet extends ConsumerStatefulWidget {
   const ApplyLeaveFormSheet({super.key});
@@ -27,7 +30,6 @@ class _ApplyLeaveFormSheetState
   void initState() {
     super.initState();
 
-    /// 🔹 Load leave types when sheet opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(leaveTypeProvider.notifier).loadLeaveTypes();
     });
@@ -52,23 +54,180 @@ class _ApplyLeaveFormSheetState
       );
   }
 
-  Future<void> _pickDate({required bool isFrom}) async {
-    final picked = await showDatePicker(
-      context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-      initialDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      setState(() {
-        isFrom ? fromDate = picked : toDate = picked;
-      });
-    }
-  }
-
   String _formatDate(DateTime date) =>
       date.toIso8601String().split('T').first;
+
+  // ===================== CALENDAR (ONLY LOGIC CHANGE) =====================
+
+  Future<void> _pickDate({required bool isFrom}) async {
+    // 🔁 FORCE REFRESH EVERY TIME
+    ref.invalidate(blockedDateProvider);
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Consumer(
+        builder: (context, ref, _) {
+          final blockedAsync = ref.watch(blockedDateProvider);
+
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 24,
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.75,
+                  ),
+                  child: blockedAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (e, _) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(e.toString()),
+                    ),
+                    data: (blockedDates) {
+                      final Map<DateTime, BlockedDateModel> blockedMap = {
+                        for (final b in blockedDates)
+                          DateTime(b.date.year, b.date.month, b.date.day): b
+                      };
+
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ---------- HEADER ----------
+                            Text(
+                              "Select Date",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(),
+
+                            const SizedBox(height: 8),
+
+                            // ---------- CALENDAR ----------
+                            Flexible(
+                              child: TableCalendar(
+                                firstDay: DateTime.now(),
+                                lastDay: DateTime(2100),
+                                focusedDay: DateTime.now(),
+
+                                rowHeight: 38,
+
+                                headerStyle: const HeaderStyle(
+                                  titleCentered: true,
+                                  formatButtonVisible: false,
+                                ),
+
+                                calendarStyle: CalendarStyle(
+                                  todayDecoration: BoxDecoration(
+                                    color: AppTheme.PrimaryColor.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  selectedDecoration: const BoxDecoration(
+                                    color: AppTheme.PrimaryColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  outsideDaysVisible: false,
+                                ),
+
+                                calendarBuilders: CalendarBuilders(
+                                  defaultBuilder: (context, day, _) {
+                                    final d = DateTime(day.year, day.month, day.day);
+
+                                    if (blockedMap.containsKey(d)) {
+                                      return Container(
+                                        margin: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade500,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          '${day.day}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return null;
+                                  },
+                                ),
+
+                                onDaySelected: (selectedDay, _) {
+                                  final d = DateTime(
+                                    selectedDay.year,
+                                    selectedDay.month,
+                                    selectedDay.day,
+                                  );
+
+                                  // 🔴 BLOCKED DATE
+                                  if (blockedMap.containsKey(d)) {
+                                    final blocked = blockedMap[d]!;
+
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text("Blocked Date"),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("Date: ${_formatDate(blocked.date)}"),
+                                            const SizedBox(height: 8),
+                                            Text("Reason: ${blocked.reason}"),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text("OK"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  // ✅ NORMAL DATE
+                                  setState(() {
+                                    isFrom ? fromDate = selectedDay : toDate = selectedDay;
+                                  });
+
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ===================== SUBMIT =====================
 
   void _submitLeave() {
     if (selectedLeaveTypeId == null ||
@@ -93,7 +252,6 @@ class _ApplyLeaveFormSheetState
     final leaveTypeState = ref.watch(leaveTypeProvider);
     final applyLeaveState = ref.watch(applyLeaveProvider);
 
-    /// ✅ SINGLE LISTENER – CORRECT PLACE
     ref.listen<AsyncValue<ApplyLeaveResponse?>>(
       applyLeaveProvider,
           (previous, next) {
@@ -167,12 +325,14 @@ class _ApplyLeaveFormSheetState
                       loading: () => const Center(
                         child: Padding(
                           padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                          CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
                       error: (e, _) => Text(
                         e.toString(),
-                        style: const TextStyle(color: Colors.red),
+                        style:
+                        const TextStyle(color: Colors.red),
                       ),
                       data: (types) {
                         return DropdownButtonFormField<int>(
@@ -180,14 +340,15 @@ class _ApplyLeaveFormSheetState
                           hint: const Text("Select leave type"),
                           items: types
                               .map(
-                                (LeaveType e) => DropdownMenuItem<int>(
-                              value: e.leaveId,
-                              child: Text(e.leaveType),
-                            ),
+                                (LeaveType e) =>
+                                DropdownMenuItem<int>(
+                                  value: e.leaveId,
+                                  child: Text(e.leaveType),
+                                ),
                           )
                               .toList(),
-                          onChanged: (v) =>
-                              setState(() => selectedLeaveTypeId = v),
+                          onChanged: (v) => setState(
+                                  () => selectedLeaveTypeId = v),
                         );
                       },
                     ),
@@ -195,15 +356,18 @@ class _ApplyLeaveFormSheetState
                     const SizedBox(height: 20),
 
                     // ---------- DATE RANGE ----------
-                    Text("Leave Duration",
-                        style: theme.textTheme.titleMedium),
+                    Text(
+                      "Leave Duration",
+                      style: theme.textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
 
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => _pickDate(isFrom: true),
+                            onPressed: () =>
+                                _pickDate(isFrom: true),
                             child: Text(
                               fromDate == null
                                   ? "From Date"
@@ -214,7 +378,8 @@ class _ApplyLeaveFormSheetState
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => _pickDate(isFrom: false),
+                            onPressed: () =>
+                                _pickDate(isFrom: false),
                             child: Text(
                               toDate == null
                                   ? "To Date"
@@ -234,8 +399,9 @@ class _ApplyLeaveFormSheetState
                     TextField(
                       controller: reasonCtrl,
                       maxLines: 2,
-                      decoration:
-                      const InputDecoration(hintText: "Enter reason"),
+                      decoration: const InputDecoration(
+                        hintText: "Enter reason",
+                      ),
                     ),
                   ],
                 ),
@@ -249,8 +415,9 @@ class _ApplyLeaveFormSheetState
                 width: double.infinity,
                 height: 52,
                 child: FilledButton(
-                  onPressed:
-                  applyLeaveState.isLoading ? null : _submitLeave,
+                  onPressed: applyLeaveState.isLoading
+                      ? null
+                      : _submitLeave,
                   child: applyLeaveState.isLoading
                       ? const SizedBox(
                     width: 20,

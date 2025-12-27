@@ -46,15 +46,20 @@ class _MainNavigationState extends State<MainNavigation>
 
   void _onTap(int index) {
     if (_currentIndex != index) {
+      final distance = (index - _currentIndex).abs();
       setState(() {
         _currentIndex = index;
         _controller.forward(from: 0);
       });
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      if (distance > 1) {
+        _pageController.jumpToPage(index);
+      } else {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     }
   }
 

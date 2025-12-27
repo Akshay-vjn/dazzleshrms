@@ -53,7 +53,7 @@ class AttendanceShimmerItem extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
+        color: Colors.grey,
         borderRadius: BorderRadius.circular(6),
       ),
     );

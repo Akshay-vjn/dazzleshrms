@@ -21,6 +21,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+
   String formatLeave(double value) {
     if (value % 1 == 0) {
       return value.toInt().toString(); // 4.0 → 4
@@ -47,9 +48,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     super.dispose();
   }
 
+  Future<void> _refresh() async {
+    _controller.reset();
+    _controller.forward();
+    await ref.read(dashboardProvider.notifier).loadDashboard();
+  }
+
   Widget _buildHeader(ThemeData theme, DashboardData data) {
     final avatarLetter =
-        (data.name.isNotEmpty ? data.name[0] : '?').toUpperCase();
+    (data.name.isNotEmpty ? data.name[0] : '?').toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
@@ -266,7 +273,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     statCardBorder,
                     textColor,
                   ),
-
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -343,7 +349,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-
   Widget _buildGrid() {
     return DashboardGrid(
       animation: _controller,
@@ -392,18 +397,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: dashboardState.when(
           data: (data) {
             if (data == null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("No dashboard data available"),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () =>
-                          ref.read(dashboardProvider.notifier).loadDashboard(),
-                      child: const Text("Retry"),
+              return RefreshIndicator(
+                onRefresh: _refresh,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("No dashboard data available"),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: _refresh,
+                            child: const Text("Retry"),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               );
             }
@@ -412,16 +425,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               children: [
                 _buildHeader(theme, data),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildJobCard(theme, data),
-                        const SizedBox(height: 24),
-                        _buildGrid(),
-                        const SizedBox(height: 100),
-                      ],
+                  child: RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildJobCard(theme, data),
+                          const SizedBox(height: 24),
+                          _buildGrid(),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -431,21 +448,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           loading: () => const Center(
             child: CircularProgressIndicator(),
           ),
-          error: (err, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  err.toString(),
-                  textAlign: TextAlign.center,
+          error: (err, _) => RefreshIndicator(
+            onRefresh: _refresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        err.toString(),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _refresh,
+                        child: const Text("Retry"),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () =>
-                      ref.read(dashboardProvider.notifier).loadDashboard(),
-                  child: const Text("Retry"),
-                ),
-              ],
+              ),
             ),
           ),
         ),

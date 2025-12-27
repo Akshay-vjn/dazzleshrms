@@ -7,6 +7,11 @@ class ApiConstants {
   static const String attendance = "/attendance";
   static const String leave = "/leave";
   static const String leaveType = "/leave/leavetype";
+  static const String appliedLeaves = "/leave/applied";
+  static const String approveLeave = "/leave/approve";
+  static const String rejectLeave = "/leave/reject";
+  static const String blockedLeaveDates = '/leave/dateBlocked';
+
 
 
 
