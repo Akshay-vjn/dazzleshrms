@@ -9,6 +9,8 @@ import 'data/models/blocked_date_model.dart';
 import 'data/providers/apply_leave_provider.dart';
 import 'data/providers/leave_type_provider.dart';
 import 'data/providers/blocked_date_provider.dart';
+import 'data/providers/leave_provider.dart';
+import '../dashboard/data/providers/dashboard_provider.dart';
 
 class ApplyLeaveFormSheet extends ConsumerStatefulWidget {
   const ApplyLeaveFormSheet({super.key});
@@ -20,6 +22,7 @@ class ApplyLeaveFormSheet extends ConsumerStatefulWidget {
 
 class _ApplyLeaveFormSheetState
     extends ConsumerState<ApplyLeaveFormSheet> {
+  final GlobalKey<ScaffoldMessengerState> _messengerKey = GlobalKey<ScaffoldMessengerState>();
   final TextEditingController reasonCtrl = TextEditingController();
 
   int? selectedLeaveTypeId;
@@ -41,8 +44,8 @@ class _ApplyLeaveFormSheetState
       String message, {
         bool isError = true,
       }) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
+    _messengerKey.currentState
+      ?..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
@@ -265,6 +268,10 @@ class _ApplyLeaveFormSheetState
               isError: false,
             );
 
+            // 🔥 REFRESH LEAVE LIST & DASHBOARD BALANCE IMMEDIATELY
+            ref.read(leaveProvider.notifier).loadLeaves();
+            ref.read(dashboardProvider.notifier).loadDashboard();
+
             Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted) Navigator.pop(context);
             });
@@ -287,154 +294,159 @@ class _ApplyLeaveFormSheetState
             top: Radius.circular(24),
           ),
         ),
-        child: Column(
-          children: [
-            // ================= DRAG INDICATOR =================
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Container(
-                width: 48,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(4),
+        child: ScaffoldMessenger(
+          key: _messengerKey,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Column(
+            children: [
+              // ================= DRAG INDICATOR =================
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 48,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-            ),
 
-            // ================= FORM =================
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Text(
-                        "New Leave Request",
+              // ================= FORM =================
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          "New Leave Request",
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ---------- LEAVE TYPE ----------
+                      Text("Leave Type", style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+
+                      leaveTypeState.when(
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8),
+                            child:
+                            CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        error: (e, _) => Text(
+                          e.toString(),
+                          style:
+                          const TextStyle(color: Colors.red),
+                        ),
+                        data: (types) {
+                          return DropdownButtonFormField<int>(
+                            value: selectedLeaveTypeId,
+                            hint: const Text("Select leave type"),
+                            items: types
+                                .map(
+                                  (LeaveType e) =>
+                                  DropdownMenuItem<int>(
+                                    value: e.leaveId,
+                                    child: Text(e.leaveType),
+                                  ),
+                            )
+                                .toList(),
+                            onChanged: (v) => setState(
+                                    () => selectedLeaveTypeId = v),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ---------- DATE RANGE ----------
+                      Text(
+                        "Leave Duration",
                         style: theme.textTheme.titleMedium,
                       ),
-                    ),
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 8),
 
-                    // ---------- LEAVE TYPE ----------
-                    Text("Leave Type", style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-
-                    leaveTypeState.when(
-                      loading: () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8),
-                          child:
-                          CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      error: (e, _) => Text(
-                        e.toString(),
-                        style:
-                        const TextStyle(color: Colors.red),
-                      ),
-                      data: (types) {
-                        return DropdownButtonFormField<int>(
-                          value: selectedLeaveTypeId,
-                          hint: const Text("Select leave type"),
-                          items: types
-                              .map(
-                                (LeaveType e) =>
-                                DropdownMenuItem<int>(
-                                  value: e.leaveId,
-                                  child: Text(e.leaveType),
-                                ),
-                          )
-                              .toList(),
-                          onChanged: (v) => setState(
-                                  () => selectedLeaveTypeId = v),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ---------- DATE RANGE ----------
-                    Text(
-                      "Leave Duration",
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () =>
-                                _pickDate(isFrom: true),
-                            child: Text(
-                              fromDate == null
-                                  ? "From Date"
-                                  : _formatDate(fromDate!),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () =>
+                                  _pickDate(isFrom: true),
+                              child: Text(
+                                fromDate == null
+                                    ? "From Date"
+                                    : _formatDate(fromDate!),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () =>
-                                _pickDate(isFrom: false),
-                            child: Text(
-                              toDate == null
-                                  ? "To Date"
-                                  : _formatDate(toDate!),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () =>
+                                  _pickDate(isFrom: false),
+                              child: Text(
+                                toDate == null
+                                    ? "To Date"
+                                    : _formatDate(toDate!),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ---------- REASON ----------
-                    Text("Reason", style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-
-                    TextField(
-                      controller: reasonCtrl,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        hintText: "Enter reason",
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
-            // ================= SUBMIT BUTTON =================
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: applyLeaveState.isLoading
-                      ? null
-                      : _submitLeave,
-                  child: applyLeaveState.isLoading
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.black,
-                    ),
-                  )
-                      : const Text("Submit Leave"),
+                      const SizedBox(height: 20),
+
+                      // ---------- REASON ----------
+                      Text("Reason", style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+
+                      TextField(
+                        controller: reasonCtrl,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          hintText: "Enter reason",
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              // ================= SUBMIT BUTTON =================
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: applyLeaveState.isLoading
+                        ? null
+                        : _submitLeave,
+                    child: applyLeaveState.isLoading
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
+                    )
+                        : const Text("Submit Leave"),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
+    ));
   }
 
   @override

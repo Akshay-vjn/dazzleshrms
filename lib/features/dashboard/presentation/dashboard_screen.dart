@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
-import 'package:dazzleshrms/features/profile/profile_screen/profile_screen.dart';
+import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:dazzleshrms/core/storage/session_storage.dart';
+import 'package:dazzleshrms/core/permissions/permission.dart';
+
 import '../../notifications/notification_screen.dart';
+import '../../profile/profile_screen/profile_screen.dart';
+import '../data/providers/dashboard_provider.dart';
+import '../data/models/dashboard_response.dart';
 import 'widgets/fade_slide_item.dart';
 import 'widgets/dashboard_grid.dart';
 import 'widgets/dashboard_grid_item.dart';
-import '../data/providers/dashboard_provider.dart';
-import '../data/models/dashboard_response.dart';
+
+import 'package:dazzleshrms/core/permissions/permission_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -22,16 +27,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  String formatLeave(double value) {
-    if (value % 1 == 0) {
-      return value.toInt().toString(); // 4.0 → 4
-    }
-    return value.toStringAsFixed(1); // 3.5 → 3.5
-  }
-
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -51,24 +50,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _refresh() async {
     _controller.reset();
     _controller.forward();
+
+    /// 🔥 VERY IMPORTANT
+    ref.invalidate(permissionProvider);
+
     await ref.read(dashboardProvider.notifier).loadDashboard();
   }
 
+  String formatLeave(double value) {
+    if (value % 1 == 0) return value.toInt().toString();
+    return value.toStringAsFixed(1);
+  }
+
+  // ================= HEADER =================
   Widget _buildHeader(ThemeData theme, DashboardData data) {
     final avatarLetter =
     (data.name.isNotEmpty ? data.name[0] : '?').toUpperCase();
 
     return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
           bottom: BorderSide(
             color: theme.dividerColor.withOpacity(0.15),
-            width: 1,
           ),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: FadeSlideItem(
         animation: _controller,
         intervalStart: 0.0,
@@ -77,9 +85,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             GestureDetector(
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
               ),
               child: CircleAvatar(
                 radius: 24,
@@ -101,9 +107,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 children: [
                   Text(
                     "Hi, ${data.name}",
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   Text(
                     "Welcome back to Dazzles !",
@@ -120,14 +125,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               child: Container(
+                padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
                   color: AppTheme.PrimaryColor,
                   shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.all(8),
-                child: Icon(
+                child: const Icon(
                   Icons.notifications_outlined,
-                  color: AppTheme.iconColor,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -137,18 +142,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  // ================= JOB CARD (ORIGINAL UI) =================
   Widget _buildJobCard(ThemeData theme, DashboardData data) {
-    // Adaptive colors based on theme brightness
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardGradientStart = isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
-    final cardGradientEnd = isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
-    final iconBgColor = isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.2);
-    final iconColor = isDark ? AppTheme.PrimaryColor : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.white;
-    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.15);
-    final statCardBg = isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.15);
-    final statCardBorder = isDark ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.25);
+    final cardGradientStart =
+    isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
+    final cardGradientEnd =
+    isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
+
+    final textColor = Colors.white;
+    final dividerColor = Colors.white.withOpacity(0.15);
+    final statBg = Colors.white.withOpacity(0.15);
 
     return FadeSlideItem(
       animation: _controller,
@@ -157,17 +162,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              cardGradientStart,
-              cardGradientEnd,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            colors: [cardGradientStart, cardGradientEnd],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withOpacity(0.25),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -176,19 +176,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: iconBgColor,
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.workspace_premium,
-                    color: iconColor,
+                    color: AppTheme.PrimaryColor,
                     size: 28,
                   ),
                 ),
@@ -198,34 +196,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        data.role.isNotEmpty ? data.role : "N/A",
+                        data.role,
                         style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
                           color: textColor,
-                          height: 1.2,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Text(
-                            "Store :",
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: textColor.withOpacity(0.85),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              data.store.isNotEmpty ? data.store : 'N/A',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: textColor.withOpacity(0.85),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        "Store : ${data.store}",
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: textColor.withOpacity(0.85)),
                       ),
                     ],
                   ),
@@ -233,71 +214,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // Divider
-            Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    dividerColor,
-                    dividerColor.withOpacity(0.5),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+            Container(height: 1, color: dividerColor),
 
             const SizedBox(height: 20),
 
-            // Leave Statistics Section
             Text(
               "Leave Balance",
               style: theme.textTheme.labelLarge?.copyWith(
                 color: textColor.withOpacity(0.9),
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
               ),
             ),
+
             const SizedBox(height: 12),
+
             Row(
               children: [
-                Expanded(
-                  child: _buildLeaveStatCard(
-                    theme,
-                    "Total",
-                    formatLeave(data.totalLeaves),
-                    isDark,
-                    statCardBg,
-                    statCardBorder,
-                    textColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildLeaveStatCard(
-                    theme,
-                    "Used",
-                    formatLeave(data.usedLeaves),
-                    isDark,
-                    statCardBg,
-                    statCardBorder,
-                    textColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildLeaveStatCard(
-                    theme,
-                    "Available",
-                    formatLeave(data.availableLeaves),
-                    isDark,
-                    statCardBg,
-                    statCardBorder,
-                    textColor,
-                  ),
-                ),
+                _leaveStatCard("Total", data.totalLeaves, statBg),
+                _leaveStatCard("Used", data.usedLeaves, statBg),
+                _leaveStatCard("Available", data.availableLeaves, statBg),
               ],
             ),
           ],
@@ -306,124 +243,98 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildLeaveStatCard(
-      ThemeData theme,
-      String label,
-      String value,
-      bool isDark,
-      Color bgColor,
-      Color borderColor,
-      Color textColor,
-      ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: borderColor,
-          width: 1,
+  Widget _leaveStatCard(String label, double value, Color bg) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
         ),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              height: 1,
+        child: Column(
+          children: [
+            Text(
+              formatLeave(value),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: textColor.withOpacity(0.8),
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white70),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildGrid() {
+  // ================= GRID (PERMISSION BASED) =================
+  Widget _buildGrid(Set<String> permissions) {
     return DashboardGrid(
       animation: _controller,
       items: [
-        DashboardGridItem(
-          icon: Icons.touch_app_rounded,
-          label: "Attendance",
-          onTap: () => context.pushNamed('attendance'),
-          animation: _controller,
-          intervalStart: 0.2,
-          gradientStart: AppTheme.gridGradient1Start,
-          gradientEnd: AppTheme.gridGradient1End,
-          iconColor: AppTheme.gridIconColor,
-        ),
-        DashboardGridItem(
-          icon: Icons.calendar_month_rounded,
-          label: "Apply Leave",
-          onTap: () => context.pushNamed('apply_leave'),
-          animation: _controller,
-          intervalStart: 0.25,
-          gradientStart: AppTheme.gridGradient2Start,
-          gradientEnd: AppTheme.gridGradient2End,
-          iconColor: AppTheme.gridIconColor,
-        ),
-        DashboardGridItem(
-          icon: Icons.check_circle_outline_rounded,
-          label: "Approvals",
-          onTap: () => context.pushNamed('approvals'),
-          animation: _controller,
-          intervalStart: 0.3,
-          gradientStart: AppTheme.gridGradient3Start,
-          gradientEnd: AppTheme.gridGradient3End,
-          iconColor: AppTheme.gridIconColor,
-        ),
+        if (permissions.contains(Permissions.viewAttendance))
+          DashboardGridItem(
+            icon: Icons.touch_app_rounded,
+            label: "Attendance",
+            onTap: () => context.pushNamed('attendance'),
+            animation: _controller,
+            intervalStart: 0.2,
+            gradientStart: AppTheme.gridGradient1Start,
+            gradientEnd: AppTheme.gridGradient1End,
+            iconColor: AppTheme.gridIconColor,
+          ),
+        if (permissions.contains(Permissions.viewApplyLeave))
+          DashboardGridItem(
+            icon: Icons.calendar_month_rounded,
+            label: "Apply Leave",
+            onTap: () => context.pushNamed('apply_leave'),
+            animation: _controller,
+            intervalStart: 0.25,
+            gradientStart: AppTheme.gridGradient2Start,
+            gradientEnd: AppTheme.gridGradient2End,
+            iconColor: AppTheme.gridIconColor,
+          ),
+        if (permissions.contains(Permissions.viewApprovals))
+          DashboardGridItem(
+            icon: Icons.check_circle_outline_rounded,
+            label: "Approvals",
+            onTap: () => context.pushNamed('approvals'),
+            animation: _controller,
+            intervalStart: 0.3,
+            gradientStart: AppTheme.gridGradient3Start,
+            gradientEnd: AppTheme.gridGradient3End,
+            iconColor: AppTheme.gridIconColor,
+          ),
       ],
     );
   }
 
+  // ================= BUILD =================
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final dashboardState = ref.watch(dashboardProvider);
+    final permissionState = ref.watch(permissionProvider);
 
     return Scaffold(
       body: SafeArea(
         child: dashboardState.when(
+          loading: () =>
+          const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text(e.toString())),
           data: (data) {
             if (data == null) {
-              return RefreshIndicator(
-                onRefresh: _refresh,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("No dashboard data available"),
-                          const SizedBox(height: 12),
-                          FilledButton(
-                            onPressed: _refresh,
-                            child: const Text("Retry"),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
+              return const Center(child: Text("No dashboard data"));
             }
 
             return Column(
               children: [
-                _buildHeader(theme, data),
+                _buildHeader(Theme.of(context), data),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _refresh,
@@ -431,12 +342,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(20),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildJobCard(theme, data),
+                          _buildJobCard(Theme.of(context), data),
                           const SizedBox(height: 24),
-                          _buildGrid(),
-                          const SizedBox(height: 100),
+                          _buildGrid(permissionState),
+                          const SizedBox(height: 80),
                         ],
                       ),
                     ),
@@ -445,34 +355,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ],
             );
           },
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          error: (err, _) => RefreshIndicator(
-            onRefresh: _refresh,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        err.toString(),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: _refresh,
-                        child: const Text("Retry"),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );

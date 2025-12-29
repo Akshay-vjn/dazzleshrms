@@ -49,6 +49,8 @@ class _ApprovalScreenState extends ConsumerState<ApprovalScreen> {
                   SnackBar(
                     content: Text(res.message),
                     backgroundColor: AppTheme.statusSuccess,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
                   ),
                 );
 
@@ -59,6 +61,8 @@ class _ApprovalScreenState extends ConsumerState<ApprovalScreen> {
                   SnackBar(
                     content: Text(_extractErrorMessage(e)),
                     backgroundColor: AppTheme.statusError,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
                   ),
                 );
               }
@@ -98,6 +102,8 @@ class _ApprovalScreenState extends ConsumerState<ApprovalScreen> {
                   const SnackBar(
                     content: Text("Please provide a rejection reason"),
                     backgroundColor: AppTheme.statusError,
+                    behavior: SnackBarBehavior.floating,
+                    margin: EdgeInsets.all(16),
                   ),
                 );
                 return;
@@ -119,6 +125,8 @@ class _ApprovalScreenState extends ConsumerState<ApprovalScreen> {
                   SnackBar(
                     content: Text(res.message),
                     backgroundColor: AppTheme.statusError,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
                   ),
                 );
 
@@ -129,6 +137,8 @@ class _ApprovalScreenState extends ConsumerState<ApprovalScreen> {
                   SnackBar(
                     content: Text(_extractErrorMessage(e)),
                     backgroundColor: AppTheme.statusError,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.all(16),
                   ),
                 );
               }

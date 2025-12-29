@@ -25,11 +25,13 @@ class VerifyOtpData {
   final String token;
   final String? refreshToken;
   final Employee employee;
+  final List<String> permissions;
 
   VerifyOtpData({
     required this.token,
     this.refreshToken,
     required this.employee,
+    required this.permissions,
   });
 
   factory VerifyOtpData.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class VerifyOtpData {
       token: json['token'],
       refreshToken: json['refreshToken'],
       employee: Employee.fromJson(json['employee']),
+      permissions: List<String>.from(json['permissions'] ?? []),
     );
   }
 }

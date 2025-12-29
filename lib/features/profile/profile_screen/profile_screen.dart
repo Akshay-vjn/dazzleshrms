@@ -1,6 +1,7 @@
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/app_theme/theme_provider.dart';
 import 'package:dazzleshrms/core/storage/session_storage.dart';
+import 'package:dazzleshrms/core/permissions/permission_provider.dart';
 import 'package:dazzleshrms/features/profile/data/providers/profile_provider.dart';
 
 import 'package:dazzleshrms/features/profile/profile_screen/widgets/infotile.dart';
@@ -186,6 +187,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     onPressed: () async {
                       await SessionStorage.clearSession();
+                      ref.read(permissionProvider.notifier).clearPermissions();
 
                       if (!context.mounted) return;
                       context.goNamed('login');

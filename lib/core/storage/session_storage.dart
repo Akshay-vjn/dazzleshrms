@@ -8,6 +8,9 @@ class SessionStorage {
   static const _keyEmployeeName = 'employeeName';
   static const _keyStoreId = 'storeId';
 
+  // 🔥 NEW
+  static const _keyPermissions = 'permissions';
+
   /// Save login/session details after a successful auth.
   static Future<void> saveSession({
     required String token,
@@ -15,18 +18,29 @@ class SessionStorage {
     required int employeeId,
     required String employeeName,
     required int storeId,
+
+    // 🔥 NEW
+    List<String>? permissions,
   }) async {
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.setString(_keyToken, token);
+
     if (refreshToken != null) {
       await prefs.setString(_keyRefreshToken, refreshToken);
     }
+
     await prefs.setInt(_keyEmployeeId, employeeId);
     await prefs.setString(_keyEmployeeName, employeeName);
     await prefs.setInt(_keyStoreId, storeId);
+
+    // 🔥 SAVE PERMISSIONS
+    if (permissions != null) {
+      await prefs.setStringList(_keyPermissions, permissions);
+    }
   }
 
-  /// Read the auth token (used to decide logged-in state).
+  /// Read the auth token.
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyToken);
@@ -38,6 +52,18 @@ class SessionStorage {
     return prefs.getString(_keyRefreshToken);
   }
 
+  /// 🔥 Read permissions
+  static Future<List<String>> getPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_keyPermissions) ?? [];
+  }
+
+  /// 🔥 Check single permission (VERY IMPORTANT helper)
+  static Future<bool> hasPermission(String permission) async {
+    final permissions = await getPermissions();
+    return permissions.contains(permission);
+  }
+
   /// Update tokens after refresh (keeps existing employee data).
   static Future<void> updateTokens({
     required String token,
@@ -45,6 +71,7 @@ class SessionStorage {
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyToken, token);
+
     if (refreshToken != null) {
       await prefs.setString(_keyRefreshToken, refreshToken);
     }
@@ -53,15 +80,14 @@ class SessionStorage {
   /// Clear all stored session details (used on logout).
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
+
     await prefs.remove(_keyToken);
     await prefs.remove(_keyRefreshToken);
     await prefs.remove(_keyEmployeeId);
     await prefs.remove(_keyEmployeeName);
     await prefs.remove(_keyStoreId);
+
+    // 🔥 CLEAR PERMISSIONS
+    await prefs.remove(_keyPermissions);
   }
 }
-
-
-
-
-

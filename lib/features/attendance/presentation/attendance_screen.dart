@@ -70,6 +70,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       _isLoadingMore = true; // 🔥 SHOW SHIMMER
     });
 
+    // 🔥 Added 1-second delay as requested to show shimmer properly
+    await Future.delayed(const Duration(seconds: 1));
+
     _currentPage++;
 
     await ref.read(attendanceProvider.notifier).loadAttendance(
@@ -120,8 +123,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         title: const Text("Attendance"),
       ),
       body: attendanceState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
+        loading: () => ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: 8,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (_, __) => const AttendanceShimmerItem(),
         ),
         error: (error, _) => Center(
           child: Text(
