@@ -10,7 +10,7 @@ class DashboardGridItem extends StatelessWidget {
   final Color gradientStart;
   final Color gradientEnd;
   final Color? iconColor;
-  final bool enabled; // 🔥 NEW
+  final bool enabled;
 
   const DashboardGridItem({
     super.key,
@@ -22,8 +22,15 @@ class DashboardGridItem extends StatelessWidget {
     required this.gradientStart,
     required this.gradientEnd,
     this.iconColor,
-    this.enabled = true, // 🔥 DEFAULT ENABLED
+    this.enabled = true,
   });
+  String formatLabel(String label) {
+    final words = label.split(' ');
+    if (words.length >= 2 && words.first.length > 7) {
+      return '${words.first}\n${words.sublist(1).join(' ')}';
+    }
+    return label;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +39,16 @@ class DashboardGridItem extends StatelessWidget {
     return FadeSlideItem(
       animation: animation,
       intervalStart: intervalStart,
-      child: Opacity(
-        opacity: enabled ? 1.0 : 0.4, // 🔥 VISUAL DISABLE
-        child: GestureDetector(
-          onTap: enabled ? onTap : null, // 🔥 BLOCK TAP
-          child: Column(
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.4,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
             children: [
-              Expanded(
+              /// 🔥 ICON AREA (FIXED SIZE)
+              Positioned.fill(
+                bottom: 28, // reserve space for label (does NOT shrink icon)
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
@@ -107,12 +117,22 @@ class DashboardGridItem extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+
+              /// 🔥 LABEL (DOES NOT AFFECT GRID HEIGHT)
+              Positioned(
+                bottom: 0,
+                child: SizedBox(
+                  height: 24,
+                  child: Text(
+                    label.contains(' ')
+                        ? label.replaceFirst(' ', '\n')
+                        : label,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -11,6 +11,15 @@ class ApiConstants {
   static const String approveLeave = "/leave/approve";
   static const String rejectLeave = "/leave/reject";
   static const String blockedLeaveDates = '/leave/dateBlocked';
+  static const String upcomingLeaves = '/leave/upcoming';
+  static const String changeLeaveRequest = '/leave/changerequest';
+  static const String getPendingLeaves = '/leave/getpending';
+  static const approveChangeLeave = '/leave/approvechange';
+  static const rejectChangeLeave = '/leave/rejectchange';
+
+
+
+
 
 
 

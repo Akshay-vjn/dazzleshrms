@@ -311,6 +311,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
+        DashboardGridItem(
+          icon: Icons.upcoming,
+          label: "Upcoming leaves",
+          onTap: () => context.pushNamed('upcoming_leaves'),
+          animation: _controller,
+          intervalStart: 0.3,
+          gradientStart: AppTheme.gridGradient2Start,
+          gradientEnd: AppTheme.gridGradient3End,
+          iconColor: AppTheme.gridIconColor,
+        ),
+
+
+
+
+
+
+
       ],
     );
   }

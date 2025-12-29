@@ -4,17 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
    // BRAND
   static const Color PrimaryColor = Color(0xFFE3ADA6);
-  static const Color SecondaryColor = Color(0xFF8B5CF6);
+  // static const Color SecondaryColor = Color(0xFF8B5CF6);
 
-  /* ============================================================
-   * BACKGROUNDS
-   * ========================================================== */
+   // BACKGROUNDS
   static const Color bgLight = Color(0xFFFAFAFA);
   static const Color bgDark = Color(0xFF1E1E1E);
 
-  /* ============================================================
-   * SURFACES (cards, sheets, containers)
-   * ========================================================== */
+   // SURFACES (cards, sheets, containers)
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF2C2C2C);
   static const Color surfaceDarkVariant = Color(0xFF1E293B);
@@ -22,9 +18,7 @@ class AppTheme {
   static const Color surfaceCardLight = surfaceLight;
   static const Color surfaceCardDark = surfaceDark;
 
-  /* ============================================================
-   * TEXT COLORS
-   * ========================================================== */
+  //TEXT COLORS
   // Light
   static const Color textPrimaryLight = Color(0xFF0F172A);
   static const Color textSecondaryLight = Color(0xFF1E293B);
@@ -36,17 +30,15 @@ class AppTheme {
   static const Color textBodyDark = Color(0xFFF1F5F9);
   static const Color textMutedDark = Color(0xFFCBD5E1);
 
-  /* ============================================================
-   * BORDERS & DIVIDERS
-   * ========================================================== */
+// BORDERS & DIVIDERS
   static const Color borderLight = Color(0xFFE2E8F0);
   static const Color borderDark = Color(0xFF334155);
 
 
 
-  // ================== GRADIENT COLORS ==================
+  //  GRADIENT COLORS
 
-// 🔹 Dashboard / Grid gradients
+//  Dashboard / Grid gradients
   static const Color gridGradient1Start = Color(0xFF4F46E5); // Indigo
   static const Color gridGradient1End   = Color(0xFF22D3EE); // Cyan
 
@@ -59,32 +51,24 @@ class AppTheme {
 
   static const Color gridIconColor= Color(0xFFECFEFF);
 
-  /* ============================================================
-   * STATUS COLORS (VERY IMPORTANT)
-   * ========================================================== */
+  // STATUS COLORS
   static const Color statusSuccess = Color(0xFF16A34A); // Present / Approved
   static const Color statusError = Color(0xFFDC2626);   // Absent / Rejected
   static const Color statusWarning = Color(0xFFF59E0B); // Pending / Half day
   static const Color statusInfo = Color(0xFF2563EB);    // Info states
 
-  /* ============================================================
-   * ICONS
-   * ========================================================== */
+   // ICONS
   static const Color iconPrimary = PrimaryColor;
   static const Color iconBgLight = Color(0xFF94A3B8);
   static const Color iconBgDark = Color(0xFFCBD5E1);
   static const Color iconColor = Color(0xFF000307);
 
 
-  /* ============================================================
-   * SHADOWS
-   * ========================================================== */
+ // SHADOWS
   static const Color shadowLight = Color(0xFF000000);
   static const Color shadowDark = Color(0xFF000000);
 
-  /* ============================================================
-   * BOTTOM NAVIGATION
-   * ========================================================== */
+   // BOTTOM NAVIGATION
   static const Color navBackgroundLight = surfaceLight;
   static const Color navBackgroundDark = surfaceDark;
 
@@ -92,14 +76,10 @@ class AppTheme {
   static const Color navIconInactiveLight = textMutedLight;
   static const Color navIconInactiveDark = textMutedDark;
 
-  /* ============================================================
-   * UTILS
-   * ========================================================== */
+   // UTILS
   static const Color transparent = Color(0x00000000);
 
-  /* ============================================================
-   * LIGHT THEME
-   * ========================================================== */
+   // LIGHT THEME
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
@@ -191,9 +171,7 @@ class AppTheme {
     ),
   );
 
-  /* ============================================================
-   * DARK THEME
-   * ========================================================== */
+   // DARK THEME
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -308,7 +286,6 @@ class AppTheme {
         borderSide: BorderSide.none,
       ),
 
-      // 🔥 Brand color only on focus (PREVIOUS BEHAVIOR)
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(

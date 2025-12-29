@@ -1,4 +1,3 @@
-// features/leave_approval/data/models/applied_leave_model.dart
 class AppliedLeaveItem {
   final int leaveRoasterId;
   final int employeeId;
@@ -33,7 +32,6 @@ class AppliedLeaveItem {
     );
   }
 }
-// features/leave_approval/data/models/applied_leave_response.dart
 
 class AppliedLeaveData {
   final int totalItems;
@@ -59,7 +57,6 @@ class AppliedLeaveData {
     );
   }
 }
-// features/leave_approval/data/models/leave_action_response.dart
 class LeaveActionResponse {
   final bool success;
   final String message;

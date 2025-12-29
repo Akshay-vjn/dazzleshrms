@@ -1,9 +1,9 @@
-import 'package:dazzleshrms/features/leave/widgets/balance_box.dart';
+import 'package:dazzleshrms/features/leave/presentation/widgets/balance_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'apply_leave_bottomsheet.dart';
-import 'data/providers/leave_provider.dart';
+import '../apply_leave_bottomsheet.dart';
+import '../data/providers/leave_provider.dart';
 
 class ApplyLeaveScreen extends ConsumerStatefulWidget {
   const ApplyLeaveScreen({super.key});
@@ -68,7 +68,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
         title: const Text("Leave"),
       ),
 
-      /// ➕ ADD LEAVE
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 20),
         child: FloatingActionButton(
@@ -183,24 +182,24 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: "all", child: Text("Show All")),
-                        PopupMenuItem(
-                            value: "date", child: Text("Filter by Date")),
-                      ],
-                      child: TextButton.icon(
-                        onPressed: null,
-                        icon: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: Theme.of(context).textTheme.titleMedium?.color,
-                        ),
-                        label: Text(
-                          "Show All",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    ),
+                    // PopupMenuButton<String>(
+                    //   itemBuilder: (_) => const [
+                    //     PopupMenuItem(value: "all", child: Text("Show All")),
+                    //     PopupMenuItem(
+                    //         value: "date", child: Text("Filter by Date")),
+                    //   ],
+                    //   child: TextButton.icon(
+                    //     onPressed: null,
+                    //     icon: Icon(
+                    //       Icons.keyboard_arrow_down_rounded,
+                    //       color: Theme.of(context).textTheme.titleMedium?.color,
+                    //     ),
+                    //     label: Text(
+                    //       "Show All",
+                    //       style: Theme.of(context).textTheme.titleMedium,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
 

@@ -1,4 +1,5 @@
 import 'package:dazzleshrms/features/approvals/presentation/approval_screen.dart';
+import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +10,7 @@ import 'package:dazzleshrms/core/navigation/bottom_navigation.dart';
 import 'package:dazzleshrms/core/navigation/navigation_keys.dart';
 
 import '../../features/attendance/presentation/attendance_screen.dart';
-import '../../features/leave/leave_apply_screen.dart';
+import '../../features/leave/presentation/leave_apply_screen.dart';
 
 /// Central app router configuration using go_router.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -56,6 +57,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/approvals',
         name: 'approvals',
         builder: (context, state) => const ApprovalScreen(),
+      ),
+      GoRoute(
+        path: '/upcoming',
+        name: 'upcoming_leaves',
+        builder: (context, state) => const UpcomingLeaveScreen(),
       ),
     ],
   );
