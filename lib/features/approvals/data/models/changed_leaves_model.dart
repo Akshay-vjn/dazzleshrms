@@ -1,4 +1,3 @@
-
 class PendingLeaveResponse {
   final int totalItems;
   final int totalPages;
@@ -16,14 +15,12 @@ class PendingLeaveResponse {
     final data = json['data'];
 
     return PendingLeaveResponse(
-      totalItems: data['totalItems'],
-      totalPages: data['totalPages'],
-      currentPage: data['currentPage'],
-      records: List<PendingLeaveItem>.from(
-        (data['data'] as List).map(
-              (e) => PendingLeaveItem.fromJson(e),
-        ),
-      ),
+      totalItems: data['totalItems'] ?? 0,
+      totalPages: data['totalPages'] ?? 0,
+      currentPage: data['currentPage'] ?? 1,
+      records: (data['data'] as List? ?? [])
+          .map((e) => PendingLeaveItem.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -31,16 +28,28 @@ class PendingLeaveResponse {
 class PendingLeaveItem {
   final int logId;
   final int employeeId;
+
+  // 🔥 NEW
+  final String employeeName;
+  final String storeName;
+
   final String date;
-  final String requestedType;
+
+  // 🔥 CHANGES
+  final String changesFrom;
+  final String changesTo;
+
   final String daysTaken;
   final String source;
 
   PendingLeaveItem({
     required this.logId,
     required this.employeeId,
+    required this.employeeName,
+    required this.storeName,
     required this.date,
-    required this.requestedType,
+    required this.changesFrom,
+    required this.changesTo,
     required this.daysTaken,
     required this.source,
   });
@@ -49,10 +58,13 @@ class PendingLeaveItem {
     return PendingLeaveItem(
       logId: json['logId'],
       employeeId: json['employeeId'],
+      employeeName: json['employeeName'] ?? '',
+      storeName: json['storeName'] ?? '',
       date: json['date'],
-      requestedType: json['requestedType'],
-      daysTaken: json['daysTaken'],
-      source: json['source'],
+      changesFrom: json['changesFrom'] ?? '',
+      changesTo: json['changesTo'] ?? '',
+      daysTaken: json['daysTaken'] ?? '0.00',
+      source: json['source'] ?? '',
     );
   }
 }

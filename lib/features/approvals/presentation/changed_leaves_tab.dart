@@ -108,35 +108,75 @@ class _ChangedLeavesTabState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
+                    // ===== DATE =====
                     Text(
                       item.date,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium,
                     ),
-                    const SizedBox(height: 6),
-                    Text("Requested Type: ${item.requestedType}"),
-                    Text("Days Taken: ${item.daysTaken}"),
-                    const SizedBox(height: 8),
 
-                    // ===== STATUS =====
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        "Pending",
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const SizedBox(height: 6),
+
+                    // ===== EMPLOYEE + STORE =====
+                    Text(
+                      item.employeeName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Store: ${item.storeName}",
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                        color: Theme.of(context).hintColor,
                       ),
                     ),
+
+                    const SizedBox(height: 10),
+
+                    // ===== CHANGE SUMMARY =====
+                    Row(
+                      children: [
+                        Text(
+                          item.changesFrom,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6),
+                          child: Icon(
+                            Icons.arrow_forward,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          item.changesTo,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // ===== DAYS TAKEN =====
+                    Text(
+                      "Days Taken: ${item.daysTaken}",
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+
+                    const SizedBox(height: 8),
+
+
 
                     const SizedBox(height: 14),
 
@@ -155,7 +195,8 @@ class _ChangedLeavesTabState
                                   try {
                                     final res = await ref
                                         .read(
-                                        changedTabRepositoryProvider)
+                                      changedTabRepositoryProvider,
+                                    )
                                         .rejectChange(item.logId);
 
                                     if (!mounted) return;
@@ -167,7 +208,9 @@ class _ChangedLeavesTabState
                                     );
 
                                     ref
-                                        .read(pendingLeaveProvider.notifier)
+                                        .read(
+                                      pendingLeaveProvider.notifier,
+                                    )
                                         .loadPendingLeaves();
                                   } catch (e) {
                                     _showSnack(
@@ -175,7 +218,9 @@ class _ChangedLeavesTabState
                                       e
                                           .toString()
                                           .replaceFirst(
-                                          'Exception: ', ''),
+                                        'Exception: ',
+                                        '',
+                                      ),
                                       Colors.red,
                                     );
                                   }
@@ -198,7 +243,8 @@ class _ChangedLeavesTabState
                                   try {
                                     final res = await ref
                                         .read(
-                                        changedTabRepositoryProvider)
+                                      changedTabRepositoryProvider,
+                                    )
                                         .approveChange(item.logId);
 
                                     if (!mounted) return;
@@ -210,7 +256,9 @@ class _ChangedLeavesTabState
                                     );
 
                                     ref
-                                        .read(pendingLeaveProvider.notifier)
+                                        .read(
+                                      pendingLeaveProvider.notifier,
+                                    )
                                         .loadPendingLeaves();
                                   } catch (e) {
                                     _showSnack(
@@ -218,7 +266,9 @@ class _ChangedLeavesTabState
                                       e
                                           .toString()
                                           .replaceFirst(
-                                          'Exception: ', ''),
+                                        'Exception: ',
+                                        '',
+                                      ),
                                       Colors.red,
                                     );
                                   }

@@ -9,7 +9,7 @@ import '../api_constants/api_constants.dart';
 
 class ApiConfig {
   // Base configuration constants
-  static const String _baseUrl = "http://192.168.1.183:7907/api";
+  static const String _baseUrl = "http://192.168.1.184:7907/api";
   static const Duration _connectTimeout = Duration(seconds: 20);
   static const Duration _receiveTimeout = Duration(seconds: 20);
 

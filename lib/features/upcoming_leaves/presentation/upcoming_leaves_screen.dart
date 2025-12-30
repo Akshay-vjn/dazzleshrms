@@ -26,7 +26,6 @@ class _UpcomingLeaveScreenState
   @override
   void initState() {
     super.initState();
-
     _controller.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,11 +41,9 @@ class _UpcomingLeaveScreenState
         _controller.position.maxScrollExtent - 120 &&
         !_isLoadingMore) {
       final state = ref.read(upcomingLeaveProvider);
-
       state.whenOrNull(
         data: (data) {
-          if (data == null) return;
-          if (_page < data.totalPages) {
+          if (data != null && _page < data.totalPages) {
             _loadNext();
           }
         },
@@ -83,16 +80,10 @@ class _UpcomingLeaveScreenState
     final state = ref.watch(upcomingLeaveProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Upcoming Leaves'),
-      ),
+      appBar: AppBar(title: const Text('Upcoming Leaves')),
       body: state.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (e, _) => Center(
-          child: Text(e.toString()),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text(e.toString())),
         data: (data) {
           if (data == null || data.records.isEmpty) {
             return RefreshIndicator(
@@ -107,9 +98,7 @@ class _UpcomingLeaveScreenState
             );
           }
 
-          if (_page == 1) {
-            _items.clear();
-          }
+          if (_page == 1) _items.clear();
 
           for (final item in data.records) {
             if (!_items.any((e) => e.leaveId == item.leaveId)) {
@@ -128,24 +117,41 @@ class _UpcomingLeaveScreenState
                 if (index >= _items.length) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
                 final item = _items[index];
+                final isPending =
+                    item.status.toLowerCase() == 'pending';
 
                 return InkWell(
                   borderRadius: BorderRadius.circular(14),
-                  onTap: () {
-                    showDialog(
+                  onTap: () async {
+                    // 🔥 WAIT FOR DIALOG RESULT
+                    final changed = await showDialog<bool>(
                       context: context,
-                      barrierDismissible: true,
-                      builder: (_) => ChangeLeaveDialog(
-                        logId: item.leaveId, // 🔥 IMPORTANT
-                      ),
+                      builder: (_) =>
+                          ChangeLeaveDialog(logId: item.leaveId),
                     );
+
+                    // 🔥 REFRESH IMMEDIATELY
+                    if (changed == true) {
+                      _page = 1;
+                      _items.clear();
+
+                      ref.invalidate(upcomingLeaveProvider);
+
+                      await Future.delayed(
+                          const Duration(milliseconds: 50));
+
+                      await ref
+                          .read(upcomingLeaveProvider.notifier)
+                          .loadUpcomingLeaves(
+                        page: _page,
+                        limit: _limit,
+                      );
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.all(16),
@@ -158,10 +164,12 @@ class _UpcomingLeaveScreenState
                       ),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
                           children: [
                             Text(
                               item.date,
@@ -187,13 +195,18 @@ class _UpcomingLeaveScreenState
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            color: isPending
+                                ? Colors.amber.withOpacity(0.15)
+                                : Colors.green.withOpacity(0.15),
+                            borderRadius:
+                            BorderRadius.circular(10),
                           ),
                           child: Text(
                             item.status,
-                            style: const TextStyle(
-                              color: Colors.green,
+                            style: TextStyle(
+                              color: isPending
+                                  ? Colors.orange[800]
+                                  : Colors.green,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

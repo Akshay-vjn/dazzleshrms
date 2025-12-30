@@ -2,6 +2,8 @@ class AppliedLeaveItem {
   final int leaveRoasterId;
   final int employeeId;
   final String employeeName;
+  final String? empCode;
+  final String? store;
   final String fromDate;
   final String toDate;
   final String leaveType;
@@ -12,6 +14,8 @@ class AppliedLeaveItem {
     required this.leaveRoasterId,
     required this.employeeId,
     required this.employeeName,
+    required this.empCode,
+    required this.store,
     required this.fromDate,
     required this.toDate,
     required this.leaveType,
@@ -24,6 +28,8 @@ class AppliedLeaveItem {
       leaveRoasterId: json['leaveRoasterId'],
       employeeId: json['employeeId'],
       employeeName: json['employeeName'],
+      empCode: json['empCode'],
+      store: json['store'],
       fromDate: json['fromDate'],
       toDate: json['toDate'],
       leaveType: json['leaveType'],

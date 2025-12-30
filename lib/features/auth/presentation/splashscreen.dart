@@ -81,14 +81,13 @@ class _SplashScreenState extends State<SplashScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ================= BIG LOGO =================
             FadeTransition(
               opacity: _logoFade,
               child: ScaleTransition(
                 scale: _logoScale,
                 child: Container(
-                  height: 230, // 🔥 BIGGER
-                  width: 230,  // 🔥 BIGGER
+                  height: 230,
+                  width: 230,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppTheme.PrimaryColor.withOpacity(0.12),
@@ -97,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Text(
                     "D",
                     style: TextStyle(
-                      fontFamily: 'Dazzles', // ✅ THIS IS THE KEY LINE
+                      fontFamily: 'Dazzles',
                       fontSize: 150,
                       color: AppTheme.PrimaryColor,
                     ),
@@ -108,7 +107,6 @@ class _SplashScreenState extends State<SplashScreen>
 
             const SizedBox(height: 32),
 
-            // ================= APP NAME =================
             SlideTransition(
               position: _textSlide,
               child: Column(
