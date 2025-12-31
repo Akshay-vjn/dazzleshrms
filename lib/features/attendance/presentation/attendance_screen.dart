@@ -83,7 +83,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     if (!mounted) return;
 
     setState(() {
-      _isLoadingMore = false; // 🔥 HIDE SHIMMER
+      _isLoadingMore = false; //
     });
   }
 
@@ -155,7 +155,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               itemCount: _items.length + (_isLoadingMore ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                /// 🔥 SHIMMER FOOTER (NO SCROLL RESET)
+                ///  SHIMMER FOOTER (NO SCROLL RESET)
                 if (index == _items.length) {
                   return const AttendanceShimmerItem();
                 }

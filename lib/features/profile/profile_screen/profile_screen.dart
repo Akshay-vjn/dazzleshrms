@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/app_theme/theme_provider.dart';
 import 'package:dazzleshrms/core/storage/session_storage.dart';
@@ -14,46 +15,134 @@ class ProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
+      ),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
+      _animationController.forward();
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Widget _buildAvatar(String name) {
     final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.PrimaryColor,
-            AppTheme.PrimaryColor.withOpacity(0.7),
-          ],
+    return GestureDetector(
+      onTap: () => _showAvatarPopup(context, name),
+      child: Container(
+        width: 88,
+        height: 88,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF6366F1), // Indigo
+              const Color(0xFF8B5CF6), // Purple
+              const Color(0xFFA855F7), // Light purple
+            ],
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.PrimaryColor.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+        child: Center(
+          child: Text(
+            letter,
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ],
+        ),
       ),
-      child: Center(
-        child: Text(
-          letter,
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+    );
+  }
+
+  void _showAvatarPopup(BuildContext context, String name) {
+    final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Large Avatar
+            Hero(
+              tag: 'profile_avatar',
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF6366F1), // Indigo
+                      const Color(0xFF8B5CF6), // Purple
+                      const Color(0xFFA855F7), // Light purple
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    letter,
+                    style: const TextStyle(
+                      fontSize: 80,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -135,21 +224,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: theme.dividerColor.withOpacity(0.1),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
               icon: Icon(
                 themeNotifier.isDarkMode
                     ? Icons.light_mode_rounded
                     : Icons.dark_mode_rounded,
-                size: 20,
               ),
               onPressed: () {
                 themeNotifier.toggleTheme();
@@ -159,8 +240,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   : 'Switch to Dark Mode',
             ),
           ),
-        ],
-      ),
+        ],      ),
       body: profileState.when(
         data: (data) {
           if (data == null) {
@@ -194,57 +274,201 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // ================= PROFILE HEADER =================
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.PrimaryColor.withOpacity(0.08),
-                        AppTheme.PrimaryColor.withOpacity(0.04),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.PrimaryColor.withOpacity(0.1),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildAvatar(data.name),
-                      const SizedBox(height: 16),
-                      Text(
-                        data.name.isNotEmpty ? data.name : "—",
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.PrimaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          data.role.isNotEmpty ? data.role : "N/A",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.PrimaryColor,
-                            fontWeight: FontWeight.w600,
+                // ================= ANIMATED PROFILE HEADER =================
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Animated Background cover with darker gradient
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Container(
+                            height: 140,
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  const Color(0xFF4F46E5), // Deep indigo-blue
+                                  const Color(0xFF7C3AED), // Purple
+                                  const Color(0xFF8B5CF6), // Light purple
+                                ],
+                                stops: const [0.0, 0.5, 1.0],
+                              ),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Stack(
+                              children: [
+                                // Animated floating circles
+                                Positioned(
+                                  right: -20,
+                                  top: -20,
+                                  child: TweenAnimationBuilder(
+                                    tween: Tween<double>(begin: 0, end: 1),
+                                    duration: const Duration(seconds: 2),
+                                    builder: (context, double value, child) {
+                                      return Transform.translate(
+                                        offset: Offset(
+                                          math.sin(value * 2 * math.pi) * 10,
+                                          math.cos(value * 2 * math.pi) * 10,
+                                        ),
+                                        child: Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color:
+                                            Colors.white.withOpacity(0.1),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 20,
+                                  bottom: 10,
+                                  child: TweenAnimationBuilder(
+                                    tween: Tween<double>(begin: 0, end: 1),
+                                    duration:
+                                    const Duration(milliseconds: 2500),
+                                    builder: (context, double value, child) {
+                                      return Transform.translate(
+                                        offset: Offset(
+                                          math.cos(value * 2 * math.pi) * 8,
+                                          math.sin(value * 2 * math.pi) * 8,
+                                        ),
+                                        child: Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color:
+                                            Colors.white.withOpacity(0.08),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                // Shimmer effect
+                                Positioned.fill(
+                                  child: TweenAnimationBuilder(
+                                    tween: Tween<double>(begin: -1, end: 2),
+                                    duration: const Duration(seconds: 3),
+                                    builder: (context, double value, child) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            stops: [
+                                              value - 0.3,
+                                              value,
+                                              value + 0.3,
+                                            ],
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.white.withOpacity(0.1),
+                                              Colors.transparent,
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        // White/Dark card with slide animation
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.fromLTRB(16, 100, 16, 0),
+                            padding: const EdgeInsets.fromLTRB(16, 56, 16, 20),
+                            decoration: BoxDecoration(
+                              color: theme.cardColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.dividerColor.withOpacity(0.1),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                FadeTransition(
+                                  opacity: _fadeAnimation,
+                                  child: Text(
+                                    data.name.isNotEmpty ? data.name : "—",
+                                    style:
+                                    theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ScaleTransition(
+                                  scale: _scaleAnimation,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.PrimaryColor.withOpacity(
+                                          0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      data.role.isNotEmpty
+                                          ? data.role
+                                          : "N/A",
+                                      style:
+                                      theme.textTheme.bodyMedium?.copyWith(
+                                        color: AppTheme.PrimaryColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Avatar positioned in the middle with scale animation
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 56,
+                          child: Center(
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: _buildAvatar(data.name),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
+
+                const SizedBox(height: 24),
 
                 // ================= EMPLOYEE INFO SECTION =================
                 Padding(
