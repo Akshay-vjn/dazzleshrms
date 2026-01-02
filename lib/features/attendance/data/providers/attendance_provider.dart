@@ -5,21 +5,18 @@ import '../models/attendance_model.dart';
 import '../repo/attendance_repo.dart';
 
 
-// ================== REPOSITORY PROVIDER ==================
 final attendanceRepositoryProvider =
 Provider<AttendanceRepository>((ref) {
   return AttendanceRepository();
 });
 
 
-// ================== STATE PROVIDER ==================
 final attendanceProvider =
 StateNotifierProvider<AttendanceNotifier, AsyncValue<AttendanceData?>>(
       (ref) => AttendanceNotifier(ref.read(attendanceRepositoryProvider)),
 );
 
 
-// ================== NOTIFIER ==================
 class AttendanceNotifier
     extends StateNotifier<AsyncValue<AttendanceData?>> {
   final AttendanceRepository _repository;
@@ -29,17 +26,14 @@ class AttendanceNotifier
   AttendanceNotifier(this._repository)
       : super(const AsyncValue.loading());
 
-  /// 🔥 LOAD ATTENDANCE (INITIAL + PAGINATION)
   Future<void> loadAttendance({
     int page = 1,
     int limit = 10,
     bool forceRefresh = false,
   }) async {
-    // Cancel any previous request
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
 
-    /// ✅ SHOW LOADING ONLY FOR FIRST PAGE
     if (page == 1) {
       state = const AsyncValue.loading();
     }
@@ -51,7 +45,6 @@ class AttendanceNotifier
         cancelToken: _cancelToken,
       );
 
-      // Only update if request wasn't cancelled
       if (!(_cancelToken?.isCancelled ?? false)) {
         state = AsyncValue.data(response.data);
       }
@@ -66,7 +59,6 @@ class AttendanceNotifier
     }
   }
 
-  /// 🔄 RESET STATE (WHEN LEAVING SCREEN)
   void reset() {
     _cancelToken?.cancel('Reset called');
     _cancelToken = null;

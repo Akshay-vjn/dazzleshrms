@@ -31,13 +31,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
-      /// Reset provider & local state
       ref.read(attendanceProvider.notifier).reset();
       _items.clear();
       _currentPage = 1;
       _isLoadingMore = false;
 
-      /// INITIAL API CALL
       ref.read(attendanceProvider.notifier).loadAttendance(
         page: _currentPage,
         limit: _limit,
@@ -67,10 +65,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     if (_isLoadingMore) return;
 
     setState(() {
-      _isLoadingMore = true; // 🔥 SHOW SHIMMER
+      _isLoadingMore = true;
     });
 
-    // 🔥 Added 1-second delay as requested to show shimmer properly
     await Future.delayed(const Duration(seconds: 1));
 
     _currentPage++;
@@ -83,7 +80,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     if (!mounted) return;
 
     setState(() {
-      _isLoadingMore = false; //
+      _isLoadingMore = false;
     });
   }
 
@@ -140,7 +137,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             return const Center(child: Text("No data found"));
           }
 
-          /// Append only new records (NO CLEAR, NO DUPLICATES)
           for (final item in attendanceData.records) {
             if (!_items.any((e) => e.date == item.date)) {
               _items.add(item);
@@ -155,7 +151,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               itemCount: _items.length + (_isLoadingMore ? 1 : 0),
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                ///  SHIMMER FOOTER (NO SCROLL RESET)
                 if (index == _items.length) {
                   return const AttendanceShimmerItem();
                 }

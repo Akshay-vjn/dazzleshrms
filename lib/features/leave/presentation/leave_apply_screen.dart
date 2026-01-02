@@ -20,7 +20,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   void initState() {
     super.initState();
 
-    // Reset state and load data when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadData();
@@ -29,12 +28,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   }
 
   Future<void> _loadData() async {
-    // Reset provider state to ensure fresh load
     ref.read(leaveProvider.notifier).reset();
-    // Reset local state
     _page = 1;
 
-    /// 🔥 API CALL
     await ref.read(leaveProvider.notifier).loadLeaves(
       page: _page,
       limit: _limit,
@@ -136,7 +132,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
-                /// ================= LEAVE BALANCE =================
                 Center(
                   child: Text(
                     "Leave Balance",
@@ -172,7 +167,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                /// ================= HEADER =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -209,7 +203,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                /// ================= LEAVE LIST =================
                 if (leaveData.records.isEmpty)
                   const Center(child: Text("No leaves applied")),
 

@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import '../models/upcoming_leave_model.dart';
 import '../repo/upcoming_leave_repo.dart';
 
-/// ================= PROVIDER =================
 final upcomingLeaveProvider = StateNotifierProvider<
     UpcomingLeaveNotifier, AsyncValue<UpcomingLeaveResponse?>>(
       (ref) => UpcomingLeaveNotifier(
@@ -14,7 +13,6 @@ final upcomingLeaveProvider = StateNotifierProvider<
   ),
 );
 
-/// ================= NOTIFIER =================
 class UpcomingLeaveNotifier
     extends StateNotifier<AsyncValue<UpcomingLeaveResponse?>> {
   final UpcomingLeaveRepository _repo;
@@ -23,19 +21,15 @@ class UpcomingLeaveNotifier
 
   UpcomingLeaveNotifier(this._repo) : super(const AsyncData(null));
 
-  /// 🔹 LOAD UPCOMING LEAVES
   Future<void> loadUpcomingLeaves({
     int page = 1,
     int limit = 10,
   }) async {
-    // 🔴 Prevent duplicate pagination calls
     if (state.isLoading && page != 1) return;
 
-    // 🔴 Cancel previous request if exists
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
 
-    // ✅ Show loader ONLY on first load
     if (page == 1 && state.value == null) {
       state = const AsyncLoading();
     }
@@ -51,7 +45,6 @@ class UpcomingLeaveNotifier
 
       state = AsyncData(response);
     } catch (e, st) {
-      // Ignore cancel exception
       if (e is DioException && e.type == DioExceptionType.cancel) return;
 
       log(
@@ -65,7 +58,6 @@ class UpcomingLeaveNotifier
     }
   }
 
-  /// 🔹 REFRESH (FOR PULL TO REFRESH)
   Future<void> refresh() async {
     state = const AsyncData(null);
     await loadUpcomingLeaves(page: 1);

@@ -80,7 +80,9 @@ class _UpcomingLeaveScreenState
     final state = ref.watch(upcomingLeaveProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Upcoming Leaves')),
+      appBar: AppBar(
+        title: const Text('Upcoming Leaves'),
+      ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -108,111 +110,152 @@ class _UpcomingLeaveScreenState
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ListView.separated(
-              controller: _controller,
-              padding: const EdgeInsets.all(16),
-              itemCount: _items.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                if (index >= _items.length) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                final item = _items[index];
-                final isPending =
-                    item.status.toLowerCase() == 'pending';
-
-                return InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () async {
-                    // 🔥 WAIT FOR DIALOG RESULT
-                    final changed = await showDialog<bool>(
-                      context: context,
-                      builder: (_) =>
-                          ChangeLeaveDialog(logId: item.leaveId),
-                    );
-
-                    // 🔥 REFRESH IMMEDIATELY
-                    if (changed == true) {
-                      _page = 1;
-                      _items.clear();
-
-                      ref.invalidate(upcomingLeaveProvider);
-
-                      await Future.delayed(
-                          const Duration(milliseconds: 50));
-
-                      await ref
-                          .read(upcomingLeaveProvider.notifier)
-                          .loadUpcomingLeaves(
-                        page: _page,
-                        limit: _limit,
-                      );
-                    }
-                  },
-                  child: Container(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight + 1,
+                  ),
+                  child: ListView.separated(
+                    controller: _controller,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.date,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                    itemCount:
+                    _items.length + (_isLoadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index >= _items.length) {
+                        return const Padding(
+                          padding:
+                          EdgeInsets.symmetric(vertical: 12),
+                          child:
+                          Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final item = _items[index];
+                      final isPending =
+                          item.status.toLowerCase() == 'pending';
+
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () async {
+                          if (item.status.toLowerCase() ==
+                              'rejected') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "This leave is already rejected and can’t be modified.",
+                                ),
+                                backgroundColor: Colors.red,
+                                behavior:
+                                SnackBarBehavior.floating,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item.type,
-                              style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outline,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
+                            );
+                            return;
+                          }
+
+                          final changed =
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (_) =>
+                                ChangeLeaveDialog(
+                                    logId: item.leaveId),
+                          );
+
+                          if (changed == true) {
+                            _page = 1;
+                            _items.clear();
+
+                            ref.invalidate(
+                                upcomingLeaveProvider);
+
+                            await ref
+                                .read(upcomingLeaveProvider.notifier)
+                                .loadUpcomingLeaves(
+                              page: _page,
+                              limit: _limit,
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: isPending
-                                ? Colors.amber.withOpacity(0.15)
-                                : Colors.green.withOpacity(0.15),
                             borderRadius:
-                            BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            item.status,
-                            style: TextStyle(
-                              color: isPending
-                                  ? Colors.orange[800]
-                                  : Colors.green,
-                              fontWeight: FontWeight.bold,
+                            BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .dividerColor
+                                  .withOpacity(0.2),
                             ),
                           ),
+                          child: Row(
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.date,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight:
+                                      FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item.type,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding:
+                                const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: item.status
+                                      .toLowerCase() ==
+                                      'rejected'
+                                      ? Colors.red
+                                      .withOpacity(0.15)
+                                      : isPending
+                                      ? Colors.amber
+                                      .withOpacity(0.15)
+                                      : Colors.green
+                                      .withOpacity(0.15),
+                                  borderRadius:
+                                  BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  item.status,
+                                  style: TextStyle(
+                                    color: item.status
+                                        .toLowerCase() ==
+                                        'rejected'
+                                        ? Colors.red
+                                        : isPending
+                                        ? Colors.orange[800]
+                                        : Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 );
               },

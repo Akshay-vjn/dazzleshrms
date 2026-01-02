@@ -31,7 +31,7 @@ class UpcomingLeaveItem {
   final int leaveId;
   final String date;
   final String type;
-  final int? leaveTypeId; // ✅ MUST BE NULLABLE
+  final int? leaveTypeId;
   final String status;
 
   UpcomingLeaveItem({
@@ -47,7 +47,7 @@ class UpcomingLeaveItem {
       leaveId: json['leaveId'] ?? 0,
       date: json['date'] ?? '',
       type: json['type'] ?? '',
-      leaveTypeId: json['leaveTypeId'], // ✅ SAFE
+      leaveTypeId: json['leaveTypeId'],
       status: json['status'] ?? '',
     );
   }

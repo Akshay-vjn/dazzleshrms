@@ -1,9 +1,9 @@
-import 'package:dazzleshrms/features/profile/profile_screen/profile_screen.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/notifications/notification_screen.dart';
 import '../../features/announcements/announcement_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -145,7 +145,6 @@ class _MainNavigationState extends State<MainNavigation>
   }
 }
 
-// ================= NAV ITEM =================
 
 class _NavItem extends StatelessWidget {
   final IconData icon;

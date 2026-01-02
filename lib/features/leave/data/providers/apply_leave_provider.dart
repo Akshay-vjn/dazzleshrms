@@ -20,7 +20,6 @@ class ApplyLeaveNotifier
   ApplyLeaveNotifier(this._repository)
       : super(const AsyncData(null));
 
-  /// ✅ THIS METHOD WAS MISSING
   Future<void> applyLeave({
     required int leaveTypeId,
     required String fromDate,
@@ -43,7 +42,6 @@ class ApplyLeaveNotifier
     }
   }
 
-  /// Optional but recommended
   void reset() {
     state = const AsyncData(null);
   }

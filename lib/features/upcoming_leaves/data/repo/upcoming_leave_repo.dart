@@ -5,13 +5,11 @@ import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
 import '../models/upcoming_leave_model.dart';
 
-/// ================= REPOSITORY PROVIDER =================
 final upcomingLeaveRepositoryProvider =
 Provider<UpcomingLeaveRepository>((ref) {
   return UpcomingLeaveRepository();
 });
 
-/// ================= REPOSITORY =================
 class UpcomingLeaveRepository {
   final Dio _dio = ApiConfig.dio;
 

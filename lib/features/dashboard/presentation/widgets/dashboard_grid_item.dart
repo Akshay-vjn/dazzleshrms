@@ -24,13 +24,6 @@ class DashboardGridItem extends StatelessWidget {
     this.iconColor,
     this.enabled = true,
   });
-  String formatLabel(String label) {
-    final words = label.split(' ');
-    if (words.length >= 2 && words.first.length > 7) {
-      return '${words.first}\n${words.sublist(1).join(' ')}';
-    }
-    return label;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +36,12 @@ class DashboardGridItem extends StatelessWidget {
         onTap: enabled ? onTap : null,
         child: Opacity(
           opacity: enabled ? 1.0 : 0.4,
-          child: Stack(
-            alignment: Alignment.bottomCenter,
+          child: Column(
             children: [
-              /// 🔥 ICON AREA (FIXED SIZE)
-              Positioned.fill(
-                bottom: 28, // reserve space for label (does NOT shrink icon)
+              /// 🔥 ICON AREA - Expanded to take available space
+              Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -60,21 +51,21 @@ class DashboardGridItem extends StatelessWidget {
                       ),
                     ),
                     child: Container(
-                      margin: const EdgeInsets.all(1.6),
+                      margin: const EdgeInsets.all(1.4),
                       decoration: BoxDecoration(
                         color: theme.brightness == Brightness.dark
                             ? const Color(0xFF020617)
                             : Colors.white.withOpacity(0.03),
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16.6),
                       ),
                       child: Stack(
                         children: [
                           Positioned(
-                            top: -30,
-                            left: -50,
+                            top: -25,
+                            left: -40,
                             child: Container(
-                              width: 90,
-                              height: 90,
+                              width: 95,
+                              height: 75,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: gradientStart.withOpacity(0.18),
@@ -82,11 +73,11 @@ class DashboardGridItem extends StatelessWidget {
                             ),
                           ),
                           Positioned(
-                            bottom: -35,
-                            right: -50,
+                            bottom: -30,
+                            right: -40,
                             child: Container(
                               width: 95,
-                              height: 85,
+                              height: 75,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: gradientEnd.withOpacity(0.16),
@@ -95,8 +86,8 @@ class DashboardGridItem extends StatelessWidget {
                           ),
                           Center(
                             child: Container(
-                              width: 58,
-                              height: 58,
+                              width: 60,
+                              height: 60,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: (iconColor ?? Colors.white)
@@ -108,7 +99,7 @@ class DashboardGridItem extends StatelessWidget {
                             child: Icon(
                               icon,
                               color: iconColor,
-                              size: 28,
+                              size: 26,
                             ),
                           ),
                         ],
@@ -118,19 +109,21 @@ class DashboardGridItem extends StatelessWidget {
                 ),
               ),
 
-              /// 🔥 LABEL (DOES NOT AFFECT GRID HEIGHT)
-              Positioned(
-                bottom: 0,
-                child: SizedBox(
-                  height: 24,
+              /// 🔥 LABEL - Fixed height, consistent font size
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 34,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Text(
-                    label.contains(' ')
-                        ? label.replaceFirst(' ', '\n')
-                        : label,
+                    label,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      height: 1.1,
+                      fontSize: 11.5,
+                      height: 1.2,
                     ),
                   ),
                 ),

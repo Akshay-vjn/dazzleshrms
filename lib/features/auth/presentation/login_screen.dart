@@ -61,7 +61,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // TOP
           Expanded(
             child: Center(
               child: Padding(
@@ -94,7 +93,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
 
-          // BOTTOM
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
@@ -138,7 +136,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: FilledButton(
                       onPressed: otpState.isLoading ? null : _onGetOtp,
                       style: FilledButton.styleFrom(
-                        // Use black text in dark theme as you requested earlier
                         foregroundColor:
                             Theme.of(context).brightness == Brightness.dark
                                 ? Colors.black

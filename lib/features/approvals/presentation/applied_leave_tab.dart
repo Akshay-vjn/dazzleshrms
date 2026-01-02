@@ -23,7 +23,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
         .loadAppliedLeaves(page: _page, limit: _limit);
   }
 
-  // ================= APPROVE =================
+  //approve
   void _showApproveDialog(int leaveId) {
     showDialog(
       context: context,
@@ -76,7 +76,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
     );
   }
 
-  // ================= REJECT =================
+  // REJECT
   void _showRejectDialog(int leaveId) {
     final ctrl = TextEditingController();
 
@@ -153,7 +153,6 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
     );
   }
 
-  // ================= ERROR PARSER =================
   String _extractErrorMessage(dynamic error) {
     final errorStr = error.toString();
 
@@ -172,7 +171,6 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
     return errorStr;
   }
 
-  // ================= REFRESH =================
   Future<void> _refresh() async {
     _page = 1;
     await ref
@@ -180,7 +178,6 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
         .loadAppliedLeaves(page: _page, limit: _limit);
   }
 
-  // ================= BUILD =================
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(leaveApprovalProvider);

@@ -12,7 +12,6 @@ import 'package:dazzleshrms/core/navigation/navigation_keys.dart';
 import '../../features/attendance/presentation/attendance_screen.dart';
 import '../../features/leave/presentation/leave_apply_screen.dart';
 
-/// Central app router configuration using go_router.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,

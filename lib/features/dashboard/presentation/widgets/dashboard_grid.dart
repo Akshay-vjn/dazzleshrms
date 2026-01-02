@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'dashboard_grid_item.dart';
 
 class DashboardGrid extends StatelessWidget {
@@ -14,14 +13,17 @@ class DashboardGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 4,
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 12,
-      childAspectRatio: 0.75,
-      children: items,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, // 🔥 3 grids per row
+        crossAxisSpacing: 20,
+        mainAxisSpacing: 5,
+        childAspectRatio: 0.85, // 🔥 Adjusted for 3-column layout
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) => items[index],
     );
   }
 }

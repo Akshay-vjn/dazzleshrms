@@ -5,7 +5,6 @@ import '../models/changedtab_actions_model.dart';
 
 class ChangedTabRepository {
 
-  /// ✅ APPROVE CHANGE REQUEST
   Future<ChangedTabActionResponse> approveChange(int logId) async {
     try {
       final response = await ApiConfig.dio.post(
@@ -20,7 +19,6 @@ class ChangedTabRepository {
     }
   }
 
-  /// ❌ REJECT CHANGE REQUEST
   Future<ChangedTabActionResponse> rejectChange(int logId) async {
     try {
       final response = await ApiConfig.dio.post(

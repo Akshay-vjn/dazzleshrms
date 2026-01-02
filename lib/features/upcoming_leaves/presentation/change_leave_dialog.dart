@@ -23,12 +23,10 @@ class _ChangeLeaveDialogState
     final theme = Theme.of(context);
     final state = ref.watch(changeLeaveProvider);
 
-    /// 🔥 LISTEN FOR SUCCESS / ERROR
     ref.listen(changeLeaveProvider, (prev, next) {
       next.whenOrNull(
         data: (res) {
           if (res != null && !res.error) {
-            // ✅ RETURN TRUE TO PARENT
             Navigator.pop(context, true);
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +61,6 @@ class _ChangeLeaveDialogState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== HEADER =====
                 Row(
                   children: [
                     Container(
@@ -89,7 +86,6 @@ class _ChangeLeaveDialogState
 
                 const SizedBox(height: 20),
 
-                // ===== CHANGE TYPE =====
                 DropdownButtonFormField<String>(
                   value: selectedType,
                   decoration: InputDecoration(
@@ -121,7 +117,6 @@ class _ChangeLeaveDialogState
 
                 const SizedBox(height: 20),
 
-                // ===== CANCEL LEAVE =====
                 TextButton.icon(
                   onPressed: state.isLoading
                       ? null
@@ -137,7 +132,6 @@ class _ChangeLeaveDialogState
 
                 const SizedBox(height: 20),
 
-                // ===== ACTIONS =====
                 Row(
                   children: [
                     Expanded(
@@ -167,7 +161,6 @@ class _ChangeLeaveDialogState
             ),
           ),
 
-          // ===== LOADING OVERLAY =====
           if (state.isLoading)
             Positioned.fill(
               child: Container(

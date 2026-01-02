@@ -111,7 +111,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Large Avatar
             Hero(
               tag: 'profile_avatar',
               child: Container(
@@ -274,14 +273,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // ================= ANIMATED PROFILE HEADER =================
                 AnimatedBuilder(
                   animation: _animationController,
                   builder: (context, child) {
                     return Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        // Animated Background cover with darker gradient
                         FadeTransition(
                           opacity: _fadeAnimation,
                           child: Container(
@@ -292,9 +289,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  const Color(0xFF4F46E5), // Deep indigo-blue
-                                  const Color(0xFF7C3AED), // Purple
-                                  const Color(0xFF8B5CF6), // Light purple
+                                  const Color(0xFF4F46E5),
+                                  const Color(0xFF7C3AED),
+                                  const Color(0xFF8B5CF6),
                                 ],
                                 stops: const [0.0, 0.5, 1.0],
                               ),
@@ -388,7 +385,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             ),
                           ),
                         ),
-                        // White/Dark card with slide animation
                         SlideTransition(
                           position: _slideAnimation,
                           child: Container(
@@ -451,7 +447,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             ),
                           ),
                         ),
-                        // Avatar positioned in the middle with scale animation
                         Positioned(
                           left: 0,
                           right: 0,
@@ -470,7 +465,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                 const SizedBox(height: 24),
 
-                // ================= EMPLOYEE INFO SECTION =================
+                //EMPLOYEE INFO
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
@@ -528,7 +523,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                 const SizedBox(height: 24),
 
-                // ================= LOGOUT BUTTON =================
+                //  LOGOUT
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Container(

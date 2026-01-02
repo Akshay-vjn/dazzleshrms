@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'package:dazzleshrms/core/storage/session_storage.dart';
 import 'package:dazzleshrms/core/permissions/permission.dart';
 
 import '../../notifications/notification_screen.dart';
-import '../../profile/profile_screen/profile_screen.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
 import '../data/models/dashboard_response.dart';
 import 'widgets/fade_slide_item.dart';
@@ -50,8 +49,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _refresh() async {
     _controller.reset();
     _controller.forward();
-
-    /// 🔥 VERY IMPORTANT
     ref.invalidate(permissionProvider);
 
     await ref.read(dashboardProvider.notifier).loadDashboard();
@@ -62,7 +59,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return value.toStringAsFixed(1);
   }
 
-  // ================= HEADER =================
   Widget _buildHeader(ThemeData theme, DashboardData data) {
     final avatarLetter =
     (data.name.isNotEmpty ? data.name[0] : '?').toUpperCase();
@@ -142,7 +138,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ================= JOB CARD (ORIGINAL UI) =================
   Widget _buildJobCard(ThemeData theme, DashboardData data) {
     final isDark = theme.brightness == Brightness.dark;
 
@@ -273,7 +268,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ================= GRID (PERMISSION BASED) =================
   Widget _buildGrid(Set<String> permissions) {
     return DashboardGrid(
       animation: _controller,
@@ -328,11 +322,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
 
 
+
       ],
     );
   }
 
-  // ================= BUILD =================
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardProvider);

@@ -28,17 +28,11 @@ class PendingLeaveResponse {
 class PendingLeaveItem {
   final int logId;
   final int employeeId;
-
-  // 🔥 NEW
   final String employeeName;
   final String storeName;
-
   final String date;
-
-  // 🔥 CHANGES
   final String changesFrom;
   final String changesTo;
-
   final String daysTaken;
   final String source;
 

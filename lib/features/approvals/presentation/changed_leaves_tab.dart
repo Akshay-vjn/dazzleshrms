@@ -24,7 +24,6 @@ class _ChangedLeavesTabState
     });
   }
 
-  // ================= SNACK =================
   void _showSnack(BuildContext context, String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -36,7 +35,6 @@ class _ChangedLeavesTabState
     );
   }
 
-  // ================= CONFIRM DIALOG =================
   void _confirmAction({
     required BuildContext context,
     required String title,
@@ -109,7 +107,7 @@ class _ChangedLeavesTabState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    // ===== DATE =====
+
                     Text(
                       item.date,
                       style: Theme.of(context)
@@ -119,7 +117,6 @@ class _ChangedLeavesTabState
 
                     const SizedBox(height: 6),
 
-                    // ===== EMPLOYEE + STORE =====
                     Text(
                       item.employeeName,
                       style: Theme.of(context)
@@ -140,7 +137,7 @@ class _ChangedLeavesTabState
 
                     const SizedBox(height: 10),
 
-                    // ===== CHANGE SUMMARY =====
+
                     Row(
                       children: [
                         Text(
@@ -168,7 +165,7 @@ class _ChangedLeavesTabState
 
                     const SizedBox(height: 6),
 
-                    // ===== DAYS TAKEN =====
+
                     Text(
                       "Days Taken: ${item.daysTaken}",
                       style: Theme.of(context).textTheme.bodySmall,
@@ -180,7 +177,7 @@ class _ChangedLeavesTabState
 
                     const SizedBox(height: 14),
 
-                    // ===== ACTION BUTTONS =====
+
                     Row(
                       children: [
                         Expanded(

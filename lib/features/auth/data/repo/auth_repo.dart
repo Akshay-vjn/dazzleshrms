@@ -9,7 +9,7 @@ import 'package:dio/dio.dart';
 class AuthRepository {
   final Dio _dio = ApiConfig.dio;
 
-  /// ================= SEND OTP =================
+  //SEND OTP
   Future<SendOtpModel> sendOtp({
     required String mobileNumber,
   }) async {
@@ -29,7 +29,7 @@ class AuthRepository {
     }
   }
 
-  /// ================= VERIFY OTP =================
+  // VERIFY OTP
   Future<VerifyOtpModel> verifyOtp({
     required String mobileNumber,
     required String otp,
@@ -51,7 +51,7 @@ class AuthRepository {
     }
   }
 
-  /// ================= REFRESH TOKEN =================
+  //REFRESH TOKEN
   Future<RefreshTokenModel> refreshToken({
     required String refreshToken,
   }) async {

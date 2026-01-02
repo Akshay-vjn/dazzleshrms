@@ -38,7 +38,6 @@ class _ApplyLeaveFormSheetState
     });
   }
 
-  // ===================== HELPERS =====================
 
   void _showSheetSnackBar(
       String message, {
@@ -60,10 +59,8 @@ class _ApplyLeaveFormSheetState
   String _formatDate(DateTime date) =>
       date.toIso8601String().split('T').first;
 
-  // ===================== CALENDAR (ONLY LOGIC CHANGE) =====================
 
   Future<void> _pickDate({required bool isFrom}) async {
-    // 🔁 FORCE REFRESH EVERY TIME
     ref.invalidate(blockedDateProvider);
 
     await showDialog(
@@ -108,7 +105,6 @@ class _ApplyLeaveFormSheetState
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ---------- HEADER ----------
                             Text(
                               "Select Date",
                               style: Theme.of(context)
@@ -121,7 +117,6 @@ class _ApplyLeaveFormSheetState
 
                             const SizedBox(height: 8),
 
-                            // ---------- CALENDAR ----------
                             Flexible(
                               child: TableCalendar(
                                 firstDay: DateTime.now(),
@@ -179,7 +174,7 @@ class _ApplyLeaveFormSheetState
                                     selectedDay.day,
                                   );
 
-                                  // 🔴 BLOCKED DATE
+                                  //  BLOCKED DATE
                                   if (blockedMap.containsKey(d)) {
                                     final blocked = blockedMap[d]!;
 
@@ -207,7 +202,6 @@ class _ApplyLeaveFormSheetState
                                     return;
                                   }
 
-                                  // ✅ NORMAL DATE
                                   setState(() {
                                     isFrom ? fromDate = selectedDay : toDate = selectedDay;
                                   });
@@ -230,7 +224,6 @@ class _ApplyLeaveFormSheetState
     );
   }
 
-  // ===================== SUBMIT =====================
 
   void _submitLeave() {
     if (selectedLeaveTypeId == null ||
@@ -240,7 +233,6 @@ class _ApplyLeaveFormSheetState
       _showSheetSnackBar("Please fill all fields");
       return;
     }
-
     ref.read(applyLeaveProvider.notifier).applyLeave(
       leaveTypeId: selectedLeaveTypeId!,
       fromDate: _formatDate(fromDate!),
@@ -268,7 +260,6 @@ class _ApplyLeaveFormSheetState
               isError: false,
             );
 
-            // 🔥 REFRESH LEAVE LIST & DASHBOARD BALANCE IMMEDIATELY
             ref.read(leaveProvider.notifier).loadLeaves();
             ref.read(dashboardProvider.notifier).loadDashboard();
 
@@ -300,7 +291,6 @@ class _ApplyLeaveFormSheetState
             backgroundColor: Colors.transparent,
             body: Column(
             children: [
-              // ================= DRAG INDICATOR =================
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Container(
@@ -313,7 +303,6 @@ class _ApplyLeaveFormSheetState
                 ),
               ),
 
-              // ================= FORM =================
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -328,7 +317,6 @@ class _ApplyLeaveFormSheetState
                       ),
                       const SizedBox(height: 20),
 
-                      // ---------- LEAVE TYPE ----------
                       Text("Leave Type", style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
 
@@ -366,7 +354,6 @@ class _ApplyLeaveFormSheetState
 
                       const SizedBox(height: 20),
 
-                      // ---------- DATE RANGE ----------
                       Text(
                         "Leave Duration",
                         style: theme.textTheme.titleMedium,
@@ -403,7 +390,6 @@ class _ApplyLeaveFormSheetState
 
                       const SizedBox(height: 20),
 
-                      // ---------- REASON ----------
                       Text("Reason", style: theme.textTheme.titleMedium),
                       const SizedBox(height: 8),
 
@@ -419,7 +405,6 @@ class _ApplyLeaveFormSheetState
                 ),
               ),
 
-              // ================= SUBMIT BUTTON =================
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(
