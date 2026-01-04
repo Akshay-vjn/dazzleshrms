@@ -1,10 +1,10 @@
+
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'package:dazzleshrms/core/permissions/permission.dart';
-
 import '../../notifications/notification_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
@@ -12,8 +12,6 @@ import '../data/models/dashboard_response.dart';
 import 'widgets/fade_slide_item.dart';
 import 'widgets/dashboard_grid.dart';
 import 'widgets/dashboard_grid_item.dart';
-
-import 'package:dazzleshrms/core/permissions/permission_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -49,14 +47,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _refresh() async {
     _controller.reset();
     _controller.forward();
-    ref.invalidate(permissionProvider);
-
     await ref.read(dashboardProvider.notifier).loadDashboard();
-  }
-
-  String formatLeave(double value) {
-    if (value % 1 == 0) return value.toInt().toString();
-    return value.toStringAsFixed(1);
   }
 
   Widget _buildHeader(ThemeData theme, DashboardData data) {
@@ -69,7 +60,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         color: theme.scaffoldBackgroundColor,
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.15),
+            color: theme.dividerColor.withValues(alpha: 0.15),
           ),
         ),
       ),
@@ -85,7 +76,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
               child: CircleAvatar(
                 radius: 24,
-                backgroundColor: AppTheme.PrimaryColor.withOpacity(0.15),
+                backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.15),
                 child: Text(
                   avatarLetter,
                   style: TextStyle(
@@ -138,17 +129,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildJobCard(ThemeData theme, DashboardData data) {
+  Widget _buildSJobtitleCard(ThemeData theme, DashboardData data) {
     final isDark = theme.brightness == Brightness.dark;
-
     final cardGradientStart =
     isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
     final cardGradientEnd =
     isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
-
     final textColor = Colors.white;
-    final dividerColor = Colors.white.withOpacity(0.15);
-    final statBg = Colors.white.withOpacity(0.15);
 
     return FadeSlideItem(
       animation: _controller,
@@ -162,75 +149,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.workspace_premium,
-                    color: AppTheme.PrimaryColor,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data.role,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Store : ${data.store}",
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: textColor.withOpacity(0.85)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Container(height: 1, color: dividerColor),
-
-            const SizedBox(height: 20),
-
-            Text(
-              "Leave Balance",
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: textColor.withOpacity(0.9),
-                fontWeight: FontWeight.w600,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.workspace_premium,
+                color: AppTheme.PrimaryColor,
+                size: 28,
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                _leaveStatCard("Total", data.totalLeaves, statBg),
-                _leaveStatCard("Used", data.usedLeaves, statBg),
-                _leaveStatCard("Available", data.availableLeaves, statBg),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.role,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Store : ${data.store}",
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: textColor.withValues(alpha: 0.85)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -238,91 +196,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _leaveStatCard(String label, double value, Color bg) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(
-              formatLeave(value),
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGrid(Set<String> permissions) {
+  Widget _buildGrid() {
     return DashboardGrid(
       animation: _controller,
       items: [
-        if (permissions.contains(Permissions.viewAttendance))
-          DashboardGridItem(
-            icon: Icons.touch_app_rounded,
-            label: "Attendance",
-            onTap: () => context.pushNamed('attendance'),
-            animation: _controller,
-            intervalStart: 0.2,
-            gradientStart: AppTheme.gridGradient1Start,
-            gradientEnd: AppTheme.gridGradient1End,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        if (permissions.contains(Permissions.viewApplyLeave))
-          DashboardGridItem(
-            icon: Icons.calendar_month_rounded,
-            label: "Apply Leave",
-            onTap: () => context.pushNamed('apply_leave'),
-            animation: _controller,
-            intervalStart: 0.25,
-            gradientStart: AppTheme.gridGradient2Start,
-            gradientEnd: AppTheme.gridGradient2End,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        if (permissions.contains(Permissions.viewApprovals))
-          DashboardGridItem(
-            icon: Icons.check_circle_outline_rounded,
-            label: "Approvals",
-            onTap: () => context.pushNamed('approvals'),
-            animation: _controller,
-            intervalStart: 0.3,
-            gradientStart: AppTheme.gridGradient3Start,
-            gradientEnd: AppTheme.gridGradient3End,
-            iconColor: AppTheme.gridIconColor,
-          ),
         DashboardGridItem(
-          icon: Icons.upcoming,
-          label: "Upcoming leaves",
-          onTap: () => context.pushNamed('upcoming_leaves'),
+          icon: Icons.event_note_rounded,
+          label: "Leave Management",
+          onTap: () => context.pushNamed('leave_management'),
           animation: _controller,
-          intervalStart: 0.3,
-          gradientStart: AppTheme.gridGradient2Start,
-          gradientEnd: AppTheme.gridGradient3End,
+          intervalStart: 0.15,
+          gradientStart: AppTheme.gridGradient1Start,
+          gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
 
 
 
 
-
-
-
-
+        // Future groups/items can be added here
       ],
     );
   }
@@ -330,7 +222,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardProvider);
-    final permissionState = ref.watch(permissionProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -345,7 +237,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
             return Column(
               children: [
-                _buildHeader(Theme.of(context), data),
+                _buildHeader(theme, data),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _refresh,
@@ -354,9 +246,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          _buildJobCard(Theme.of(context), data),
+                          _buildSJobtitleCard(theme, data),
                           const SizedBox(height: 24),
-                          _buildGrid(permissionState),
+                          _buildGrid(),
                           const SizedBox(height: 80),
                         ],
                       ),

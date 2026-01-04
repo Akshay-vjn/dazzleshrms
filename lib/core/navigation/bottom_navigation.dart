@@ -121,14 +121,14 @@ class _MainNavigationState extends State<MainNavigation>
                 onTap: () => _onTap(1),
                 activeColor: AppTheme.navIconSelected,
               ),
-              _NavItem(
-                icon: Icons.campaign_outlined,
-                label: "Announcement",
-                isActive: _currentIndex == 2,
-                animation: _controller,
-                onTap: () => _onTap(2),
-                activeColor: AppTheme.navIconSelected,
-              ),
+              // _NavItem(
+              //   icon: Icons.campaign_outlined,
+              //   label: "Announcement",
+              //   isActive: _currentIndex == 2,
+              //   animation: _controller,
+              //   onTap: () => _onTap(2),
+              //   activeColor: AppTheme.navIconSelected,
+              // ),
               _NavItem(
                 icon: Icons.person_outline,
                 label: "Profile",

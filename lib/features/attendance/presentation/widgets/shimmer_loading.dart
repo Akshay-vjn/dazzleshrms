@@ -22,38 +22,36 @@ class AttendanceShimmerItem extends StatelessWidget {
           border: Border.all(
             color: Theme.of(context).dividerColor.withOpacity(0.1),
           ),
+          boxShadow: [
+             BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+             ),
+          ],
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             Container(
-              width: 6,
-              height: double.infinity,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 color: baseColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
+                shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _shimmerBox(width: 120, height: 16, color: baseColor),
-                    _shimmerBox(width: 80, height: 12, color: baseColor),
-                  ],
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _shimmerBox(width: 120, height: 16, color: baseColor),
+                ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: _shimmerBox(width: 70, height: 26, color: baseColor),
-            ),
+            _shimmerBox(width: 80, height: 12, color: baseColor),
           ],
         ),
       ),

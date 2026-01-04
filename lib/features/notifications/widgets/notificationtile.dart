@@ -31,7 +31,7 @@ class NotificationTile extends StatelessWidget {
               child: Icon(
                 icon,
                 color: AppTheme.PrimaryColor,
-              ),
+              )
             ),
             if (isUnread)
               Positioned(

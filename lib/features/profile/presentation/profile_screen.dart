@@ -153,54 +153,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     required String value,
     required ThemeData theme,
   }) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.1),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: AppTheme.PrimaryColor,
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.PrimaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: AppTheme.PrimaryColor,
-            ),
+        title: Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+            fontSize: 12,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        subtitle: Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -533,7 +505,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.statusError.withOpacity(0.3),
+                          color: AppTheme.statusError.withOpacity(0.08),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

@@ -289,6 +289,7 @@ class _ApplyLeaveFormSheetState
           key: _messengerKey,
           child: Scaffold(
             backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: false,
             body: Column(
             children: [
               Padding(

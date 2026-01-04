@@ -14,6 +14,10 @@ class AppTheme {
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF2C2C2C);
   static const Color surfaceDarkVariant = Color(0xFF1E293B);
+  static const Color bottomBg = Color(0xFF151515);
+
+
+
 
   static const Color surfaceCardLight = surfaceLight;
   static const Color surfaceCardDark = surfaceDark;
@@ -53,7 +57,7 @@ class AppTheme {
 
   // STATUS COLORS
   static const Color statusSuccess = Color(0xFF16A34A); // Present / Approved
-  static const Color statusError = Color(0xFFDC2626);   // Absent / Rejected
+  static const Color statusError = Color(0xFFEC4848);   // Absent / Rejected
   static const Color statusWarning = Color(0xFFF59E0B); // Pending / Half day
   static const Color statusInfo = Color(0xFF2563EB);    // Info states
 

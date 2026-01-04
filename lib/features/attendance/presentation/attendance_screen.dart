@@ -36,7 +36,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       _currentPage = 1;
       _isLoadingMore = false;
 
-      ref.read(attendanceProvider.notifier).loadAttendance(
+      ref
+          .read(attendanceProvider.notifier)
+          .loadAttendance(
         page: _currentPage,
         limit: _limit,
         forceRefresh: true,
@@ -72,10 +74,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     _currentPage++;
 
-    await ref.read(attendanceProvider.notifier).loadAttendance(
-      page: _currentPage,
-      limit: _limit,
-    );
+    await ref
+        .read(attendanceProvider.notifier)
+        .loadAttendance(page: _currentPage, limit: _limit);
 
     if (!mounted) return;
 
@@ -90,11 +91,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     _items.clear();
     await Future.delayed(const Duration(seconds: 1));
 
-    await ref.read(attendanceProvider.notifier).loadAttendance(
-      page: _currentPage,
-      limit: _limit,
-      forceRefresh: true,
-    );
+    await ref
+        .read(attendanceProvider.notifier)
+        .loadAttendance(page: _currentPage, limit: _limit, forceRefresh: true);
   }
 
   Color _statusColor(String status) {
@@ -116,9 +115,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     final attendanceState = ref.watch(attendanceProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Attendance"),
-      ),
+      appBar: AppBar(title: const Text("Attendance")),
       body: attendanceState.when(
         loading: () => ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -145,109 +142,69 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
           return RefreshIndicator(
             onRefresh: _onRefresh,
-            child: ListView.separated(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _items.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                if (index == _items.length) {
-                  return const AttendanceShimmerItem();
-                }
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: ListView.separated(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  if (index == _items.length) {
+                    return const AttendanceShimmerItem();
+                  }
 
-                final item = _items[index];
-                final statusColor = _statusColor(item.status);
+                  final item = _items[index];
+                  final statusColor = _statusColor(item.status);
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context)
-                          .dividerColor
-                          .withOpacity(0.2),
+                  final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.dividerColor.withOpacity(0.1),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark
+                              ? Colors.black.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                          spreadRadius: 0,
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .shadowColor
-                            .withOpacity(0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 72,
-                        decoration: BoxDecoration(
+                      leading: Icon(
+                        Icons.calendar_today_outlined,
+                        color: statusColor,
+                      ),
+                      title: Text(
+                        item.date,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      trailing: Text(
+                        item.status,
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: statusColor,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            bottomLeft: Radius.circular(12),
-                          ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 4,
-                          ),
-                          child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 16,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    item.date,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                  statusColor.withOpacity(0.15),
-                                  borderRadius:
-                                  BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  item.status,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  );
+                },
+              ),
             ),
           );
         },

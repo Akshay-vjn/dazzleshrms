@@ -38,7 +38,6 @@ class DashboardGridItem extends StatelessWidget {
           opacity: enabled ? 1.0 : 0.4,
           child: Column(
             children: [
-              /// 🔥 ICON AREA - Expanded to take available space
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
@@ -60,30 +59,30 @@ class DashboardGridItem extends StatelessWidget {
                       ),
                       child: Stack(
                         children: [
-                          Positioned(
-                            top: -25,
-                            left: -40,
-                            child: Container(
-                              width: 95,
-                              height: 75,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: gradientStart.withOpacity(0.18),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: -30,
-                            right: -40,
-                            child: Container(
-                              width: 95,
-                              height: 75,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: gradientEnd.withOpacity(0.16),
-                              ),
-                            ),
-                          ),
+                          // Positioned(
+                          //   top: -25,
+                          //   left: -40,
+                          //   child: Container(
+                          //     width: 95,
+                          //     height: 75,
+                          //     decoration: BoxDecoration(
+                          //       shape: BoxShape.circle,
+                          //       color: gradientStart.withOpacity(0.18),
+                          //     ),
+                          //   ),
+                          // ),
+                          // Positioned(
+                          //   bottom: -30,
+                          //   right: -40,
+                          //   child: Container(
+                          //     width: 95,
+                          //     height: 75,
+                          //     decoration: BoxDecoration(
+                          //       shape: BoxShape.circle,
+                          //       color: gradientEnd.withOpacity(0.16),
+                          //     ),
+                          //   ),
+                          // ),
                           Center(
                             child: Container(
                               width: 60,
@@ -99,7 +98,7 @@ class DashboardGridItem extends StatelessWidget {
                             child: Icon(
                               icon,
                               color: iconColor,
-                              size: 26,
+                              size: 30,
                             ),
                           ),
                         ],
@@ -109,7 +108,6 @@ class DashboardGridItem extends StatelessWidget {
                 ),
               ),
 
-              /// 🔥 LABEL - Fixed height, consistent font size
               const SizedBox(height: 8),
               SizedBox(
                 height: 34,
@@ -120,9 +118,9 @@ class DashboardGridItem extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11.5,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
                       height: 1.2,
                     ),
                   ),

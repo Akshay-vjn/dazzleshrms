@@ -1,5 +1,6 @@
 import 'package:dazzleshrms/features/approvals/presentation/approval_screen.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
+import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -61,6 +62,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/upcoming',
         name: 'upcoming_leaves',
         builder: (context, state) => const UpcomingLeaveScreen(),
+      ),
+      GoRoute(
+        path: '/leave-management',
+        name: 'leave_management',
+        builder: (context, state) => const LeaveManagementScreen(),
       ),
     ],
   );

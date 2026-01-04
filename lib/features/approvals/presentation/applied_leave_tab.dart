@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
+import '../../dashboard/data/providers/dashboard_provider.dart';
 import '../data/providers/approvals_provider.dart';
 
 class AppliedLeavesTab extends ConsumerStatefulWidget {
@@ -57,6 +58,8 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                 );
 
                 _refresh();
+                // Refresh dashboard leave counts
+                ref.read(dashboardProvider.notifier).loadDashboard();
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -134,6 +137,8 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                 );
 
                 _refresh();
+                // Refresh dashboard leave counts after rejection
+                ref.read(dashboardProvider.notifier).loadDashboard();
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../dashboard/data/providers/dashboard_provider.dart';
 import '../data/providers/changed_leave_provider.dart';
 import '../data/providers/changedtab_actions_provider.dart';
 
@@ -209,6 +210,8 @@ class _ChangedLeavesTabState
                                       pendingLeaveProvider.notifier,
                                     )
                                         .loadPendingLeaves();
+                // Refresh dashboard leave counts
+                ref.read(dashboardProvider.notifier).loadDashboard();
                                   } catch (e) {
                                     _showSnack(
                                       context,
@@ -257,6 +260,8 @@ class _ChangedLeavesTabState
                                       pendingLeaveProvider.notifier,
                                     )
                                         .loadPendingLeaves();
+                // Refresh dashboard leave counts
+                ref.read(dashboardProvider.notifier).loadDashboard();
                                   } catch (e) {
                                     _showSnack(
                                       context,

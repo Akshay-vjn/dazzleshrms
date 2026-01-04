@@ -19,8 +19,8 @@ class DashboardGrid extends StatelessWidget {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3, // 🔥 3 grids per row
         crossAxisSpacing: 20,
-        mainAxisSpacing: 5,
-        childAspectRatio: 0.85, // 🔥 Adjusted for 3-column layout
+        mainAxisSpacing: 4,
+        childAspectRatio: 0.75, // 🔥 Adjusted for 3-column layout
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => items[index],
