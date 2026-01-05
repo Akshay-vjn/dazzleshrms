@@ -21,6 +21,50 @@ class LeaveManagementScreen extends ConsumerStatefulWidget {
 class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  void _showUsedLeavesDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Stack(
+          children: [
+            // EMPTY CONTENT (FUTURE DATA)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 220,
+                child: Center(
+                  child: Text(
+                    "Used leave details will appear here",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // CLOSE BUTTON
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -124,7 +168,12 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             Row(
               children: [
                 _leaveStatCard("Total", data.totalLeaves, statBg),
-                _leaveStatCard("Used", data.usedLeaves, statBg),
+                _leaveStatCard(
+                  "Used",
+                  data.usedLeaves,
+                  statBg,
+                  onTap: () => _showUsedLeavesDialog(),
+                ),
                 _leaveStatCard("Available", data.availableLeaves, statBg),
               ],
             ),
@@ -134,9 +183,18 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
     );
   }
 
-  Widget _leaveStatCard(String label, double value, Color bg) {
+  Widget _leaveStatCard(
+      String label,
+      double value,
+      Color bg, {
+        VoidCallback? onTap,
+      }) {
     return Expanded(
-      child: Container(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
@@ -162,6 +220,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
           ],
         ),
       ),
+    )
     );
   }
 

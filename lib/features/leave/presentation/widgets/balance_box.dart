@@ -1,50 +1,102 @@
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
-class BalanceBox extends StatelessWidget {
+class BalanceBox extends StatefulWidget {
   final String label;
   final String value;
 
   const BalanceBox({
+    super.key,
     required this.label,
     required this.value,
   });
 
   @override
+  State<BalanceBox> createState() => _BalanceBoxState();
+}
+
+class _BalanceBoxState extends State<BalanceBox> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final surfaceColor =
+    isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
+
+    final textColor =
+    isDark ? Colors.white : Colors.black.withOpacity(0.85);
+
+    // 🔥 PrimaryColor thin outline
+    final borderColor = AppTheme.PrimaryColor.withOpacity(
+      isDark ? 0.35 : 0.18,
+    );
+
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.gridGradient3Start,
-            width: 0.8,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).shadowColor.withOpacity(0.06),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+
+          // ✅ Instant feedback + auto reset
+          onTapDown: (_) {
+            setState(() => _pressed = true);
+
+            Future.delayed(const Duration(milliseconds: 90), () {
+              if (mounted) {
+                setState(() => _pressed = false);
+              }
+            });
+          },
+
+          onTap: () {}, // optional (no navigation needed)
+
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            transform: Matrix4.identity()
+              ..translate(0.0, _pressed ? 3.0 : -5.0)
+              ..scale(_pressed ? 0.97 : 1.0),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(16),
+
+              // ✅ PrimaryColor border
+              border: Border.all(
+                color: borderColor,
+                width: 1,
               ),
+
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.45 : 0.12),
+                  blurRadius: _pressed ? 6 : 16,
+                  offset: Offset(0, _pressed ? 3 : 8),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.value,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.PrimaryColor,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor.withOpacity(0.75),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

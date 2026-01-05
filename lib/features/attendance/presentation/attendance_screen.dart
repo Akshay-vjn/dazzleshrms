@@ -148,7 +148,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 itemCount: _items.length + (_isLoadingMore ? 1 : 0),
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => const SizedBox(height: 20),
                 itemBuilder: (context, index) {
                   if (index == _items.length) {
                     return const AttendanceShimmerItem();
@@ -163,7 +163,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   return Container(
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(15),
                       border: Border.all(
                         color: theme.dividerColor.withOpacity(0.1),
                       ),

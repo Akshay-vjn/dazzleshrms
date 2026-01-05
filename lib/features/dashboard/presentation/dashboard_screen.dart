@@ -1,10 +1,8 @@
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+
 import '../../notifications/notification_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
@@ -49,6 +47,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _controller.forward();
     await ref.read(dashboardProvider.notifier).loadDashboard();
   }
+
+  // ================= HEADER =================
 
   Widget _buildHeader(ThemeData theme, DashboardData data) {
     final avatarLetter =
@@ -129,72 +129,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildSJobtitleCard(ThemeData theme, DashboardData data) {
-    final isDark = theme.brightness == Brightness.dark;
-    final cardGradientStart =
-    isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
-    final cardGradientEnd =
-    isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
-    final textColor = Colors.white;
+  // ================= JOB TITLE CARD =================
 
+  Widget _buildJobtitleCard(ThemeData theme, DashboardData data) {
     return FadeSlideItem(
       animation: _controller,
       intervalStart: 0.1,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [cardGradientStart, cardGradientEnd],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.workspace_premium,
-                color: AppTheme.PrimaryColor,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.role,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Store : ${data.store}",
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: textColor.withValues(alpha: 0.85)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      child: _JobTitleCard(
+        role: data.role,
+        store: data.store,
+        theme: theme,
       ),
     );
   }
+
+  // ================= GRID =================
 
   Widget _buildGrid() {
     return DashboardGrid(
@@ -210,14 +159,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
-
-
-
-
-        // Future groups/items can be added here
       ],
     );
   }
+
+  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
@@ -227,8 +173,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Scaffold(
       body: SafeArea(
         child: dashboardState.when(
-          loading: () =>
-          const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text(e.toString())),
           data: (data) {
             if (data == null) {
@@ -246,7 +191,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          _buildSJobtitleCard(theme, data),
+                          _buildJobtitleCard(theme, data),
                           const SizedBox(height: 24),
                           _buildGrid(),
                           const SizedBox(height: 80),
@@ -258,6 +203,123 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+// ================= JOB TITLE 3D CARD =================
+
+class _JobTitleCard extends StatefulWidget {
+  final String role;
+  final String store;
+  final ThemeData theme;
+
+  const _JobTitleCard({
+    required this.role,
+    required this.store,
+    required this.theme,
+  });
+
+  @override
+  State<_JobTitleCard> createState() => _JobTitleCardState();
+}
+
+class _JobTitleCardState extends State<_JobTitleCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.theme.brightness == Brightness.dark;
+
+    final surfaceColor =
+    isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
+
+    final textColor =
+    isDark ? Colors.white : Colors.black.withValues(alpha: 0.85);
+
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+
+        // 🔥 INSTANT TAP FLASH
+        onTapDown: (_) {
+          setState(() => _pressed = true);
+
+          Future.delayed(const Duration(milliseconds: 90), () {
+            if (mounted) {
+              setState(() => _pressed = false);
+            }
+          });
+        },
+
+        onTap: () {},
+
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          transform: Matrix4.identity()
+            ..translate(0.0, _pressed ? 4.0 : -6.0)
+            ..scale(_pressed ? 0.98 : 1.0),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.15),
+                blurRadius: _pressed ? 8 : 18,
+                offset: Offset(0, _pressed ? 4 : 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium,
+                  color: AppTheme.PrimaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.role,
+                      style: widget.theme.textTheme.headlineSmall?.copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Store : ${widget.store}",
+                      style: widget.theme.textTheme.bodyMedium?.copyWith(
+                        color: textColor.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
