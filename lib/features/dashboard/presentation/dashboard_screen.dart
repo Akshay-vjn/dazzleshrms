@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
 import '../../notifications/notification_screen.dart';
+import '../../announcements/announcement_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
 import '../data/models/dashboard_response.dart';
@@ -159,6 +160,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
+        DashboardGridItem(
+          icon: Icons.campaign_rounded,
+          label: "Announcements",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AnnouncementScreen()),
+          ),
+          animation: _controller,
+          intervalStart: 0.2,
+          gradientStart: AppTheme.gridGradient2Start,
+          gradientEnd: AppTheme.gridGradient2End,
+          iconColor: AppTheme.gridIconColor,
+        ),
       ],
     );
   }
@@ -239,10 +253,9 @@ class _JobTitleCardState extends State<_JobTitleCard> {
     final textColor =
     isDark ? Colors.white : Colors.black.withValues(alpha: 0.85);
 
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.08);
-
+    final borderColor = AppTheme.PrimaryColor.withValues(
+      alpha: isDark ? 0.35 : 0.18,
+    );
     return Material(
       color: Colors.transparent,
       child: InkWell(

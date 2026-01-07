@@ -25,7 +25,7 @@ class AuthRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? "Failed to send OTP";
-      throw Exception(message);
+      throw (message);
     }
   }
 
