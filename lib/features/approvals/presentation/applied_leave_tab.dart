@@ -137,7 +137,6 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                 );
 
                 _refresh();
-                // Refresh dashboard leave counts after rejection
                 ref.read(dashboardProvider.notifier).loadDashboard();
               } catch (e) {
                 if (!mounted) return;

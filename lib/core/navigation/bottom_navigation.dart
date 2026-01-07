@@ -2,8 +2,8 @@ import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/notifications/notification_screen.dart';
-import '../../features/announcements/announcement_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/announcements/presentation/employee_announcement_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -22,7 +22,7 @@ class _MainNavigationState extends State<MainNavigation>
   final _screens = const [
     DashboardScreen(),
     NotificationScreen(),
-    AnnouncementScreen(),
+    EmployeeAnnouncementScreen(),
     ProfileScreen()
   ];
 
@@ -121,14 +121,14 @@ class _MainNavigationState extends State<MainNavigation>
                 onTap: () => _onTap(1),
                 activeColor: AppTheme.navIconSelected,
               ),
-              // _NavItem(
-              //   icon: Icons.campaign_outlined,
-              //   label: "Announcement",
-              //   isActive: _currentIndex == 2,
-              //   animation: _controller,
-              //   onTap: () => _onTap(2),
-              //   activeColor: AppTheme.navIconSelected,
-              // ),
+              _NavItem(
+                icon: Icons.newspaper_outlined,
+                label: "Announcement",
+                isActive: _currentIndex == 2,
+                animation: _controller,
+                onTap: () => _onTap(2),
+                activeColor: AppTheme.navIconSelected,
+              ),
               _NavItem(
                 icon: Icons.person_outline,
                 label: "Profile",

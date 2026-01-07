@@ -29,7 +29,6 @@ class _BalanceBoxState extends State<BalanceBox> {
     final textColor =
     isDark ? Colors.white : Colors.black.withOpacity(0.85);
 
-    // 🔥 PrimaryColor thin outline
     final borderColor = AppTheme.PrimaryColor.withOpacity(
       isDark ? 0.35 : 0.18,
     );
@@ -40,7 +39,6 @@ class _BalanceBoxState extends State<BalanceBox> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
 
-          // ✅ Instant feedback + auto reset
           onTapDown: (_) {
             setState(() => _pressed = true);
 
@@ -51,7 +49,7 @@ class _BalanceBoxState extends State<BalanceBox> {
             });
           },
 
-          onTap: () {}, // optional (no navigation needed)
+          onTap: () {},
 
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
@@ -63,7 +61,6 @@ class _BalanceBoxState extends State<BalanceBox> {
               color: surfaceColor,
               borderRadius: BorderRadius.circular(16),
 
-              // ✅ PrimaryColor border
               border: Border.all(
                 color: borderColor,
                 width: 1,

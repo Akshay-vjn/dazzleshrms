@@ -14,9 +14,20 @@ class ApiConstants {
   static const String upcomingLeaves = '/leave/upcoming';
   static const String changeLeaveRequest = '/leave/changerequest';
   static const String getPendingLeaves = '/leave/getpending';
-  static const approveChangeLeave = '/leave/approvechange';
-  static const rejectChangeLeave = '/leave/rejectchange';
-  static const announcement = '/announcement';
+  static const String approveChangeLeave = '/leave/approvechange';
+  static const String rejectChangeLeave = '/leave/rejectchange';
+  static const String announcement = '/announcement';
+  static const String getApprovedAnnouncements = "/announcement";
+  static const String getPendingAnnouncements = "/announcement/pending";
+  static const String approveAnnouncement = "/announcement/approve";
+  static const String rejectAnnouncement = "/announcement/reject";
+  static const String stores = "/stores";
+  static const String employeesByStore = "/stores";
+  static const String usedLeaves = "/leave/used";
+  static const String getEmployeeAnnouncements = "/announcement/employee";
+
+
+
 
 
 

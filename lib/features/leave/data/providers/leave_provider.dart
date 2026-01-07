@@ -2,6 +2,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/leave_model.dart';
+import '../models/used_leave_model.dart';
 import '../repo/leave_repo.dart';
 
 final leaveRepositoryProvider = Provider<LeaveRepository>((ref) {
@@ -12,6 +13,11 @@ final leaveProvider =
 StateNotifierProvider<LeaveNotifier, AsyncValue<LeaveData?>>(
       (ref) => LeaveNotifier(ref.read(leaveRepositoryProvider)),
 );
+
+final usedLeavesProvider = FutureProvider<UsedLeaveData>((ref) async {
+  final repo = ref.watch(leaveRepositoryProvider);
+  return repo.fetchUsedLeaves();
+});
 
 class LeaveNotifier extends StateNotifier<AsyncValue<LeaveData?>> {
   final LeaveRepository _repository;

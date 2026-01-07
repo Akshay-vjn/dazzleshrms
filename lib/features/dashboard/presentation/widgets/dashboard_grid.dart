@@ -17,10 +17,10 @@ class DashboardGrid extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // 🔥 3 grids per row
+        crossAxisCount: 3,
         crossAxisSpacing: 20,
         mainAxisSpacing: 4,
-        childAspectRatio: 0.75, // 🔥 Adjusted for 3-column layout
+        childAspectRatio: 0.75,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) => items[index],

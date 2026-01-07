@@ -1,10 +1,10 @@
+import 'package:dazzleshrms/features/announcements/presentation/announcement_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
 import '../../notifications/notification_screen.dart';
-import '../../announcements/announcement_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
 import '../data/models/dashboard_response.dart';
@@ -49,7 +49,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     await ref.read(dashboardProvider.notifier).loadDashboard();
   }
 
-  // ================= HEADER =================
 
   Widget _buildHeader(ThemeData theme, DashboardData data) {
     final avatarLetter =
@@ -130,7 +129,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ================= JOB TITLE CARD =================
 
   Widget _buildJobtitleCard(ThemeData theme, DashboardData data) {
     return FadeSlideItem(
@@ -144,7 +142,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ================= GRID =================
 
   Widget _buildGrid() {
     return DashboardGrid(
@@ -177,7 +174,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +219,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 }
 
-// ================= JOB TITLE 3D CARD =================
 
 class _JobTitleCard extends StatefulWidget {
   final String role;
@@ -261,7 +256,6 @@ class _JobTitleCardState extends State<_JobTitleCard> {
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
 
-        // 🔥 INSTANT TAP FLASH
         onTapDown: (_) {
           setState(() => _pressed = true);
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "721879809008",
+    "project_id": "dazzles-hrms",
+    "storage_bucket": "dazzles-hrms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:721879809008:android:6078048ecaf6155901bb35",
+        "android_client_info": {
+          "package_name": "com.crisant.dazzleshrms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALYJEDGH6aaxkQqWcPxIl_u2J_kiGbGjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

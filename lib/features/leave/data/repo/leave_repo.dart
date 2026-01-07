@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
 import '../models/leave_model.dart';
+import '../models/used_leave_model.dart';
 
 class LeaveRepository {
   Future<LeaveModel> fetchLeaves({
@@ -21,4 +22,25 @@ class LeaveRepository {
 
     return LeaveModel.fromJson(response.data);
   }
+  
+  Future<UsedLeaveData> fetchUsedLeaves({
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await ApiConfig.dio.get(
+      ApiConstants.usedLeaves,
+      queryParameters: {
+        "page": page,
+        "limit": limit,
+      },
+    );
+
+    if (response.data == null || response.data['error'] == true) {
+      throw Exception(
+          response.data?['message'] ?? "Failed to fetch used leaves");
+    }
+
+    return UsedLeaveResponse.fromJson(response.data).data;
+  }
 }
+

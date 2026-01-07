@@ -210,7 +210,6 @@ class _ChangedLeavesTabState
                                       pendingLeaveProvider.notifier,
                                     )
                                         .loadPendingLeaves();
-                // Refresh dashboard leave counts
                 ref.read(dashboardProvider.notifier).loadDashboard();
                                   } catch (e) {
                                     _showSnack(
@@ -260,7 +259,6 @@ class _ChangedLeavesTabState
                                       pendingLeaveProvider.notifier,
                                     )
                                         .loadPendingLeaves();
-                // Refresh dashboard leave counts
                 ref.read(dashboardProvider.notifier).loadDashboard();
                                   } catch (e) {
                                     _showSnack(

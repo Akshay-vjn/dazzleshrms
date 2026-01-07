@@ -9,6 +9,7 @@ import '../../dashboard/data/models/dashboard_response.dart';
 import '../../dashboard/presentation/widgets/fade_slide_item.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
+import '../../leave/data/providers/leave_provider.dart';
 
 class LeaveManagementScreen extends ConsumerStatefulWidget {
   const LeaveManagementScreen({super.key});
@@ -29,38 +30,96 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
         ),
-        child: Stack(
-          children: [
-            // EMPTY CONTENT (FUTURE DATA)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 220,
-                child: Center(
-                  child: Text(
-                    "Used leave details will appear here",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(
-                      color: Theme.of(context).hintColor,
-                    ),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Used Leaves",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final state = ref.watch(usedLeavesProvider);
+                    return state.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (e, _) => Center(
+                        child: Text(
+                          "Failed to load data",
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                      data: (data) {
+                        if (data.records.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "No used leaves found",
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).hintColor,
+                                  ),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          itemCount: data.records.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final item = data.records[index];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                item.leaveType,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(item.date),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.statusError.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "${item.daysTaken} Day${item.daysTaken > 1 ? 's' : ''}",
+                                  style: const TextStyle(
+                                    color: AppTheme.statusError,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
-            ),
-
-            // CLOSE BUTTON
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: const Icon(Icons.close_rounded),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -295,16 +354,23 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                   if (data == null) {
                     return const Center(child: Text("No data"));
                   }
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        _buildBalanceCard(theme, data),
-                        const SizedBox(height: 24),
-                        _buildGrid(permissionState),
-                        const SizedBox(height: 80),
-                      ],
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await ref
+                          .read(dashboardProvider.notifier)
+                          .loadDashboard();
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          _buildBalanceCard(theme, data),
+                          const SizedBox(height: 24),
+                          _buildGrid(permissionState),
+                          const SizedBox(height: 80),
+                        ],
+                      ),
                     ),
                   );
                 },
