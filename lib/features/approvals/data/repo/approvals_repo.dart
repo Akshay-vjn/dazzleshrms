@@ -21,10 +21,16 @@ class LeaveApprovalRepository {
     return AppliedLeaveData.fromJson(response.data['data']);
   }
 
-  Future<LeaveActionResponse> approveLeave(int leaveRoasterId) async {
+  Future<LeaveActionResponse> approveLeave({
+    required int leaveRoasterId,
+    required List<Map<String, String>> decisions,
+  }) async {
     final response = await _dio.post(
       ApiConstants.approveLeave,
-      data: {"leaveRoasterId": leaveRoasterId},
+      data: {
+        "leaveRoasterId": leaveRoasterId,
+        "decisions": decisions,
+      },
     );
 
     return LeaveActionResponse.fromJson(response.data['data']);

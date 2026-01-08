@@ -26,12 +26,12 @@ class NotificationTile extends StatelessWidget {
         leading: Stack(
           children: [
             CircleAvatar(
-              radius: 22,
-              backgroundColor: AppTheme.PrimaryColor.withOpacity(0.12),
-              child: Icon(
-                icon,
-                color: AppTheme.PrimaryColor,
-              )
+                radius: 22,
+                backgroundColor: AppTheme.PrimaryColor.withOpacity(0.12),
+                child: Icon(
+                  icon,
+                  color: AppTheme.PrimaryColor,
+                )
             ),
             if (isUnread)
               Positioned(

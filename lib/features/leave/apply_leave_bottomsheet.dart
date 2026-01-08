@@ -262,6 +262,7 @@ class _ApplyLeaveFormSheetState
 
             ref.read(leaveProvider.notifier).loadLeaves();
             ref.read(dashboardProvider.notifier).loadDashboard();
+            ref.invalidate(usedLeavesProvider);
 
             Future.delayed(const Duration(milliseconds: 800), () {
               if (mounted) Navigator.pop(context);

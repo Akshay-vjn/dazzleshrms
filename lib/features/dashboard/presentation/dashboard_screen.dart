@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
-import '../../notifications/notification_screen.dart';
+import '../../notifications/presentation/notification_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
 import '../data/models/dashboard_response.dart';

@@ -11,9 +11,9 @@ class UsedLeaveResponse {
 
   factory UsedLeaveResponse.fromJson(Map<String, dynamic> json) {
     return UsedLeaveResponse(
-      data: UsedLeaveData.fromJson(json['data']),
-      message: json['message'],
-      error: json['error'],
+      data: UsedLeaveData.fromJson(json['data'] ?? {}),
+      message: json['message'] ?? '',
+      error: json['error'] ?? false,
     );
   }
 }
@@ -36,8 +36,10 @@ class UsedLeaveData {
       totalItems: json['totalItems'] ?? 0,
       totalPages: json['totalPages'] ?? 0,
       currentPage: json['currentPage'] ?? 1,
-      records:
-          (json['data'] as List).map((e) => UsedLeaveItem.fromJson(e)).toList(),
+      records: (json['data'] as List?)
+              ?.map((e) => UsedLeaveItem.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -45,7 +47,7 @@ class UsedLeaveData {
 class UsedLeaveItem {
   final String date;
   final String leaveType;
-  final int daysTaken; // Using int based on JSON but double might be safer if half days are possible? JSON shows 1. Assuming int for now based on example.
+  final double daysTaken;
 
   UsedLeaveItem({
     required this.date,
@@ -57,7 +59,8 @@ class UsedLeaveItem {
     return UsedLeaveItem(
       date: json['date'] ?? '',
       leaveType: json['leaveType'] ?? '',
-      daysTaken: json['daysTaken'] ?? 0,
+      daysTaken: (json['daysTaken'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
+

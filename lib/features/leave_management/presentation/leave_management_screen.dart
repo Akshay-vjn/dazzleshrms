@@ -65,7 +65,8 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                       ),
                       error: (e, _) => Center(
                         child: Text(
-                          "Failed to load data",
+                          "Error: ${e.toString()}",
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: Theme.of(context).colorScheme.error),
                         ),
                       ),
@@ -103,7 +104,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  "${item.daysTaken} Day${item.daysTaken > 1 ? 's' : ''}",
+                                  "${formatLeave(item.daysTaken)} Day${item.daysTaken > 1 ? 's' : ''}",
                                   style: const TextStyle(
                                     color: AppTheme.statusError,
                                     fontWeight: FontWeight.bold,

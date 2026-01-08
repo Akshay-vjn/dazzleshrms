@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
 import '../../dashboard/data/providers/dashboard_provider.dart';
+import '../data/models/applied_leave_model.dart';
 import '../data/providers/approvals_provider.dart';
+import 'widgets/approval_sheet.dart';
+import 'widgets/rejection_sheet.dart';
+import 'package:intl/intl.dart';
+
 
 class AppliedLeavesTab extends ConsumerStatefulWidget {
   const AppliedLeavesTab({super.key});
@@ -24,135 +29,89 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
         .loadAppliedLeaves(page: _page, limit: _limit);
   }
 
-  //approve
-  void _showApproveDialog(int leaveId) {
-    showDialog(
+  // APPROVE (Partial/Itemized)
+  void _showPartialApprovalSheet(AppliedLeaveItem item) {
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Approve Leave"),
-        content:
-        const Text("Are you sure you want to approve this leave?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-
-              try {
-                final res = await ref
-                    .read(leaveApprovalRepositoryProvider)
-                    .approveLeave(leaveId);
-
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(res.message),
-                    backgroundColor: AppTheme.statusSuccess,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-
-                _refresh();
-                // Refresh dashboard leave counts
-                ref.read(dashboardProvider.notifier).loadDashboard();
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(_extractErrorMessage(e)),
-                    backgroundColor: AppTheme.statusError,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-              }
-            },
-            child: const Text("Approve"),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ApprovalSheet(
+        employeeName: item.employeeName,
+        fromDate: item.fromDate,
+        toDate: item.toDate,
+        onSubmitted: (decisions) async {
+          Navigator.pop(context);
+          
+          // Transform map to API structure: [{ "date": "...", "action": "APPROVE/REJECT" }]
+          final apiDecisions = decisions.entries.map((e) => {
+            "date": DateFormat('yyyy-MM-dd').format(e.key),
+            "action": e.value ? "APPROVE" : "REJECT"
+          }).toList();
+          
+          try {
+            final res = await ref.read(leaveApprovalRepositoryProvider).approveLeave(
+              leaveRoasterId: item.leaveRoasterId,
+              decisions: apiDecisions,
+            );
+            _handleSuccess(res.message);
+          } catch (e) {
+            _handleError(e);
+          }
+        },
       ),
     );
   }
 
-  // REJECT
-  void _showRejectDialog(int leaveId) {
-    final ctrl = TextEditingController();
+  void _handleSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.statusSuccess,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+    _refresh();
+    ref.read(dashboardProvider.notifier).loadDashboard();
+  }
 
-    showDialog(
+  void _handleError(dynamic e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_extractErrorMessage(e)),
+        backgroundColor: AppTheme.statusError,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  // REJECT (Bottom Sheet)
+  void _showRejectSheet(AppliedLeaveItem item) {
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Reject Leave"),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(
-            hintText: "Enter reject reason",
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (ctrl.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                    Text("Please provide a rejection reason"),
-                    backgroundColor: AppTheme.statusError,
-                    behavior: SnackBarBehavior.floating,
-                    margin: EdgeInsets.all(16),
-                  ),
-                );
-                return;
-              }
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => RejectionSheet(
+        employeeName: item.employeeName,
+        onSubmitted: (reason) async {
+          Navigator.pop(context);
 
-              Navigator.pop(context);
+          try {
+            final res = await ref
+                .read(leaveApprovalRepositoryProvider)
+                .rejectLeave(
+              leaveRoasterId: item.leaveRoasterId,
+              reason: reason,
+            );
 
-              try {
-                final res = await ref
-                    .read(leaveApprovalRepositoryProvider)
-                    .rejectLeave(
-                  leaveRoasterId: leaveId,
-                  reason: ctrl.text.trim(),
-                );
-
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(res.message),
-                    backgroundColor: AppTheme.statusError,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-
-                _refresh();
-                ref.read(dashboardProvider.notifier).loadDashboard();
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(_extractErrorMessage(e)),
-                    backgroundColor: AppTheme.statusError,
-                    behavior: SnackBarBehavior.floating,
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-              }
-            },
-            child: const Text("Reject"),
-          ),
-        ],
+            _handleSuccess(res.message);
+          } catch (e) {
+            _handleError(e);
+          }
+        },
       ),
     );
   }
@@ -276,8 +235,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () =>
-                                _showRejectDialog(
-                                    item.leaveRoasterId),
+                                _showRejectSheet(item),
                             child: const Text("Reject"),
                           ),
                         ),
@@ -285,8 +243,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                         Expanded(
                           child: FilledButton(
                             onPressed: () =>
-                                _showApproveDialog(
-                                    item.leaveRoasterId),
+                                _showPartialApprovalSheet(item),
                             child: const Text("Approve"),
                           ),
                         ),

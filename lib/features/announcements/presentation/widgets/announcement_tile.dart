@@ -30,8 +30,9 @@ class AnnouncementTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.brightness == Brightness.dark
-            ? AppTheme.surfaceDarkVariant
+            ? AppTheme.surfaceDark
             : AppTheme.surfaceLight,
+
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.PrimaryColor.withOpacity(0.1),
@@ -49,8 +50,10 @@ class AnnouncementTile extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: theme.brightness == Brightness.dark
-                      ? AppTheme.iconBgDark
-                      : (iconColor ?? AppTheme.iconPrimary).withOpacity(0.1),
+                      ? AppTheme.PrimaryColor.withOpacity(0.15)
+                      : (iconColor ?? AppTheme.iconPrimary).withOpacity(0.12),
+
+
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

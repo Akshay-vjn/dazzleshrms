@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dazzleshrms/features/announcements/data/providers/announcement_provider.dart';
 
+import '../../../core/app_theme/app_theme.dart';
+
 class EmployeeAnnouncementScreen extends ConsumerWidget {
   const EmployeeAnnouncementScreen({super.key});
 
@@ -29,7 +31,9 @@ class EmployeeAnnouncementScreen extends ConsumerWidget {
               final announcement = data.records[index];
               return Card(
                 elevation: 0,
-                color: theme.colorScheme.surface,
+                color: theme.brightness == Brightness.dark
+                    ? AppTheme.surfaceDark
+                    : AppTheme.surfaceLight,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),

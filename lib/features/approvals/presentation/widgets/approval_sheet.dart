@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../core/app_theme/app_theme.dart';
+
+class ApprovalSheet extends StatefulWidget {
+  final String employeeName;
+  final String fromDate;
+  final String toDate;
+  final Function(Map<DateTime, bool> decisions) onSubmitted;
+
+  const ApprovalSheet({
+    super.key,
+    required this.employeeName,
+    required this.fromDate,
+    required this.toDate,
+    required this.onSubmitted,
+  });
+
+  @override
+  State<ApprovalSheet> createState() => _ApprovalSheetState();
+}
+
+class _ApprovalSheetState extends State<ApprovalSheet> {
+  late Map<DateTime, bool> daySelections;
+  late List<DateTime> allDays;
+
+  @override
+  void initState() {
+    super.initState();
+    final start = DateTime.parse(widget.fromDate);
+    final end = DateTime.parse(widget.toDate);
+    allDays = _getDaysInRange(start, end);
+    // Default all days to 'true' (Approved)
+    daySelections = {for (var day in allDays) day: true};
+  }
+
+  List<DateTime> _getDaysInRange(DateTime from, DateTime to) {
+    List<DateTime> days = [];
+    for (int i = 0; i <= to.difference(from).inDays; i++) {
+      days.add(from.add(Duration(days: i)));
+    }
+    return days;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Approval",
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.PrimaryColor.withOpacity(0.12),
+                ),
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                  color: AppTheme.PrimaryColor,
+                  splashRadius: 22,
+                ),
+              ),
+
+            ],
+          ),
+          // Text(
+          //   "For ${widget.employeeName}",
+          //   style: theme.textTheme.bodyMedium?.copyWith(
+          //     color: AppTheme.PrimaryColor,
+          //     fontWeight: FontWeight.w600,
+          //   ),
+          // ),
+          const SizedBox(height: 8),
+
+          const SizedBox(height: 20),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4,
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: allDays.length,
+              separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+              itemBuilder: (context, index) {
+                final day = allDays[index];
+                final isApproved = daySelections[day]!;
+
+                return SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    DateFormat('EEEE, d MMM yyyy').format(day),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    isApproved ? "Approved" : "Rejected",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isApproved ? AppTheme.statusSuccess : AppTheme.statusError,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  value: isApproved,
+                  activeColor: AppTheme.statusSuccess,
+                  inactiveThumbColor: AppTheme.statusError,
+                  inactiveTrackColor: AppTheme.statusError.withOpacity(0.2),
+                  onChanged: (val) => setState(() => daySelections[day] = val),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => widget.onSubmitted(daySelections),
+                  child: const Text("Approve"),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

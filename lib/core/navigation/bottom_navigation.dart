@@ -1,7 +1,7 @@
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
-import '../../features/notifications/notification_screen.dart';
+import '../../features/notifications/presentation/notification_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/announcements/presentation/employee_announcement_screen.dart';
 
