@@ -160,16 +160,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         DashboardGridItem(
           icon: Icons.campaign_rounded,
           label: "Announcements",
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AnnouncementScreen()),
-          ),
+          onTap: () => context.pushNamed('announcement'),
           animation: _controller,
           intervalStart: 0.2,
-          gradientStart: AppTheme.gridGradient2Start,
-          gradientEnd: AppTheme.gridGradient2End,
+          gradientStart: AppTheme.dTeal,
+          gradientEnd: AppTheme.dGreen,
           iconColor: AppTheme.gridIconColor,
         ),
+
       ],
     );
   }

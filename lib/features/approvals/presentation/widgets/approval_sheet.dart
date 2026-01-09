@@ -7,7 +7,7 @@ class ApprovalSheet extends StatefulWidget {
   final String employeeName;
   final String fromDate;
   final String toDate;
-  final Function(Map<DateTime, bool> decisions) onSubmitted;
+  final Function(Map<DateTime, bool> decisions, String? reason) onSubmitted;
 
   const ApprovalSheet({
     super.key,
@@ -24,6 +24,7 @@ class ApprovalSheet extends StatefulWidget {
 class _ApprovalSheetState extends State<ApprovalSheet> {
   late Map<DateTime, bool> daySelections;
   late List<DateTime> allDays;
+  final TextEditingController reasonCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -35,6 +36,12 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     daySelections = {for (var day in allDays) day: true};
   }
 
+  @override
+  void dispose() {
+    reasonCtrl.dispose();
+    super.dispose();
+  }
+
   List<DateTime> _getDaysInRange(DateTime from, DateTime to) {
     List<DateTime> days = [];
     for (int i = 0; i <= to.difference(from).inDays; i++) {
@@ -42,6 +49,8 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     }
     return days;
   }
+
+  bool get _hasRejectedDays => daySelections.values.any((isApproved) => !isApproved);
 
   @override
   Widget build(BuildContext context) {
@@ -84,53 +93,71 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
                   splashRadius: 22,
                 ),
               ),
-
             ],
           ),
-          // Text(
-          //   "For ${widget.employeeName}",
-          //   style: theme.textTheme.bodyMedium?.copyWith(
-          //     color: AppTheme.PrimaryColor,
-          //     fontWeight: FontWeight.w600,
-          //   ),
-          // ),
           const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: allDays.length,
+                    separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+                    itemBuilder: (context, index) {
+                      final day = allDays[index];
+                      final isApproved = daySelections[day]!;
 
-          const SizedBox(height: 20),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.4,
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: allDays.length,
-              separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
-              itemBuilder: (context, index) {
-                final day = allDays[index];
-                final isApproved = daySelections[day]!;
-
-                return SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    DateFormat('EEEE, d MMM yyyy').format(day),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                      return SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          DateFormat('EEEE, d MMM yyyy').format(day),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          isApproved ? "Approved" : "Rejected",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isApproved ? AppTheme.statusSuccess : AppTheme.statusError,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        value: isApproved,
+                        activeColor: AppTheme.statusSuccess,
+                        inactiveThumbColor: AppTheme.statusError,
+                        inactiveTrackColor: AppTheme.statusError.withOpacity(0.2),
+                        onChanged: (val) => setState(() => daySelections[day] = val),
+                      );
+                    },
                   ),
-                  subtitle: Text(
-                    isApproved ? "Approved" : "Rejected",
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isApproved ? AppTheme.statusSuccess : AppTheme.statusError,
-                      fontWeight: FontWeight.bold,
+                  if (_hasRejectedDays) ...[
+                    const SizedBox(height: 20),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Rejection Reason",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: reasonCtrl,
+                          maxLines: 2,
+                          decoration: const InputDecoration(
+                            hintText: "Enter reason for rejection",
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  value: isApproved,
-                  activeColor: AppTheme.statusSuccess,
-                  inactiveThumbColor: AppTheme.statusError,
-                  inactiveTrackColor: AppTheme.statusError.withOpacity(0.2),
-                  onChanged: (val) => setState(() => daySelections[day] = val),
-                );
-              },
+                  ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -145,8 +172,20 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => widget.onSubmitted(daySelections),
-                  child: const Text("Approve"),
+                  onPressed: () {
+                    if (_hasRejectedDays && reasonCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please enter a reason for rejection"),
+                          backgroundColor: AppTheme.statusError,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+                    widget.onSubmitted(daySelections, _hasRejectedDays ? reasonCtrl.text.trim() : null);
+                  },
+                  child: const Text("Submit"),
                 ),
               ),
             ],

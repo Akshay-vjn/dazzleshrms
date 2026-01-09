@@ -39,7 +39,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
         employeeName: item.employeeName,
         fromDate: item.fromDate,
         toDate: item.toDate,
-        onSubmitted: (decisions) async {
+        onSubmitted: (decisions, reason) async {
           Navigator.pop(context);
           
           // Transform map to API structure: [{ "date": "...", "action": "APPROVE/REJECT" }]
@@ -52,6 +52,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
             final res = await ref.read(leaveApprovalRepositoryProvider).approveLeave(
               leaveRoasterId: item.leaveRoasterId,
               decisions: apiDecisions,
+              reason: reason,
             );
             _handleSuccess(res.message);
           } catch (e) {

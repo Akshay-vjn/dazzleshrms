@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/features/announcements/presentation/announcement_screen.dart';
 import 'package:dazzleshrms/features/approvals/presentation/approval_screen.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
@@ -67,6 +68,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/leave-management',
         name: 'leave_management',
         builder: (context, state) => const LeaveManagementScreen(),
+      ),
+      GoRoute(
+        path: '/announcement',
+        name: 'announcement',
+        builder: (context, state) => const AnnouncementScreen(),
       ),
     ],
   );

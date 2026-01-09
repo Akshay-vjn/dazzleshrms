@@ -4,11 +4,13 @@ import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 class BalanceBox extends StatefulWidget {
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   const BalanceBox({
     super.key,
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   @override
@@ -49,7 +51,7 @@ class _BalanceBoxState extends State<BalanceBox> {
             });
           },
 
-          onTap: () {},
+          onTap: widget.onTap,
 
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),

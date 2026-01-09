@@ -46,6 +46,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
     switch (status) {
       case "Approved":
         return AppTheme.statusSuccess;
+      case "Partially Approved":
+        return Colors.blue;
       case "Rejected":
         return AppTheme.statusError;
       case "Applied":
@@ -53,6 +55,115 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
       default:
         return Colors.grey;
     }
+  }
+
+  String formatLeave(double value) {
+    if (value % 1 == 0) return value.toInt().toString();
+    return value.toStringAsFixed(1);
+  }
+
+  void _showUsedLeavesDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Used Leaves",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final state = ref.watch(usedLeavesProvider);
+                    return state.when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (e, _) => Center(
+                        child: Text(
+                          "Error: ${e.toString()}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                      data: (data) {
+                        if (data.records.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "No used leaves found",
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).hintColor,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          itemCount: data.records.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final item = data.records[index];
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                item.leaveType,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(item.date),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.statusError.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "${formatLeave(item.daysTaken)} Day${item.daysTaken > 1 ? 's' : ''}",
+                                  style: const TextStyle(
+                                    color: AppTheme.statusError,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -152,7 +263,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                     BalanceBox(
                       label: "Used",
                       value: leaveData.summary.usedLeaves.toString(),
+                      onTap: () => _showUsedLeavesDialog(),
                     ),
+
                     const SizedBox(width: 12),
                     BalanceBox(
                       label: "Balance",
@@ -176,24 +289,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // PopupMenuButton<String>(
-                    //   itemBuilder: (_) => const [
-                    //     PopupMenuItem(value: "all", child: Text("Show All")),
-                    //     PopupMenuItem(
-                    //         value: "date", child: Text("Filter by Date")),
-                    //   ],
-                    //   child: TextButton.icon(
-                    //     onPressed: null,
-                    //     icon: Icon(
-                    //       Icons.keyboard_arrow_down_rounded,
-                    //       color: Theme.of(context).textTheme.titleMedium?.color,
-                    //     ),
-                    //     label: Text(
-                    //       "Show All",
-                    //       style: Theme.of(context).textTheme.titleMedium,
-                    //     ),
-                    //   ),
-                    // ),
                   ],
                 ),
 
@@ -208,11 +303,15 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
 
                 ...leaveData.records.map((leave) {
                   final color = _statusColor(leave.status);
+                  final hasRejectInfo = (leave.rejectReason != null &&
+                      leave.rejectReason!.trim().isNotEmpty) ||
+                      leave.rejectedDates.isNotEmpty;
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+                      color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -224,74 +323,128 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              bottomLeft: Radius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 4,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Leave type and status row
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
                                   leave.leaveType,
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 16,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "${leave.fromDate} → ${leave.toDate}",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outline
-                                            .withOpacity(0.8),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                leave.status,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: color,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Date range
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 15,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  "${leave.fromDate} → ${leave.toDate}",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Reject reason and dates (if any)
+                          if (hasRejectInfo) ...[
+                            const SizedBox(height: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (leave.rejectReason != null &&
+                                    leave.rejectReason!.trim().isNotEmpty) ...[
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 14,
+                                        color: AppTheme.statusError,
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          leave.rejectReason!,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.statusError.withOpacity(0.9),
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (leave.rejectedDates.isNotEmpty) ...[
+                                  if (leave.rejectReason != null &&
+                                      leave.rejectReason!.trim().isNotEmpty)
+                                    const SizedBox(height: 6),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.event_busy,
+                                        size: 14,
+                                        color: AppTheme.statusError,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          "Rejected: ${leave.rejectedDates.join(', ')}",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.statusError.withOpacity(0.85),
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: Text(
-                            leave.status,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: color,
-                            ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),

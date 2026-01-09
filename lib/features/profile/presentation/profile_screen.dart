@@ -364,7 +364,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             margin: const EdgeInsets.fromLTRB(16, 100, 16, 0),
                             padding: const EdgeInsets.fromLTRB(16, 56, 16, 20),
                             decoration: BoxDecoration(
-                              color: theme.cardColor,
+                              color: AppTheme.surfaceBlack,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: theme.dividerColor.withOpacity(0.1),
@@ -386,6 +386,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     style:
                                     theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
+                                      color: Colors.white
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

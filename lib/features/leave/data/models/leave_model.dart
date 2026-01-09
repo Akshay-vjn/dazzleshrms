@@ -65,8 +65,8 @@ class LeaveItem {
   final String toDate;
   final String leaveType;
   final String status;
-  final String? approvedBy;
-  final String? rejectedBy;
+  final String? rejectReason;
+  final List<String> rejectedDates;
 
   LeaveItem({
     required this.leaveRoasterId,
@@ -74,8 +74,8 @@ class LeaveItem {
     required this.toDate,
     required this.leaveType,
     required this.status,
-    this.approvedBy,
-    this.rejectedBy,
+    this.rejectReason,
+    required this.rejectedDates,
   });
 
   factory LeaveItem.fromJson(Map<String, dynamic> json) {
@@ -85,8 +85,8 @@ class LeaveItem {
       toDate: json['toDate'],
       leaveType: json['leaveType'],
       status: json['status'],
-      approvedBy: json['approvedBy'],
-      rejectedBy: json['rejectedBy'],
+      rejectReason: json['rejectReason'],
+      rejectedDates: (json['rejectedDates'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 }

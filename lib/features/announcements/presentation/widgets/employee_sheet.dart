@@ -79,7 +79,7 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
                     : null,
                 filled: true,
                 fillColor: isDark
-                    ? AppTheme.surfaceDarkVariant
+                    ? AppTheme.surfaceBlack
                     : AppTheme.surfaceLight,
                 contentPadding:
                 const EdgeInsets.symmetric(vertical: 12),

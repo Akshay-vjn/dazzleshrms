@@ -24,12 +24,14 @@ class LeaveApprovalRepository {
   Future<LeaveActionResponse> approveLeave({
     required int leaveRoasterId,
     required List<Map<String, String>> decisions,
+    String? reason,
   }) async {
     final response = await _dio.post(
       ApiConstants.approveLeave,
       data: {
         "leaveRoasterId": leaveRoasterId,
         "decisions": decisions,
+        if (reason != null) "rejectReason": reason,
       },
     );
 

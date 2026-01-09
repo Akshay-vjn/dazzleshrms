@@ -15,6 +15,7 @@ class AppTheme {
   static const Color surfaceDark = Color(0xFF2C2C2C);
   static const Color surfaceDarkVariant = Color(0xFF1E293B);
   static const Color bottomBg = Color(0xFF151515);
+  static const Color surfaceBlack = Color(0xFF0F0F0F);
 
 
 
@@ -50,7 +51,20 @@ class AppTheme {
   static const Color gridGradient2End   = Color(0xFFF59E0B); // Amber
 
   static const Color gridGradient3Start = Color(0xFF7C3AED); // Purple
-  static const Color gridGradient3End   = Color(0xFFA855F7); // Light Purple
+  static const Color gridGradient3End   = Color(0xFFA855F7);// Light Purple
+
+  //DARK THEME GRIDCOLORS
+  static const Color dGreen = Color(0xFF9DB8A0);
+  static const Color dBlue = Color(0xFF4A6FA5);
+  static const Color dTeal = Color(0xFF2F6F73);
+  static const Color dGrid1 = Color(0xFF8E7DBE);
+  static const Color dGrid2 = Color(0xFF8B7E74);
+
+
+
+
+
+
 
 
   static const Color gridIconColor= Color(0xFFECFEFF);
@@ -271,7 +285,7 @@ class AppTheme {
     return InputDecorationTheme(
       filled: true,
       fillColor: brightness == Brightness.dark
-          ? surfaceDarkVariant
+          ? surfaceBlack
           : surfaceLight,
 
       contentPadding: const EdgeInsets.symmetric(
