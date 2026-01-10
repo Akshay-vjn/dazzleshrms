@@ -30,6 +30,7 @@ class PendingLeaveItem {
   final int employeeId;
   final String employeeName;
   final String storeName;
+  final String designation;
   final String date;
   final String changesFrom;
   final String changesTo;
@@ -41,6 +42,7 @@ class PendingLeaveItem {
     required this.employeeId,
     required this.employeeName,
     required this.storeName,
+    required this.designation,
     required this.date,
     required this.changesFrom,
     required this.changesTo,
@@ -54,6 +56,7 @@ class PendingLeaveItem {
       employeeId: json['employeeId'],
       employeeName: json['employeeName'] ?? '',
       storeName: json['storeName'] ?? '',
+      designation: json['designation'] ?? '',
       date: json['date'],
       changesFrom: json['changesFrom'] ?? '',
       changesTo: json['changesTo'] ?? '',

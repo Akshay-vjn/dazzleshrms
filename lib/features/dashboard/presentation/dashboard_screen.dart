@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
+import '../../../core/permissions/permission.dart';
 import '../../notifications/presentation/notification_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
@@ -11,6 +12,7 @@ import '../data/models/dashboard_response.dart';
 import 'widgets/fade_slide_item.dart';
 import 'widgets/dashboard_grid.dart';
 import 'widgets/dashboard_grid_item.dart';
+import '../../../core/permissions/permission_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -143,7 +145,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
 
-  Widget _buildGrid() {
+  Widget _buildGrid(Set<String> permissions) {
     return DashboardGrid(
       animation: _controller,
       items: [
@@ -157,7 +159,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
-        DashboardGridItem(
+        if (permissions.contains(Permissions.viewAnnouncements))
+          DashboardGridItem(
           icon: Icons.campaign_rounded,
           label: "Announcements",
           onTap: () => context.pushNamed('announcement'),
@@ -177,6 +180,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardProvider);
     final theme = Theme.of(context);
+    final permissions = ref.watch(permissionProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -201,7 +205,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         children: [
                           _buildJobtitleCard(theme, data),
                           const SizedBox(height: 24),
-                          _buildGrid(),
+                          _buildGrid(permissions),
                           const SizedBox(height: 80),
                         ],
                       ),

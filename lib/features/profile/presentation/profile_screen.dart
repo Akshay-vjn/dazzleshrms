@@ -182,7 +182,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final theme = Theme.of(context);
     final themeNotifier = ref.read(themeModeProvider.notifier);
     final profileState = ref.watch(profileProvider);
-
+    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -364,7 +364,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             margin: const EdgeInsets.fromLTRB(16, 100, 16, 0),
                             padding: const EdgeInsets.fromLTRB(16, 56, 16, 20),
                             decoration: BoxDecoration(
-                              color: AppTheme.surfaceBlack,
+                              color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: theme.dividerColor.withOpacity(0.1),

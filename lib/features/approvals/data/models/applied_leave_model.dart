@@ -4,6 +4,7 @@ class AppliedLeaveItem {
   final String employeeName;
   final String? empCode;
   final String? store;
+  final String? designation;
   final String fromDate;
   final String toDate;
   final String leaveType;
@@ -16,6 +17,7 @@ class AppliedLeaveItem {
     required this.employeeName,
     required this.empCode,
     required this.store,
+    required this.designation,
     required this.fromDate,
     required this.toDate,
     required this.leaveType,
@@ -30,6 +32,7 @@ class AppliedLeaveItem {
       employeeName: json['employeeName'],
       empCode: json['empCode'],
       store: json['store'],
+      designation: json['designation'],
       fromDate: json['fromDate'],
       toDate: json['toDate'],
       leaveType: json['leaveType'],

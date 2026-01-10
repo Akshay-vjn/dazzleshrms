@@ -63,6 +63,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   }
 
   void _showUsedLeavesDialog() {
+    // Invalidate the provider to force a fresh fetch when dialog opens
+    ref.invalidate(usedLeavesProvider);
+    
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -104,10 +107,22 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                         child: CircularProgressIndicator(),
                       ),
                       error: (e, _) => Center(
-                        child: Text(
-                          "Error: ${e.toString()}",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Error: ${e.toString()}",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Theme.of(context).colorScheme.error),
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed: () {
+                                ref.invalidate(usedLeavesProvider);
+                              },
+                              child: const Text("Retry"),
+                            ),
+                          ],
                         ),
                       ),
                       data: (data) {

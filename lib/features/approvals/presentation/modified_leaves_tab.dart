@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/app_theme/app_theme.dart';
+
 import '../../dashboard/data/providers/dashboard_provider.dart';
-import '../data/models/applied_leave_model.dart';
+import '../data/providers/changed_leave_provider.dart';
+import '../data/providers/changedtab_actions_provider.dart';
 import '../data/models/designation_model.dart';
 import '../../announcements/data/models/store_model.dart';
 import '../data/providers/approvals_provider.dart';
-import 'widgets/approval_sheet.dart';
-import 'widgets/rejection_sheet.dart';
-import 'package:intl/intl.dart';
 
-
-class AppliedLeavesTab extends ConsumerStatefulWidget {
-  const AppliedLeavesTab({super.key});
+class ChangedLeavesTab extends ConsumerStatefulWidget {
+  const ChangedLeavesTab({super.key});
 
   @override
-  ConsumerState<AppliedLeavesTab> createState() =>
-      _LeaveAppliedTabState();
+  ConsumerState<ChangedLeavesTab> createState() =>
+      _ChangedLeavesTabState();
 }
 
-class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
+class _ChangedLeavesTabState
+    extends ConsumerState<ChangedLeavesTab> {
   int _page = 1;
   final int _limit = 10;
   int? _selectedDesignationId;
@@ -30,121 +28,15 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
   @override
   void initState() {
     super.initState();
-    ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
-      page: _page,
-      limit: _limit,
-      designationId: _selectedDesignationId,
-      storeId: _selectedStoreId,
-    );
-  }
 
-  // APPROVE (Partial/Itemized)
-  void _showPartialApprovalSheet(AppliedLeaveItem item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ApprovalSheet(
-        employeeName: item.employeeName,
-        fromDate: item.fromDate,
-        toDate: item.toDate,
-        onSubmitted: (decisions, reason) async {
-          Navigator.pop(context);
-
-          final apiDecisions = decisions.entries.map((e) => {
-            "date": DateFormat('yyyy-MM-dd').format(e.key),
-            "action": e.value ? "APPROVE" : "REJECT"
-          }).toList();
-
-          try {
-            final res = await ref.read(leaveApprovalRepositoryProvider).approveLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              decisions: apiDecisions,
-              reason: reason,
-            );
-            _handleSuccess(res.message);
-          } catch (e) {
-            _handleError(e);
-          }
-        },
-      ),
-    );
-  }
-
-  void _handleSuccess(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.statusSuccess,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-    _refresh();
-    ref.read(dashboardProvider.notifier).loadDashboard();
-  }
-
-  void _handleError(dynamic e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_extractErrorMessage(e)),
-        backgroundColor: AppTheme.statusError,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  void _showRejectSheet(AppliedLeaveItem item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => RejectionSheet(
-        employeeName: item.employeeName,
-        onSubmitted: (reason) async {
-          Navigator.pop(context);
-
-          try {
-            final res = await ref
-                .read(leaveApprovalRepositoryProvider)
-                .rejectLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              reason: reason,
-            );
-
-            _handleSuccess(res.message);
-          } catch (e) {
-            _handleError(e);
-          }
-        },
-      ),
-    );
-  }
-
-  String _extractErrorMessage(dynamic error) {
-    final errorStr = error.toString();
-
-    if (errorStr.contains('message:')) {
-      final regex = RegExp(r'message:\s*([^,}]+)');
-      final match = regex.firstMatch(errorStr);
-      if (match != null && match.group(1) != null) {
-        return match.group(1)!.trim();
-      }
-    }
-
-    if (errorStr.startsWith('Exception: ')) {
-      return errorStr.replaceFirst('Exception: ', '');
-    }
-
-    return errorStr;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refresh();
+    });
   }
 
   Future<void> _refresh() async {
     _page = 1;
-    await ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
+    await ref.read(pendingLeaveProvider.notifier).loadPendingLeaves(
       page: _page,
       limit: _limit,
       designationId: _selectedDesignationId,
@@ -154,7 +46,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
 
   void _onFilterChanged() {
     _page = 1;
-    ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
+    ref.read(pendingLeaveProvider.notifier).loadPendingLeaves(
       page: _page,
       limit: _limit,
       designationId: _selectedDesignationId,
@@ -330,26 +222,60 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
     );
   }
 
+  void _showSnack(BuildContext context, String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _confirmAction({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(leaveApprovalProvider);
+    final state = ref.watch(pendingLeaveProvider);
 
     return Column(
       children: [
         _buildFilters(),
         Expanded(
           child: state.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => RefreshIndicator(
-              onRefresh: _refresh,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  child: Center(child: Text(_extractErrorMessage(e))),
-                ),
-              ),
-            ),
+            loading: () =>
+            const Center(child: CircularProgressIndicator()),
+
+            error: (e, _) =>
+                Center(child: Text(e.toString())),
+
             data: (data) {
               if (data == null || data.records.isEmpty) {
                 return RefreshIndicator(
@@ -358,79 +284,197 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
                       height: MediaQuery.of(context).size.height * 0.6,
-                      child: const Center(child: Text("No applied leaves")),
+                      child: const Center(child: Text("No changed leaves")),
                     ),
                   ),
                 );
               }
-
-              final items = data.records;
 
               return RefreshIndicator(
                 onRefresh: _refresh,
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemCount: data.records.length,
+                  separatorBuilder: (_, __) =>
+                  const SizedBox(height: 12),
                   itemBuilder: (context, i) {
-                    final item = items[i];
+                    final item = data.records[i];
 
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.employeeName,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            item.date,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium,
                           ),
-                          const SizedBox(height: 4),
-                          if (item.store != null)
-                            Text(
-                              "STORE: ${item.store}",
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
+
+                          const SizedBox(height: 6),
+
+                          Text(
+                            item.employeeName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Store: ${item.storeName}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                              color: Theme.of(context).hintColor,
                             ),
-                          if (item.empCode != null)
-                            Text(
-                              "EmpCode: ${item.empCode}",
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                            ),
+                          ),
                           if (item.designation != null)
                             Text(
                               "Designation:${item.designation}",
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                             ),
-                            ),
+
+                          const SizedBox(height: 10),
+
+                          Row(
+                            children: [
+                              Text(
+                                item.changesFrom,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6),
+                                child: Icon(
+                                  Icons.arrow_forward,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                item.changesTo,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+
                           const SizedBox(height: 6),
+
                           Text(
-                            "${item.fromDate} → ${item.toDate}",
+                            "Days Taken: ${item.daysTaken}",
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          const SizedBox(height: 6),
-                          Text("Type: ${item.leaveType}"),
-                          const SizedBox(height: 12),
+
+                          const SizedBox(height: 14),
+
                           Row(
                             children: [
                               Expanded(
                                 child: OutlinedButton(
-                                  onPressed: () => _showRejectSheet(item),
+                                  onPressed: () {
+                                    _confirmAction(
+                                      context: context,
+                                      title: "Reject Change",
+                                      message:
+                                      "Reject this leave modification request?",
+                                      onConfirm: () async {
+                                        try {
+                                          final res = await ref
+                                              .read(
+                                            changedTabRepositoryProvider,
+                                          )
+                                              .rejectChange(item.logId);
+
+                                          if (!mounted) return;
+
+                                          _showSnack(
+                                            context,
+                                            res.message,
+                                            Colors.red,
+                                          );
+
+                                          _refresh();
+                                          ref.read(dashboardProvider.notifier).loadDashboard();
+                                        } catch (e) {
+                                          _showSnack(
+                                            context,
+                                            e
+                                                .toString()
+                                                .replaceFirst(
+                                              'Exception: ',
+                                              '',
+                                            ),
+                                            Colors.red,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
                                   child: const Text("Reject"),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: () => _showPartialApprovalSheet(item),
+                                  onPressed: () {
+                                    _confirmAction(
+                                      context: context,
+                                      title: "Approve Change",
+                                      message:
+                                      "Approve this leave modification request?",
+                                      onConfirm: () async {
+                                        try {
+                                          final res = await ref
+                                              .read(
+                                            changedTabRepositoryProvider,
+                                          )
+                                              .approveChange(item.logId);
+
+                                          if (!mounted) return;
+
+                                          _showSnack(
+                                            context,
+                                            res.message,
+                                            Colors.green,
+                                          );
+
+                                          _refresh();
+                                          ref.read(dashboardProvider.notifier).loadDashboard();
+                                        } catch (e) {
+                                          _showSnack(
+                                            context,
+                                            e
+                                                .toString()
+                                                .replaceFirst(
+                                              'Exception: ',
+                                              '',
+                                            ),
+                                            Colors.red,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
                                   child: const Text("Approve"),
                                 ),
                               ),

@@ -1,8 +1,8 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/changed_leaves_model.dart';
-import '../repo/changed_leave_repo.dart';
+import '../models/modified_leaves_model.dart';
+import '../repo/modified_leave_repo.dart';
 
 
 final pendingLeaveRepositoryProvider =
@@ -27,12 +27,16 @@ class PendingLeaveNotifier
   Future<void> loadPendingLeaves({
     int page = 1,
     int limit = 10,
+    int? designationId,
+    int? storeId,
   }) async {
     state = const AsyncLoading();
     try {
       final res = await _repo.fetchPendingLeaves(
         page: page,
         limit: limit,
+        designationId: designationId,
+        storeId: storeId,
       );
       state = AsyncData(res);
     } catch (e, st) {

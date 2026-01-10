@@ -26,6 +26,7 @@ class ApiConstants {
   static const String usedLeaves = "/leave/used";
   static const String getEmployeeAnnouncements = "/announcement/employee";
   static const String notifications = "/notification";
+  static const String designations = "/designations";
 
 
 

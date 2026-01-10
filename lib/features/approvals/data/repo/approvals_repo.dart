@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
+import '../../../announcements/data/models/store_model.dart';
 import '../models/applied_leave_model.dart';
+import '../models/designation_model.dart';
 
 class LeaveApprovalRepository {
   final Dio _dio = ApiConfig.dio;
@@ -9,12 +11,16 @@ class LeaveApprovalRepository {
   Future<AppliedLeaveData> fetchAppliedLeaves({
     required int page,
     required int limit,
+    int? designationId,
+    int? storeId,
   }) async {
     final response = await _dio.get(
       ApiConstants.appliedLeaves,
       queryParameters: {
         "page": page,
         "limit": limit,
+        if (designationId != null) "designation": designationId,
+        if (storeId != null) "store": storeId,
       },
     );
 
@@ -51,5 +57,25 @@ class LeaveApprovalRepository {
     );
 
     return LeaveActionResponse.fromJson(response.data['data']);
+  }
+
+  Future<List<Designation>> fetchDesignations() async {
+    try {
+      final response = await _dio.get(ApiConstants.designations);
+      return DesignationResponse.fromJson(response.data).data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? 'Failed to fetch designations';
+      throw (message);
+    }
+  }
+
+  Future<List<Store>> fetchStores() async {
+    try {
+      final response = await _dio.get(ApiConstants.stores);
+      return StoreResponse.fromJson(response.data).data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? 'Failed to fetch stores';
+      throw (message);
+    }
   }
 }

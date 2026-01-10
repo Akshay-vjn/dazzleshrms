@@ -35,12 +35,25 @@ class LeaveRepository {
       },
     );
 
-    if (response.data == null || response.data['error'] == true) {
-      throw Exception(
-          response.data?['message'] ?? "Failed to fetch used leaves");
+    if (response.data == null) {
+      throw Exception("Failed to fetch used leaves: No response data");
     }
 
-    return UsedLeaveResponse.fromJson(response.data).data;
+    if (response.data['error'] == true) {
+      throw Exception(
+          response.data['message'] ?? "Failed to fetch used leaves");
+    }
+
+    try {
+      return UsedLeaveResponse.fromJson(response.data).data;
+    } catch (e) {
+      return UsedLeaveData(
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: page,
+        records: [],
+      );
+    }
   }
 }
 

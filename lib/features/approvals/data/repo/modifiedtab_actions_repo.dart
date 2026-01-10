@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
-import '../models/changedtab_actions_model.dart';
+import '../models/modifiedtab_actions_model.dart';
 
 class ChangedTabRepository {
 
