@@ -23,7 +23,6 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   void _showUsedLeavesDialog() {
-    // Invalidate the provider to force a fresh fetch when dialog opens
     ref.invalidate(usedLeavesProvider);
     
     showDialog(
@@ -146,10 +145,9 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000), // Extended slightly
+      duration: const Duration(milliseconds: 1000),
     );
 
-    // Delay animation to allow screen transition to finish
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         _controller.forward();

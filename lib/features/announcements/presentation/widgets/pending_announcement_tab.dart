@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/pending_announcement_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'announcement_tile.dart';
 
 class PendingAnnouncementsTab extends ConsumerStatefulWidget {
@@ -68,6 +69,45 @@ class _PendingAnnouncementsTabState
                   _infoText(context, "Store", item.storeName),
                   _infoText(context, "Employee", item.employeeName),
                   _infoText(context, "Created By", item.createdByName),
+                  if (item.attachment != null &&
+                      item.attachment!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: InkWell(
+                        onTap: () async {
+                          final url = Uri.parse(item.attachment!);
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url,
+                                mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.picture_as_pdf,
+                                  size: 16, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text(
+                                "View Attachment PDF",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
 

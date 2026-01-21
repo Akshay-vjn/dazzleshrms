@@ -14,6 +14,7 @@ class AnnouncementRepository {
     required String announcement,
     int? storeId,
     int? employeeId,
+    String? attachmentPath,
   }) async {
     try {
       final Map<String, dynamic> data = {
@@ -22,15 +23,24 @@ class AnnouncementRepository {
       };
 
       if (storeId != null) {
-        data["storeId"] = storeId;
+        data["storeId"] = storeId.toString();
       }
       if (employeeId != null) {
-        data["employeeId"] = employeeId;
+        data["employeeId"] = employeeId.toString();
       }
+
+      if (attachmentPath != null) {
+        data["attachment"] = await MultipartFile.fromFile(
+          attachmentPath,
+          filename: attachmentPath.split('/').last,
+        );
+      }
+
+      final formData = FormData.fromMap(data);
 
       final response = await _dio.post(
         ApiConstants.announcement,
-        data: data,
+        data: formData,
       );
 
       return CreateAnnouncementResponse.fromJson(response.data);

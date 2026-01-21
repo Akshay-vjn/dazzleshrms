@@ -1,3 +1,5 @@
+import '../../../../core/api_constants/api_constants.dart';
+
 class EmployeeAnnouncementResponse {
   final int totalItems;
   final int totalPages;
@@ -30,6 +32,7 @@ class EmployeeAnnouncementItem {
   final String announcement;
   final String createdBy;
   final String createdAt;
+  final String? attachment;
 
   EmployeeAnnouncementItem({
     required this.announcementId,
@@ -37,15 +40,22 @@ class EmployeeAnnouncementItem {
     required this.announcement,
     required this.createdBy,
     required this.createdAt,
+    this.attachment,
   });
 
   factory EmployeeAnnouncementItem.fromJson(Map<String, dynamic> json) {
+    String? attachmentPath = json['attachmentUrl'] ?? json['attachment'];
+    if (attachmentPath != null && attachmentPath.isNotEmpty && !attachmentPath.startsWith('http')) {
+      attachmentPath = '${ApiConstants.mediaBaseUrl}$attachmentPath';
+    }
+
     return EmployeeAnnouncementItem(
       announcementId: json['announcementId'],
       title: json['title'] ?? '',
-      announcement: json['announcement'] ?? '',
-      createdBy: json['createdBy'] ?? '',
+      announcement: json['announcement'] ?? json['anouncement'] ?? '',
+      createdBy: json['createdByName'] ?? json['createdBy'] ?? '',
       createdAt: json['createdAt'] ?? '',
+      attachment: attachmentPath,
     );
   }
 }

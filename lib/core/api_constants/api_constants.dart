@@ -40,4 +40,5 @@ class ApiConstants {
 
 
 
+  static const String mediaBaseUrl = "http://192.168.1.184:7907/";
 }

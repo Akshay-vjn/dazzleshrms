@@ -1,3 +1,5 @@
+import '../../../../core/api_constants/api_constants.dart';
+
 class AnnouncementResponse {
   final int totalItems;
   final int totalPages;
@@ -36,6 +38,7 @@ class AnnouncementItem {
   final String? approvedByName;
   final String? rejectedByName;
   final String createdAt;
+  final String? attachment;
 
   AnnouncementItem({
     required this.announcementId,
@@ -48,13 +51,19 @@ class AnnouncementItem {
     this.approvedByName,
     this.rejectedByName,
     required this.createdAt,
+    this.attachment,
   });
 
   factory AnnouncementItem.fromJson(Map<String, dynamic> json) {
+    String? attachmentPath = json['attachmentUrl'] ?? json['attachment'];
+    if (attachmentPath != null && attachmentPath.isNotEmpty && !attachmentPath.startsWith('http')) {
+      attachmentPath = '${ApiConstants.mediaBaseUrl}$attachmentPath';
+    }
+
     return AnnouncementItem(
       announcementId: json['announcementId'],
       title: json['title'] ?? '',
-      announcement: json['announcement'] ?? '',
+      announcement: json['announcement'] ?? json['anouncement'] ?? '',
       status: json['status'] ?? '',
       storeName: json['storeName'],
       employeeName: json['employeeName'],
@@ -62,6 +71,7 @@ class AnnouncementItem {
       approvedByName: json['approvedByName'],
       rejectedByName: json['rejectedByName'],
       createdAt: json['createdAt'] ?? '',
+      attachment: attachmentPath,
     );
   }
 }

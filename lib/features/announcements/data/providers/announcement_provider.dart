@@ -40,6 +40,7 @@ class CreateAnnouncementNotifier
     required String announcement,
     int? storeId,
     int? employeeId,
+    String? attachmentPath,
   }) async {
     state = const AsyncLoading();
 
@@ -49,6 +50,7 @@ class CreateAnnouncementNotifier
         announcement: announcement,
         storeId: storeId,
         employeeId: employeeId,
+        attachmentPath: attachmentPath,
       );
 
       state = AsyncData(response);

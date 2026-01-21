@@ -44,6 +44,9 @@ dependencies:
   firebase_core: ^4.3.0
   firebase_messaging: ^16.1.0
   intl: ^0.20.2
+  file_picker: ^10.3.8
+  url_launcher: ^6.3.2
+  path: ^1.9.1
 
 
 dev_dependencies:

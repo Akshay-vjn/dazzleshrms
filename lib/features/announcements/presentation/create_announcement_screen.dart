@@ -4,6 +4,7 @@ import 'package:dazzleshrms/features/announcements/presentation/widgets/employee
 import 'package:dazzleshrms/features/announcements/presentation/widgets/store_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../core/app_theme/app_theme.dart';
 
 class CreateAnnouncementScreen extends ConsumerStatefulWidget {
@@ -23,8 +24,9 @@ class _CreateAnnouncementScreenState
   String? selectedStoreName;
   int? selectedEmployeeId;
   String? selectedEmployeeName;
+  String? attachmentPath;
+  String? attachmentName;
 
-  // 🔹 FIELD DECORATION (HEIGHT + THEME COLOR)
   InputDecoration _selectorDecoration(BuildContext context, String label) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -65,7 +67,26 @@ class _CreateAnnouncementScreenState
       announcement: announcementCtrl.text.trim(),
       storeId: selectedStoreId,
       employeeId: selectedEmployeeId,
+      attachmentPath: attachmentPath,
     );
+  }
+
+  Future<void> _pickPDF() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          attachmentPath = result.files.single.path;
+          attachmentName = result.files.single.name;
+        });
+      }
+    } catch (e) {
+      _showSnackBar("Error picking file: $e");
+    }
   }
 
   void _showStoreSheet() {
@@ -128,6 +149,8 @@ class _CreateAnnouncementScreenState
                 selectedStoreName = null;
                 selectedEmployeeId = null;
                 selectedEmployeeName = null;
+                attachmentPath = null;
+                attachmentName = null;
               });
               Future.delayed(const Duration(milliseconds: 800), () {
                 if (mounted) Navigator.pop(context);
@@ -166,7 +189,6 @@ class _CreateAnnouncementScreenState
 
                   const SizedBox(height: 24),
 
-                  // 🔹 STORE FIELD
                   InkWell(
                     onTap: _showStoreSheet,
                     child: InputDecorator(
@@ -187,9 +209,8 @@ class _CreateAnnouncementScreenState
                     ),
                   ),
 
-                  const SizedBox(height: 20), // ✅ spacing
+                  const SizedBox(height: 20),
 
-                  // 🔹 EMPLOYEE FIELD
                   InkWell(
                     onTap:
                     selectedStoreId != null ? _showEmployeeSheet : null,
@@ -218,8 +239,35 @@ class _CreateAnnouncementScreenState
                     ),
                   ),
 
+                  const SizedBox(height: 20),
+
+                  InkWell(
+                    onTap: _pickPDF,
+                    child: InputDecorator(
+                      decoration: _selectorDecoration(context, "Attachment (PDF)"),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              attachmentName ?? "Select PDF File",
+                              style: theme.textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            attachmentPath != null ? Icons.picture_as_pdf : Icons.attach_file,
+                            size: 22,
+                            color: attachmentPath != null ? Colors.red : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   if (selectedStoreId != null ||
-                      selectedEmployeeId != null)
+                      selectedEmployeeId != null ||
+                      attachmentPath != null)
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -227,16 +275,17 @@ class _CreateAnnouncementScreenState
                           selectedStoreName = null;
                           selectedEmployeeId = null;
                           selectedEmployeeName = null;
+                          attachmentPath = null;
+                          attachmentName = null;
                         });
                       },
-                      child: const Text("Clear"),
+                      child: const Text("Clear Selection"),
                     ),
                 ],
               ),
             ),
           ),
 
-          // 🔹 SUBMIT BUTTON
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(

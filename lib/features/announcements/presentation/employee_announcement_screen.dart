@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dazzleshrms/features/announcements/data/providers/announcement_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/app_theme/app_theme.dart';
 
@@ -15,7 +16,6 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
   @override
   void initState() {
     super.initState();
-    // Refresh announcements when the screen is first opened
     Future.microtask(() => ref.invalidate(employeeAnnouncementsProvider));
   }
 
@@ -98,13 +98,55 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
                         ),
                         const SizedBox(height: 12),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Icon(Icons.person_outline, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Posted by ${announcement.createdBy}",
-                              style: theme.textTheme.bodySmall,
+                            Row(
+                              children: [
+                                const Icon(Icons.person_outline, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "Posted by ${announcement.createdBy}",
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
                             ),
+                            if (announcement.attachment != null &&
+                                announcement.attachment!.isNotEmpty)
+                              InkWell(
+                                onTap: () async {
+                                  final url = Uri.parse(announcement.attachment!);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url,
+                                        mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: Colors.red.withOpacity(0.3)),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.picture_as_pdf,
+                                          size: 14, color: Colors.red),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "PDF",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ],

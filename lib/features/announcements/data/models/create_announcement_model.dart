@@ -29,6 +29,7 @@ class AnnouncementData {
   final String status;
   final String modifiedAt;
   final String createdAt;
+  final String? attachment;
 
   AnnouncementData({
     required this.announcementId,
@@ -38,18 +39,19 @@ class AnnouncementData {
     required this.status,
     required this.modifiedAt,
     required this.createdAt,
+    this.attachment,
   });
 
   factory AnnouncementData.fromJson(Map<String, dynamic> json) {
     return AnnouncementData(
       announcementId: json['announcementId'],
       title: json['title'],
-      // Handle potential API typo "anouncement" or "announcement"
       announcement: json['anouncement'] ?? json['announcement'] ?? '',
       createdBy: json['createdBy'],
       status: json['status'],
       modifiedAt: json['modified_at'],
       createdAt: json['created_at'],
+      attachment: json['attachment'],
     );
   }
 }
