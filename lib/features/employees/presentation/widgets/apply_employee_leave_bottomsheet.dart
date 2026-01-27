@@ -4,25 +4,24 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
-import 'data/models/apply_leave_model.dart';
-import 'data/models/leave_type_model.dart';
-import 'data/models/blocked_date_model.dart';
-import 'data/providers/apply_leave_provider.dart';
-import 'data/providers/leave_type_provider.dart';
-import 'data/providers/blocked_date_provider.dart';
-import 'data/providers/leave_provider.dart';
-import '../dashboard/data/providers/dashboard_provider.dart';
+import '../../../leave/data/models/blocked_date_model.dart';
+import '../../../leave/data/providers/blocked_date_provider.dart';
+import '../../../leave/data/providers/leave_type_provider.dart';
+import '../../../leave/data/models/leave_type_model.dart';
+import '../../data/provider/employee_leave_provider.dart';
 
-class ApplyLeaveFormSheet extends ConsumerStatefulWidget {
-  const ApplyLeaveFormSheet({super.key});
+
+class ApplyEmployeeLeaveFormSheet extends ConsumerStatefulWidget {
+  final int employeeId;
+  const ApplyEmployeeLeaveFormSheet({super.key, required this.employeeId});
 
   @override
-  ConsumerState<ApplyLeaveFormSheet> createState() =>
-      _ApplyLeaveFormSheetState();
+  ConsumerState<ApplyEmployeeLeaveFormSheet> createState() =>
+      _ApplyEmployeeLeaveFormSheetState();
 }
 
-class _ApplyLeaveFormSheetState
-    extends ConsumerState<ApplyLeaveFormSheet> {
+class _ApplyEmployeeLeaveFormSheetState
+    extends ConsumerState<ApplyEmployeeLeaveFormSheet> {
   final GlobalKey<ScaffoldMessengerState> _messengerKey = GlobalKey<ScaffoldMessengerState>();
   final TextEditingController reasonCtrl = TextEditingController();
 
@@ -39,7 +38,6 @@ class _ApplyLeaveFormSheetState
       ref.read(leaveTypeProvider.notifier).loadLeaveTypes();
     });
   }
-
 
   void _showSheetSnackBar(
       String message, {
@@ -137,7 +135,7 @@ class _ApplyLeaveFormSheetState
 
                                 calendarStyle: CalendarStyle(
                                   todayDecoration: BoxDecoration(
-                                    color: AppTheme.PrimaryColor.withOpacity(0.2),
+                                    color: AppTheme.PrimaryColor.withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
                                   selectedDecoration: const BoxDecoration(
@@ -250,7 +248,7 @@ class _ApplyLeaveFormSheetState
       _showSheetSnackBar("Please fill all fields");
       return;
     }
-    ref.read(applyLeaveProvider.notifier).applyLeave(
+    ref.read(applyEmployeeLeaveProvider(widget.employeeId).notifier).applyLeave(
       leaveTypeId: selectedLeaveTypeId!,
       fromDate: _formatDate(fromDate!),
       toDate: _formatDate(toDate!),
@@ -262,28 +260,29 @@ class _ApplyLeaveFormSheetState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final leaveTypeState = ref.watch(leaveTypeProvider);
-    final applyLeaveState = ref.watch(applyLeaveProvider);
+    final applyLeaveState = ref.watch(applyEmployeeLeaveProvider(widget.employeeId));
 
-    ref.listen<AsyncValue<ApplyLeaveResponse?>>(
-      applyLeaveProvider,
+    ref.listen<AsyncValue<void>>(
+      applyEmployeeLeaveProvider(widget.employeeId),
           (previous, next) {
         next.whenOrNull(
           error: (error, _) {
             _showSheetSnackBar(error.toString());
           },
           data: (_) {
-            _showSheetSnackBar(
-              "Leave applied successfully",
-              isError: false,
-            );
+            if (previous is AsyncLoading) {
+               _showSheetSnackBar(
+                "Leave applied successfully",
+                isError: false,
+              );
 
-            ref.read(leaveProvider.notifier).loadLeaves();
-            ref.read(dashboardProvider.notifier).loadDashboard();
-            ref.invalidate(usedLeavesProvider);
+              ref.read(employeeLeavesProvider(widget.employeeId).notifier).loadLeaves();
+              ref.invalidate(usedLeavesFamilyProvider(widget.employeeId));
 
-            Future.delayed(const Duration(milliseconds: 800), () {
-              if (mounted) Navigator.pop(context);
-            });
+              Future.delayed(const Duration(milliseconds: 800), () {
+                if (context.mounted) Navigator.pop(context);
+              });
+            }
           },
         );
       },

@@ -206,7 +206,7 @@ class _UpcomingLeaveScreenState
                                       FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                   const SizedBox(height: 4),
                                   Text(
                                     item.type,
                                     style: TextStyle(
@@ -229,7 +229,7 @@ class _UpcomingLeaveScreenState
                                       'rejected'
                                       ? Colors.red
                                       .withOpacity(0.15)
-                                      : isPending
+                                      : (isPending || item.status.toLowerCase() == 'applied')
                                       ? Colors.amber
                                       .withOpacity(0.15)
                                       : Colors.green
@@ -244,7 +244,7 @@ class _UpcomingLeaveScreenState
                                         .toLowerCase() ==
                                         'rejected'
                                         ? Colors.red
-                                        : isPending
+                                        : (isPending || item.status.toLowerCase() == 'applied')
                                         ? Colors.orange[800]
                                         : Colors.green,
                                     fontWeight: FontWeight.bold,

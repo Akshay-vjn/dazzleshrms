@@ -7,13 +7,13 @@ import '../../data/providers/announcement_provider.dart';
 
 class EmployeeSheet extends ConsumerStatefulWidget {
   final int storeId;
-  final int? selectedEmployeeId;
-  final Function(int?, String?) onSelect;
+  final List<int> selectedEmployeeIds;
+  final Function(List<int>, List<String>) onSelect;
 
   const EmployeeSheet({
     super.key,
     required this.storeId,
-    required this.selectedEmployeeId,
+    required this.selectedEmployeeIds,
     required this.onSelect,
   });
 
@@ -24,15 +24,22 @@ class EmployeeSheet extends ConsumerStatefulWidget {
 class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
   final searchCtrl = TextEditingController();
   String query = '';
+  late List<int> _tempSelectedIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _tempSelectedIds = List.from(widget.selectedEmployeeIds);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final employees = ref.watch(employeesProvider(widget.storeId));
+    final employeesAsync = ref.watch(employeesProvider(widget.storeId));
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
         color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -46,15 +53,25 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Select Employee",
+                  "Select Employees",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                TextButton(
+                  onPressed: () {
+                    final allEmployees = employeesAsync.value ?? [];
+                    widget.onSelect(
+                      _tempSelectedIds,
+                      allEmployees
+                          .where((e) => _tempSelectedIds.contains(e.employeeId))
+                          .map((e) => e.employeeName)
+                          .toList(),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Done"),
                 ),
               ],
             ),
@@ -92,7 +109,7 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
 
           // LIST
           Expanded(
-            child: employees.when(
+            child: employeesAsync.when(
               loading: () =>
               const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
@@ -113,27 +130,29 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
 
                 return ListView(
                   children: [
-                    ListTile(
+                    CheckboxListTile(
                       title: const Text("All Employees"),
-                      trailing: widget.selectedEmployeeId == null
-                          ? const Icon(Icons.check, size: 20)
-                          : null,
-                      onTap: () {
-                        widget.onSelect(null, null);
-                        Navigator.pop(context);
+                      value: _tempSelectedIds.isEmpty,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            _tempSelectedIds.clear();
+                          }
+                        });
                       },
                     ),
                     ...filtered.map(
-                          (e) => ListTile(
+                      (e) => CheckboxListTile(
                         title: Text(e.employeeName),
-                        trailing:
-                        widget.selectedEmployeeId == e.employeeId
-                            ? const Icon(Icons.check, size: 20)
-                            : null,
-                        onTap: () {
-                          widget.onSelect(
-                              e.employeeId, e.employeeName);
-                          Navigator.pop(context);
+                        value: _tempSelectedIds.contains(e.employeeId),
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              _tempSelectedIds.add(e.employeeId);
+                            } else {
+                              _tempSelectedIds.remove(e.employeeId);
+                            }
+                          });
                         },
                       ),
                     ),

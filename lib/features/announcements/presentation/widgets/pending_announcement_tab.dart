@@ -67,6 +67,7 @@ class _PendingAnnouncementsTabState
                 children: [
                   _infoText(context, "Status", item.status),
                   _infoText(context, "Store", item.storeName),
+                  _infoText(context, "Designation", item.designationName),
                   _infoText(context, "Employee", item.employeeName),
                   _infoText(context, "Created By", item.createdByName),
                   if (item.attachment != null &&

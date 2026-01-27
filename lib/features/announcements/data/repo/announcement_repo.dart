@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
+import '../../../approvals/data/models/designation_model.dart';
 import '../models/create_announcement_model.dart';
 import '../models/store_model.dart';
 import '../models/employee_model.dart';
@@ -12,8 +13,9 @@ class AnnouncementRepository {
   Future<CreateAnnouncementResponse> createAnnouncement({
     required String title,
     required String announcement,
-    int? storeId,
-    int? employeeId,
+    List<int>? storeIds,
+    List<int>? employeeIds,
+    List<int>? designationIds,
     String? attachmentPath,
   }) async {
     try {
@@ -22,11 +24,14 @@ class AnnouncementRepository {
         "announcement": announcement,
       };
 
-      if (storeId != null) {
-        data["storeId"] = storeId.toString();
+      if (storeIds != null && storeIds.isNotEmpty) {
+        data["storeId"] = storeIds.join(',');
       }
-      if (employeeId != null) {
-        data["employeeId"] = employeeId.toString();
+      if (employeeIds != null && employeeIds.isNotEmpty) {
+        data["employeeId"] = employeeIds.join(',');
+      }
+      if (designationIds != null && designationIds.isNotEmpty) {
+        data["designationId"] = designationIds.join(',');
       }
 
       if (attachmentPath != null) {
@@ -105,6 +110,19 @@ class AnnouncementRepository {
       return EmployeeAnnouncementResponse.fromJson(response.data);
     } on DioException catch (e) {
       final message = e.response?.data?['message'] ?? "Failed to fetch announcements";
+      throw (message);
+    }
+  }
+
+  Future<List<Designation>> fetchDesignations() async {
+    try {
+      final response = await _dio.get(ApiConstants.designations);
+      if (response.data == null || response.data['error'] == true) {
+        throw Exception(response.data?['message'] ?? "Failed to fetch designations");
+      }
+      return DesignationResponse.fromJson(response.data).data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Failed to fetch designations";
       throw (message);
     }
   }

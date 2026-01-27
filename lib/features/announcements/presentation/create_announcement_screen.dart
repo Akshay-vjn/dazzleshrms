@@ -1,5 +1,6 @@
 import 'package:dazzleshrms/features/announcements/data/models/create_announcement_model.dart';
 import 'package:dazzleshrms/features/announcements/data/providers/announcement_provider.dart';
+import 'package:dazzleshrms/features/announcements/presentation/widgets/designation_sheet.dart';
 import 'package:dazzleshrms/features/announcements/presentation/widgets/employee_sheet.dart';
 import 'package:dazzleshrms/features/announcements/presentation/widgets/store_sheet.dart';
 import 'package:flutter/material.dart';
@@ -20,10 +21,12 @@ class _CreateAnnouncementScreenState
   final TextEditingController titleCtrl = TextEditingController();
   final TextEditingController announcementCtrl = TextEditingController();
 
-  int? selectedStoreId;
-  String? selectedStoreName;
-  int? selectedEmployeeId;
-  String? selectedEmployeeName;
+  List<int> selectedStoreIds = [];
+  List<String> selectedStoreNames = [];
+  List<int> selectedEmployeeIds = [];
+  List<String> selectedEmployeeNames = [];
+  List<int> selectedDesignationIds = [];
+  List<String> selectedDesignationNames = [];
   String? attachmentPath;
   String? attachmentName;
 
@@ -65,8 +68,9 @@ class _CreateAnnouncementScreenState
     ref.read(createAnnouncementProvider.notifier).createAnnouncement(
       title: titleCtrl.text.trim(),
       announcement: announcementCtrl.text.trim(),
-      storeId: selectedStoreId,
-      employeeId: selectedEmployeeId,
+      storeIds: selectedStoreIds,
+      employeeIds: selectedEmployeeIds,
+      designationIds: selectedDesignationIds,
       attachmentPath: attachmentPath,
     );
   }
@@ -94,13 +98,30 @@ class _CreateAnnouncementScreenState
       context: context,
       isScrollControlled: true,
       builder: (context) => StoreSheet(
-        selectedStoreId: selectedStoreId,
-        onSelect: (id, name) {
+        selectedStoreIds: selectedStoreIds,
+        onSelect: (ids, names) {
           setState(() {
-            selectedStoreId = id;
-            selectedStoreName = name;
-            selectedEmployeeId = null;
-            selectedEmployeeName = null;
+            selectedStoreIds = ids;
+            selectedStoreNames = names;
+            // Clear employee selection if store changes or becomes multiple
+            selectedEmployeeIds = [];
+            selectedEmployeeNames = [];
+          });
+        },
+      ),
+    );
+  }
+
+  void _showDesignationSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DesignationSheet(
+        selectedDesignationIds: selectedDesignationIds,
+        onSelect: (ids, names) {
+          setState(() {
+            selectedDesignationIds = ids;
+            selectedDesignationNames = names;
           });
         },
       ),
@@ -108,8 +129,12 @@ class _CreateAnnouncementScreenState
   }
 
   void _showEmployeeSheet() {
-    if (selectedStoreId == null) {
+    if (selectedStoreIds.isEmpty) {
       _showSnackBar("Please select a store first");
+      return;
+    }
+    if (selectedStoreIds.length > 1) {
+      _showSnackBar("Employee selection is only available for a single store");
       return;
     }
 
@@ -117,12 +142,12 @@ class _CreateAnnouncementScreenState
       context: context,
       isScrollControlled: true,
       builder: (context) => EmployeeSheet(
-        storeId: selectedStoreId!,
-        selectedEmployeeId: selectedEmployeeId,
-        onSelect: (id, name) {
+        storeId: selectedStoreIds.first,
+        selectedEmployeeIds: selectedEmployeeIds,
+        onSelect: (ids, names) {
           setState(() {
-            selectedEmployeeId = id;
-            selectedEmployeeName = name;
+            selectedEmployeeIds = ids;
+            selectedEmployeeNames = names;
           });
         },
       ),
@@ -145,10 +170,12 @@ class _CreateAnnouncementScreenState
               titleCtrl.clear();
               announcementCtrl.clear();
               setState(() {
-                selectedStoreId = null;
-                selectedStoreName = null;
-                selectedEmployeeId = null;
-                selectedEmployeeName = null;
+                selectedStoreIds = [];
+                selectedStoreNames = [];
+                selectedEmployeeIds = [];
+                selectedEmployeeNames = [];
+                selectedDesignationIds = [];
+                selectedDesignationNames = [];
                 attachmentPath = null;
                 attachmentName = null;
               });
@@ -161,6 +188,8 @@ class _CreateAnnouncementScreenState
       },
     );
 
+    final bool isEmployeeDisabled = selectedStoreIds.length != 1;
+
     return Scaffold(
       appBar: AppBar(title: const Text("New Announcement")),
       body: Column(
@@ -172,8 +201,7 @@ class _CreateAnnouncementScreenState
                 children: [
                   TextField(
                     controller: titleCtrl,
-                    decoration: const InputDecoration(
-                      labelText: "Title",
+                    decoration: _selectorDecoration(context, "Title").copyWith(
                       hintText: "Enter title",
                     ),
                   ),
@@ -181,8 +209,7 @@ class _CreateAnnouncementScreenState
                   TextField(
                     controller: announcementCtrl,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: "Announcement",
+                    decoration: _selectorDecoration(context, "Announcement").copyWith(
                       hintText: "Enter details",
                     ),
                   ),
@@ -199,8 +226,10 @@ class _CreateAnnouncementScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              selectedStoreName ?? "All Stores",
+                              selectedStoreNames.isEmpty ? "All Stores" : selectedStoreNames.join(', '),
                               style: theme.textTheme.bodyMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const Icon(Icons.arrow_drop_down, size: 22),
@@ -212,10 +241,33 @@ class _CreateAnnouncementScreenState
                   const SizedBox(height: 20),
 
                   InkWell(
-                    onTap:
-                    selectedStoreId != null ? _showEmployeeSheet : null,
+                    onTap: _showDesignationSheet,
+                    child: InputDecorator(
+                      decoration: _selectorDecoration(context, "Designation"),
+                      child: Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedDesignationNames.isEmpty ? "All Designations" : selectedDesignationNames.join(', '),
+                              style: theme.textTheme.bodyMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, size: 22),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  InkWell(
+                    onTap: isEmployeeDisabled ? null : _showEmployeeSheet,
                     child: Opacity(
-                      opacity: selectedStoreId != null ? 1 : 0.5,
+                      opacity: isEmployeeDisabled ? 0.5 : 1,
                       child: InputDecorator(
                         decoration:
                         _selectorDecoration(context, "Employee"),
@@ -225,11 +277,16 @@ class _CreateAnnouncementScreenState
                           children: [
                             Expanded(
                               child: Text(
-                                selectedStoreId == null
+                                selectedStoreIds.isEmpty
                                     ? "Select store first"
-                                    : (selectedEmployeeName ??
-                                    "All Employees"),
+                                    : (selectedStoreIds.length > 1
+                                    ? "Not applicable for multiple stores"
+                                    : (selectedEmployeeNames.isEmpty
+                                    ? "All Employees"
+                                    : selectedEmployeeNames.join(', '))),
                                 style: theme.textTheme.bodyMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const Icon(Icons.arrow_drop_down, size: 22),
@@ -265,16 +322,19 @@ class _CreateAnnouncementScreenState
                     ),
                   ),
 
-                  if (selectedStoreId != null ||
-                      selectedEmployeeId != null ||
+                  if (selectedStoreIds.isNotEmpty ||
+                      selectedEmployeeIds.isNotEmpty ||
+                      selectedDesignationIds.isNotEmpty ||
                       attachmentPath != null)
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          selectedStoreId = null;
-                          selectedStoreName = null;
-                          selectedEmployeeId = null;
-                          selectedEmployeeName = null;
+                          selectedStoreIds = [];
+                          selectedStoreNames = [];
+                          selectedEmployeeIds = [];
+                          selectedEmployeeNames = [];
+                          selectedDesignationIds = [];
+                          selectedDesignationNames = [];
                           attachmentPath = null;
                           attachmentName = null;
                         });

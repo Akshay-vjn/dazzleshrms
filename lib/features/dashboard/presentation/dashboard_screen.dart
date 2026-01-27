@@ -169,6 +169,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.dGreen,
           iconColor: AppTheme.gridIconColor,
         ),
+        DashboardGridItem(
+          icon: Icons.people,
+          label: "Employees",
+          onTap: () => context.pushNamed('employees'),
+          animation: _controller,
+          intervalStart: 0.3,
+          gradientStart: AppTheme.dGrid1,
+          gradientEnd: AppTheme.dGrid1,
+          iconColor: AppTheme.gridIconColor,
+        ),
 
       ],
     );

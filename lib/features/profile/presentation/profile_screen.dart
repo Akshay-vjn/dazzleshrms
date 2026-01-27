@@ -292,8 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           height: 80,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color:
-                                            Colors.white.withOpacity(0.1),
+                                            color: Colors.white.withValues(alpha: 0.1),
                                           ),
                                         ),
                                       );
@@ -305,8 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   bottom: 10,
                                   child: TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0, end: 1),
-                                    duration:
-                                    const Duration(milliseconds: 2500),
+                                    duration: const Duration(milliseconds: 2500),
                                     builder: (context, double value, child) {
                                       return Transform.translate(
                                         offset: Offset(
@@ -318,8 +316,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           height: 50,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color:
-                                            Colors.white.withOpacity(0.08),
+                                            color: Colors.white.withValues(alpha: 0.08),
                                           ),
                                         ),
                                       );
@@ -338,13 +335,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                             begin: Alignment.topLeft,
                                             end: Alignment.bottomRight,
                                             stops: [
-                                              value - 0.3,
-                                              value,
-                                              value + 0.3,
+                                              (value - 0.3).clamp(0.0, 1.0),
+                                              value.clamp(0.0, 1.0),
+                                              (value + 0.3).clamp(0.0, 1.0),
                                             ],
                                             colors: [
                                               Colors.transparent,
-                                              Colors.white.withOpacity(0.1),
+                                              Colors.white.withValues(alpha: 0.1),
                                               Colors.transparent,
                                             ],
                                           ),
@@ -522,23 +519,101 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       onPressed: () async {
                         final shouldLogout = await showDialog<bool>(
                           context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Logout"),
-                            content:
-                            const Text("Are you sure you want to logout?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text("Cancel"),
+                          barrierColor: Colors.black.withOpacity(0.5),
+                          builder: (context) => Dialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                                borderRadius: BorderRadius.circular(24),
                               ),
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppTheme.statusError,
-                                ),
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text("Logout"),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 72,
+                                    height: 72,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          AppTheme.statusError.withValues(alpha: 0.15),
+                                          AppTheme.statusError.withValues(alpha: 0.05),
+                                        ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.logout_rounded,
+                                      size: 36,
+                                      color: AppTheme.statusError,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    "Logout",
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    "Are you sure you want to logout from your account?",
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.hintColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 28),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            side: BorderSide(color: theme.dividerColor),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "Cancel",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: theme.textTheme.bodyMedium?.color,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: FilledButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: AppTheme.statusError,
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            "Logout",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         );
 

@@ -33,6 +33,7 @@ class AnnouncementItem {
   final String announcement;
   final String status;
   final String? storeName;
+  final String? designationName;
   final String? employeeName;
   final String createdByName;
   final String? approvedByName;
@@ -46,6 +47,7 @@ class AnnouncementItem {
     required this.announcement,
     required this.status,
     this.storeName,
+    this.designationName,
     this.employeeName,
     required this.createdByName,
     this.approvedByName,
@@ -66,6 +68,7 @@ class AnnouncementItem {
       announcement: json['announcement'] ?? json['anouncement'] ?? '',
       status: json['status'] ?? '',
       storeName: json['storeName'],
+      designationName: json['designationName'],
       employeeName: json['employeeName'],
       createdByName: json['createdByName'] ?? '',
       approvedByName: json['approvedByName'],

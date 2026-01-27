@@ -32,6 +32,7 @@ class UpcomingLeaveItem {
   final String date;
   final String type;
   final int? leaveTypeId;
+  final String source;
   final String status;
 
   UpcomingLeaveItem({
@@ -39,15 +40,17 @@ class UpcomingLeaveItem {
     required this.date,
     required this.type,
     required this.leaveTypeId,
+    required this.source,
     required this.status,
   });
 
   factory UpcomingLeaveItem.fromJson(Map<String, dynamic> json) {
     return UpcomingLeaveItem(
-      leaveId: json['leaveId'] ?? 0,
+      leaveId: json['leaveLogId'] ?? 0,
       date: json['date'] ?? '',
       type: json['type'] ?? '',
       leaveTypeId: json['leaveTypeId'],
+      source: json['source'] ?? '',
       status: json['status'] ?? '',
     );
   }

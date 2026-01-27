@@ -1,5 +1,12 @@
 import 'package:dazzleshrms/features/announcements/presentation/announcement_screen.dart';
 import 'package:dazzleshrms/features/approvals/presentation/approval_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employees_list_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employee_dashboard_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employee_attendance_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employee_leave_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employee_pending_leaves_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/employee_upcoming_leaves_screen.dart';
+import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,6 +80,69 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/announcement',
         name: 'announcement',
         builder: (context, state) => const AnnouncementScreen(),
+      ),
+      GoRoute(
+        path: '/employees',
+        name: 'employees',
+        builder: (context, state) => const EmployeesListScreen(),
+        routes: [
+          GoRoute(
+            path: 'dashboard',
+            name: 'employee_dashboard',
+            builder: (context, state) {
+              final employee = state.extra as Employee;
+              return EmployeeDashboardScreen(employee: employee);
+            },
+          ),
+          GoRoute(
+            path: ':id/attendance',
+            name: 'employee_attendance',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final employee = state.extra as Employee;
+              return EmployeeAttendanceScreen(
+                employeeId: id,
+                employeeName: employee.name,
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/leaves',
+            name: 'employee_leaves',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final employee = state.extra as Employee;
+              return EmployeeLeaveScreen(
+                employeeId: id,
+                employeeName: employee.name,
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/pending-leaves',
+            name: 'employee_pending_leaves',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final employee = state.extra as Employee;
+              return EmployeePendingLeavesScreen(
+                employeeId: id,
+                employeeName: employee.name,
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id/upcoming-leaves',
+            name: 'employee_upcoming_leaves',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final employee = state.extra as Employee;
+              return EmployeeUpcomingLeavesScreen(
+                employeeId: id,
+                employeeName: employee.name,
+              );
+            },
+          ),
+        ],
       ),
     ],
   );

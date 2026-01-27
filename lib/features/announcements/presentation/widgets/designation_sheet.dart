@@ -1,40 +1,38 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../approvals/data/models/designation_model.dart';
 import '../../data/providers/announcement_provider.dart';
 
-class StoreSheet extends ConsumerStatefulWidget {
-  final List<int> selectedStoreIds;
+class DesignationSheet extends ConsumerStatefulWidget {
+  final List<int> selectedDesignationIds;
   final Function(List<int>, List<String>) onSelect;
 
-  const StoreSheet({
+  const DesignationSheet({
     super.key,
-    required this.selectedStoreIds,
+    required this.selectedDesignationIds,
     required this.onSelect,
   });
 
   @override
-  ConsumerState<StoreSheet> createState() => _StoreSheetState();
+  ConsumerState<DesignationSheet> createState() => _DesignationSheetState();
 }
 
-class _StoreSheetState extends ConsumerState<StoreSheet> {
+class _DesignationSheetState extends ConsumerState<DesignationSheet> {
   late List<int> _tempSelectedIds;
-  late List<String> _tempSelectedNames;
 
   @override
   void initState() {
     super.initState();
-    _tempSelectedIds = List.from(widget.selectedStoreIds);
-    _tempSelectedNames = []; // We will populate this on Done or keep it simple
+    _tempSelectedIds = List.from(widget.selectedDesignationIds);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final storesAsync = ref.watch(storesProvider);
+    final designationsAsync = ref.watch(designationsProvider);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -51,7 +49,7 @@ class _StoreSheetState extends ConsumerState<StoreSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Select Stores",
+                  "Select Designations",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -59,12 +57,12 @@ class _StoreSheetState extends ConsumerState<StoreSheet> {
                 ),
                 TextButton(
                   onPressed: () {
-                    final allStores = storesAsync.value ?? [];
+                    final allDesignations = designationsAsync.value ?? [];
                     widget.onSelect(
                       _tempSelectedIds,
-                      allStores
-                          .where((s) => _tempSelectedIds.contains(s.storeId))
-                          .map((s) => s.storeName)
+                      allDesignations
+                          .where((d) => _tempSelectedIds.contains(d.designationId))
+                          .map((d) => d.designation)
                           .toList(),
                     );
                     Navigator.pop(context);
@@ -78,13 +76,13 @@ class _StoreSheetState extends ConsumerState<StoreSheet> {
 
           // LIST
           Expanded(
-            child: storesAsync.when(
+            child: designationsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (list) => ListView(
                 children: [
                   CheckboxListTile(
-                    title: const Text("All Stores"),
+                    title: const Text("All Designations"),
                     value: _tempSelectedIds.isEmpty,
                     onChanged: (val) {
                       setState(() {
@@ -95,15 +93,15 @@ class _StoreSheetState extends ConsumerState<StoreSheet> {
                     },
                   ),
                   ...list.map(
-                    (s) => CheckboxListTile(
-                      title: Text(s.storeName),
-                      value: _tempSelectedIds.contains(s.storeId),
+                    (d) => CheckboxListTile(
+                      title: Text(d.designation),
+                      value: _tempSelectedIds.contains(d.designationId),
                       onChanged: (val) {
                         setState(() {
                           if (val == true) {
-                            _tempSelectedIds.add(s.storeId);
+                            _tempSelectedIds.add(d.designationId);
                           } else {
-                            _tempSelectedIds.remove(s.storeId);
+                            _tempSelectedIds.remove(d.designationId);
                           }
                         });
                       },

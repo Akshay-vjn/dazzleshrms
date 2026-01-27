@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../approvals/data/models/designation_model.dart';
 import '../models/create_announcement_model.dart';
 import '../models/store_model.dart';
 import '../models/employee_model.dart';
@@ -17,6 +18,11 @@ final createAnnouncementProvider = StateNotifierProvider<
 final storesProvider = FutureProvider<List<Store>>((ref) async {
   final repo = ref.watch(announcementRepositoryProvider);
   return repo.fetchStores();
+});
+ 
+final designationsProvider = FutureProvider<List<Designation>>((ref) async {
+  final repo = ref.watch(announcementRepositoryProvider);
+  return repo.fetchDesignations();
 });
 
 final employeesProvider = FutureProvider.family<List<Employee>, int>((ref, storeId) async {
@@ -38,8 +44,9 @@ class CreateAnnouncementNotifier
   Future<void> createAnnouncement({
     required String title,
     required String announcement,
-    int? storeId,
-    int? employeeId,
+    List<int>? storeIds,
+    List<int>? employeeIds,
+    List<int>? designationIds,
     String? attachmentPath,
   }) async {
     state = const AsyncLoading();
@@ -48,8 +55,9 @@ class CreateAnnouncementNotifier
       final response = await _repository.createAnnouncement(
         title: title,
         announcement: announcement,
-        storeId: storeId,
-        employeeId: employeeId,
+        storeIds: storeIds,
+        employeeIds: employeeIds,
+        designationIds: designationIds,
         attachmentPath: attachmentPath,
       );
 

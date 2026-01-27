@@ -1,4 +1,8 @@
 class ApiConstants {
+  static const String mediaBaseUrl = "http://192.168.1.183:7907/";
+
+
+
   static const String sendOtp = "/auth/send-otp";
   static const String verifyOtp = "/auth/verify-otp";
   static const String refreshToken = "/auth/refreshtoken";
@@ -27,6 +31,15 @@ class ApiConstants {
   static const String getEmployeeAnnouncements = "/announcement/employee";
   static const String notifications = "/notification";
   static const String designations = "/designations";
+  static const String myEmployees = "/team/employees";
+  static const String EmployeeAttendance = "/team/employee/{id}/attendance";
+  static const String EmployeeLeaves = "/team/employee/{id}/leaves";
+  static const String EmployeeUsedLeaves = "/team/employee/{id}/usedleaves";
+  static const String EmployeeApplyLeave = "/team/employee/{id}/leave";
+  static const String EmployeeUpcomingLeaves = "/team/employee/{id}/upcoming";
+  static const String EmployeePendingLeaves = "/team/employee/{id}/pendingleave";
+  static const String ApproveEmployeeLeave = "/team/employee/approveleave";
+  static const String RejectEmployeeLeave = "/team/employee/rejectleave";
 
 
 
@@ -40,5 +53,4 @@ class ApiConstants {
 
 
 
-  static const String mediaBaseUrl = "http://192.168.1.184:7907/";
 }
