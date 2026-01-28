@@ -6,13 +6,13 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../../data/providers/announcement_provider.dart';
 
 class EmployeeSheet extends ConsumerStatefulWidget {
-  final int storeId;
+  final int? storeId; // Nullable - when null, fetch all employees
   final List<int> selectedEmployeeIds;
   final Function(List<int>, List<String>) onSelect;
 
   const EmployeeSheet({
     super.key,
-    required this.storeId,
+    this.storeId, // Now optional
     required this.selectedEmployeeIds,
     required this.onSelect,
   });
@@ -36,7 +36,12 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final employeesAsync = ref.watch(employeesProvider(widget.storeId));
+    
+    // Use allEmployeesProvider when storeId is null (All Stores selected)
+    // Otherwise use the store-specific employees provider
+    final employeesAsync = widget.storeId == null
+        ? ref.watch(allEmployeesProvider)
+        : ref.watch(employeesProvider(widget.storeId!));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

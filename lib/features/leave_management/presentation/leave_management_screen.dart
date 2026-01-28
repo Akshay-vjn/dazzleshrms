@@ -334,7 +334,8 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
-        DashboardGridItem(
+        if (permissions.contains(Permissions.viewUpcomingLeaves))
+          DashboardGridItem(
           icon: Icons.upcoming,
           label: "Upcoming Leaves",
           onTap: () => context.pushNamed('upcoming_leaves'),

@@ -144,6 +144,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(otpLength, (index) {
+                  final isDark = theme.brightness == Brightness.dark;
                   return SizedBox(
                     width: 52,
                     height: 60,
@@ -160,7 +161,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                         decoration: InputDecoration(
                           counterText: "",
                           contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          filled: true,
+                          fillColor: isDark
+                              ? AppTheme.surfaceDarkVariant
+                              : AppTheme.surfaceLight,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: AppTheme.PrimaryColor, width: 2),

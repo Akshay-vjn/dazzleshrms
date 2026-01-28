@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_theme/app_theme.dart';
+import '../../../core/permissions/permission.dart';
+import '../../../core/permissions/permission_provider.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
 import '../data/models/employee_model.dart';
 
-class EmployeeDashboardScreen extends StatefulWidget {
+class EmployeeDashboardScreen extends ConsumerStatefulWidget {
   final Employee employee;
   const EmployeeDashboardScreen({super.key, required this.employee});
 
   @override
-  State<EmployeeDashboardScreen> createState() => _EmployeeDashboardScreenState();
+  ConsumerState<EmployeeDashboardScreen> createState() => _EmployeeDashboardScreenState();
 }
 
-class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
+class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -35,6 +38,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final permissions = ref.watch(permissionProvider);
     
     return Scaffold(
       appBar: AppBar(
@@ -95,6 +99,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        Text(
+                          "Store: ${widget.employee.store}",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppTheme.PrimaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
                       ],
                     ),
                   ),
@@ -106,62 +118,66 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
             DashboardGrid(
               animation: _controller,
               items: [
-                DashboardGridItem(
-                  icon: Icons.calendar_today_rounded,
-                  label: "Attendance",
-                  onTap: () => context.pushNamed(
-                    'employee_attendance',
-                    pathParameters: {'id': widget.employee.employeeId.toString()},
-                    extra: widget.employee,
+                if (permissions.contains(Permissions.viewEmployeeAttendance))
+                  DashboardGridItem(
+                    icon: Icons.calendar_today_rounded,
+                    label: "Attendance",
+                    onTap: () => context.pushNamed(
+                      'employee_attendance',
+                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      extra: widget.employee,
+                    ),
+                    animation: _controller,
+                    intervalStart: 0.1,
+                    gradientStart: AppTheme.gridGradient1Start,
+                    gradientEnd: AppTheme.gridGradient1End,
+                    iconColor: AppTheme.gridIconColor,
                   ),
-                  animation: _controller,
-                  intervalStart: 0.1,
-                  gradientStart: AppTheme.gridGradient1Start,
-                  gradientEnd: AppTheme.gridGradient1End,
-                  iconColor: AppTheme.gridIconColor,
-                ),
-                DashboardGridItem(
-                  icon: Icons.calendar_month,
-                  label: "Leaves",
-                  onTap: () => context.pushNamed(
-                    'employee_leaves',
-                    pathParameters: {'id': widget.employee.employeeId.toString()},
-                    extra: widget.employee,
+                if (permissions.contains(Permissions.viewEmployeeLeaves))
+                  DashboardGridItem(
+                    icon: Icons.calendar_month,
+                    label: "Leaves",
+                    onTap: () => context.pushNamed(
+                      'employee_leaves',
+                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      extra: widget.employee,
+                    ),
+                    animation: _controller,
+                    intervalStart: 0.2,
+                    gradientStart: AppTheme.dTeal,
+                    gradientEnd: AppTheme.dGreen,
+                    iconColor: AppTheme.gridIconColor,
                   ),
-                  animation: _controller,
-                  intervalStart: 0.2,
-                  gradientStart: AppTheme.dTeal,
-                  gradientEnd: AppTheme.dGreen,
-                  iconColor: AppTheme.gridIconColor,
-                ),
-                DashboardGridItem(
-                  icon: Icons.fact_check_outlined,
-                  label: "Approvals",
-                  onTap: () => context.pushNamed(
-                    'employee_pending_leaves',
-                    pathParameters: {'id': widget.employee.employeeId.toString()},
-                    extra: widget.employee,
+                if (permissions.contains(Permissions.viewEmployeeApprovals))
+                  DashboardGridItem(
+                    icon: Icons.fact_check_outlined,
+                    label: "Approvals",
+                    onTap: () => context.pushNamed(
+                      'employee_pending_leaves',
+                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      extra: widget.employee,
+                    ),
+                    animation: _controller,
+                    intervalStart: 0.3,
+                    gradientStart: AppTheme.gridGradient2Start,
+                    gradientEnd: AppTheme.gridGradient2End,
+                    iconColor: AppTheme.gridIconColor,
                   ),
-                  animation: _controller,
-                  intervalStart: 0.3,
-                  gradientStart: AppTheme.gridGradient2Start,
-                  gradientEnd: AppTheme.gridGradient2End,
-                  iconColor: AppTheme.gridIconColor,
-                ),
-                DashboardGridItem(
-                  icon: Icons.next_plan_outlined,
-                  label: "Upcoming Leaves",
-                  onTap: () => context.pushNamed(
-                    'employee_upcoming_leaves',
-                    pathParameters: {'id': widget.employee.employeeId.toString()},
-                    extra: widget.employee,
+                if (permissions.contains(Permissions.viewEmployeeUpcoming))
+                  DashboardGridItem(
+                    icon: Icons.next_plan_outlined,
+                    label: "Upcoming Leaves",
+                    onTap: () => context.pushNamed(
+                      'employee_upcoming_leaves',
+                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      extra: widget.employee,
+                    ),
+                    animation: _controller,
+                    intervalStart: 0.4,
+                    gradientStart: AppTheme.dTeal,
+                    gradientEnd: AppTheme.gridGradient1Start,
+                    iconColor: AppTheme.gridIconColor,
                   ),
-                  animation: _controller,
-                  intervalStart: 0.4,
-                  gradientStart: AppTheme.dTeal,
-                  gradientEnd: AppTheme.gridGradient1Start,
-                  iconColor: AppTheme.gridIconColor,
-                ),
               ],
             ),
           ],

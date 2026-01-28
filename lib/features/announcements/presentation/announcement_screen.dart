@@ -2,16 +2,19 @@ import 'package:dazzleshrms/features/announcements/presentation/create_announcem
 import 'package:dazzleshrms/features/announcements/presentation/widgets/approved_announcement_tab.dart';
 import 'package:dazzleshrms/features/announcements/presentation/widgets/pending_announcement_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/permissions/permission.dart';
+import '../../../core/permissions/permission_provider.dart';
 
 
-class AnnouncementScreen extends StatefulWidget {
+class AnnouncementScreen extends ConsumerStatefulWidget {
   const AnnouncementScreen({super.key});
 
   @override
-  State<AnnouncementScreen> createState() => _AnnouncementScreenState();
+  ConsumerState<AnnouncementScreen> createState() => _AnnouncementScreenState();
 }
 
-class _AnnouncementScreenState extends State<AnnouncementScreen>
+class _AnnouncementScreenState extends ConsumerState<AnnouncementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -30,6 +33,8 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final permissions = ref.watch(permissionProvider);
+    final canCreateAnnouncement = permissions.contains(Permissions.viewCreateAnnouncement);
 
     return Scaffold(
       appBar: AppBar(
@@ -46,17 +51,19 @@ class _AnnouncementScreenState extends State<AnnouncementScreen>
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateAnnouncementScreen(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: canCreateAnnouncement
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateAnnouncementScreen(),
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
 
       body: TabBarView(
         controller: _tabController,

@@ -24,24 +24,57 @@ class AnnouncementRepository {
         "announcement": announcement,
       };
 
+      // Send IDs as arrays (not comma-separated strings)
       if (storeIds != null && storeIds.isNotEmpty) {
-        data["storeId"] = storeIds.join(',');
+        data["storeIds"] = storeIds;
       }
       if (employeeIds != null && employeeIds.isNotEmpty) {
-        data["employeeId"] = employeeIds.join(',');
+        data["employeeIds"] = employeeIds;
       }
       if (designationIds != null && designationIds.isNotEmpty) {
-        data["designationId"] = designationIds.join(',');
+        data["designationIds"] = designationIds;
       }
 
+      FormData formData;
+      
       if (attachmentPath != null) {
-        data["attachment"] = await MultipartFile.fromFile(
+        // When there's an attachment, we need to send as FormData
+        // For FormData, we need to send array values differently
+        final Map<String, dynamic> formDataMap = {
+          "title": title,
+          "announcement": announcement,
+        };
+        
+        if (storeIds != null && storeIds.isNotEmpty) {
+          for (int i = 0; i < storeIds.length; i++) {
+            formDataMap["storeIds[$i]"] = storeIds[i];
+          }
+        }
+        if (employeeIds != null && employeeIds.isNotEmpty) {
+          for (int i = 0; i < employeeIds.length; i++) {
+            formDataMap["employeeIds[$i]"] = employeeIds[i];
+          }
+        }
+        if (designationIds != null && designationIds.isNotEmpty) {
+          for (int i = 0; i < designationIds.length; i++) {
+            formDataMap["designationIds[$i]"] = designationIds[i];
+          }
+        }
+        
+        formDataMap["attachment"] = await MultipartFile.fromFile(
           attachmentPath,
           filename: attachmentPath.split('/').last,
         );
+        
+        formData = FormData.fromMap(formDataMap);
+      } else {
+        // Without attachment, send as regular JSON
+        final response = await _dio.post(
+          ApiConstants.announcement,
+          data: data,
+        );
+        return CreateAnnouncementResponse.fromJson(response.data);
       }
-
-      final formData = FormData.fromMap(data);
 
       final response = await _dio.post(
         ApiConstants.announcement,
@@ -91,6 +124,20 @@ class AnnouncementRepository {
   Future<List<Employee>> fetchEmployees(int storeId) async {
     try {
       final response = await _dio.get('${ApiConstants.stores}/$storeId/employees');
+      if (response.data == null || response.data['error'] == true) {
+         throw Exception(response.data?['message'] ?? "Failed to fetch employees");
+      }
+      return EmployeeResponse.fromJson(response.data).data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Failed to fetch employees";
+      throw (message);
+    }
+  }
+
+  /// Fetch all employees without store filter (for "All Stores" selection)
+  Future<List<Employee>> fetchAllEmployees() async {
+    try {
+      final response = await _dio.get(ApiConstants.myEmployees);
       if (response.data == null || response.data['error'] == true) {
          throw Exception(response.data?['message'] ?? "Failed to fetch employees");
       }

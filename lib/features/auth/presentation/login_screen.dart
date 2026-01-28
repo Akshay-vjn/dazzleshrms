@@ -117,11 +117,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: mobileCtrl,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Mobile Number",
-                      prefixIcon: Icon(Icons.phone_android_rounded),
+                      prefixIcon: const Icon(Icons.phone_android_rounded),
                       prefixText: "+91 ",
                       counterText: "",
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.surfaceDarkVariant
+                          : AppTheme.surfaceLight,
                     ),
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,

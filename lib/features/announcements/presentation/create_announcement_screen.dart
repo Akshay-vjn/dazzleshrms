@@ -129,12 +129,13 @@ class _CreateAnnouncementScreenState
   }
 
   void _showEmployeeSheet() {
-    if (selectedStoreIds.isEmpty) {
-      _showSnackBar("Please select a store first");
+    if (selectedStoreIds.length > 1 || selectedDesignationIds.length > 1) {
+      _showSnackBar("Employee selection is only available for a single store/designation");
       return;
     }
-    if (selectedStoreIds.length > 1) {
-      _showSnackBar("Employee selection is only available for a single store");
+    
+    if (selectedStoreIds.isEmpty && selectedDesignationIds.isEmpty) {
+      _showSnackBar("Select a store or designation first");
       return;
     }
 
@@ -142,7 +143,8 @@ class _CreateAnnouncementScreenState
       context: context,
       isScrollControlled: true,
       builder: (context) => EmployeeSheet(
-        storeId: selectedStoreIds.first,
+        // Pass null when "All Stores" is selected (empty list), or the selected store ID
+        storeId: selectedStoreIds.isEmpty ? null : selectedStoreIds.first,
         selectedEmployeeIds: selectedEmployeeIds,
         onSelect: (ids, names) {
           setState(() {
@@ -188,7 +190,11 @@ class _CreateAnnouncementScreenState
       },
     );
 
-    final bool isEmployeeDisabled = selectedStoreIds.length != 1;
+    // Employee selection is enabled ONLY when:
+    // 1. Exactly one store is selected OR
+    // 2. Exactly one designation is selected
+    final bool isEmployeeEnabled = (selectedStoreIds.length == 1 || selectedDesignationIds.length == 1);
+    final bool isEmployeeDisabled = !isEmployeeEnabled;
 
     return Scaffold(
       appBar: AppBar(title: const Text("New Announcement")),
@@ -277,13 +283,13 @@ class _CreateAnnouncementScreenState
                           children: [
                             Expanded(
                               child: Text(
-                                selectedStoreIds.isEmpty
-                                    ? "Select store first"
-                                    : (selectedStoreIds.length > 1
-                                    ? "Not applicable for multiple stores"
-                                    : (selectedEmployeeNames.isEmpty
-                                    ? "All Employees"
-                                    : selectedEmployeeNames.join(', '))),
+                                  isEmployeeDisabled
+                                      ? (selectedStoreIds.length > 1 || selectedDesignationIds.length > 1
+                                          ? "Not applicable for multiple selections"
+                                          : "Select a single Store or Designation")
+                                      : (selectedEmployeeNames.isEmpty
+                                          ? "All Employees"
+                                          : selectedEmployeeNames.join(', ')),
                                 style: theme.textTheme.bodyMedium,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

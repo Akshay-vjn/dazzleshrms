@@ -148,6 +148,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return DashboardGrid(
       animation: _controller,
       items: [
+        if (permissions.contains(Permissions.viewLeaveManagement))
         DashboardGridItem(
           icon: Icons.event_note_rounded,
           label: "Leave Management",
@@ -169,6 +170,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.dGreen,
           iconColor: AppTheme.gridIconColor,
         ),
+        if (permissions.contains(Permissions.viewEmployees))
         DashboardGridItem(
           icon: Icons.people,
           label: "Employees",
