@@ -47,7 +47,7 @@ class AuthRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? "OTP verification failed";
-      throw Exception(message);
+      throw (message);
     }
   }
 
@@ -67,7 +67,7 @@ class AuthRepository {
     } on DioException catch (e) {
       final message =
           e.response?.data?['message'] ?? "Token refresh failed";
-      throw Exception(message);
+      throw (message);
     }
   }
 }
