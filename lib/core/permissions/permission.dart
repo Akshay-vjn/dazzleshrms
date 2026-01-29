@@ -7,7 +7,7 @@ class Permissions {
   static const viewUpcomingLeaves = 'view.upcoming';
   static const viewLeaveManagement = 'view.leavemanagement';
   static const viewEmployeeAttendance = 'view.employeeattendance';
-  static const viewEmployeeLeaves = 'view.employeealeaves';
+  static const viewEmployeeLeaves = 'view.employeeleaves';
   static const viewEmployeeApprovals = 'view.employeeapprovals';
   static const viewEmployeeUpcoming = 'view.employeeupcoming';
   static const viewCreateAnnouncement = 'view.createannouncement';
