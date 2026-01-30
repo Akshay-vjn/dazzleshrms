@@ -6,6 +6,9 @@ import '../models/employee_leave_model.dart';
 import '../models/employee_pending_leave_model.dart';
 import '../models/employee_upcoming_leave_model.dart';
 
+
+//employee upcomingleaves
+
 class EmployeeLeaveRepository {
   Future<EmployeeUpcomingLeaveResponse> getEmployeeUpcomingLeaves(int employeeId, {int page = 1, int limit = 10}) async {
     final String url = ApiConstants.EmployeeUpcomingLeaves.replaceFirst("{id}", employeeId.toString());
@@ -23,6 +26,10 @@ class EmployeeLeaveRepository {
 
     return EmployeeUpcomingLeaveResponse.fromJson(response.data);
   }
+
+
+
+  //pending leaves
   Future<EmployeePendingLeaveResponse> getEmployeePendingLeaves(int employeeId, {int page = 1, int limit = 10}) async {
     final String url = ApiConstants.EmployeePendingLeaves.replaceFirst("{id}", employeeId.toString());
     final Response response = await ApiConfig.dio.get(
@@ -40,6 +47,8 @@ class EmployeeLeaveRepository {
     return EmployeePendingLeaveResponse.fromJson(response.data);
   }
 
+
+  //approve
   Future<void> approveEmployeeLeave({
     required int leaveRoasterId,
     required List<Map<String, dynamic>> decisions,
@@ -59,6 +68,8 @@ class EmployeeLeaveRepository {
     }
   }
 
+
+  //reject
   Future<void> rejectEmployeeLeave({
     required int leaveRoasterId,
     required String rejectReason,
@@ -75,6 +86,8 @@ class EmployeeLeaveRepository {
       throw Exception(response.data?['message'] ?? "Failed to reject leave");
     }
   }
+
+
   Future<EmployeeLeaveResponse> getEmployeeLeaves(int employeeId, {int page = 1, int limit = 10}) async {
     final String url = ApiConstants.EmployeeLeaves.replaceFirst("{id}", employeeId.toString());
     final Response response = await ApiConfig.dio.get(

@@ -286,7 +286,7 @@ class _CreateAnnouncementScreenState
                                   isEmployeeDisabled
                                       ? (selectedStoreIds.length > 1 || selectedDesignationIds.length > 1
                                           ? "Not applicable for multiple selections"
-                                          : "Select a single Store or Designation")
+                                          : "Select employee")
                                       : (selectedEmployeeNames.isEmpty
                                           ? "All Employees"
                                           : selectedEmployeeNames.join(', ')),

@@ -170,7 +170,6 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               ),
 
               const SizedBox(height: 40),
-
               SizedBox(
                 width: double.infinity,
                 height: 56,
