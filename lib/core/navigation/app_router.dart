@@ -9,6 +9,7 @@ import 'package:dazzleshrms/features/employees/presentation/employee_upcoming_le
 import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
+import 'package:dazzleshrms/core/widgets/no_internet_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -143,6 +144,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: '/no-internet',
+        name: 'no_internet',
+        builder: (context, state) => const NoInternetScreen(),
       ),
     ],
   );

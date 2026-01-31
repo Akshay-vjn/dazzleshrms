@@ -103,7 +103,6 @@ class _CreateAnnouncementScreenState
           setState(() {
             selectedStoreIds = ids;
             selectedStoreNames = names;
-            // Clear employee selection if store changes or becomes multiple
             selectedEmployeeIds = [];
             selectedEmployeeNames = [];
           });
@@ -133,7 +132,7 @@ class _CreateAnnouncementScreenState
       _showSnackBar("Employee selection is only available for a single store/designation");
       return;
     }
-    
+
     if (selectedStoreIds.isEmpty && selectedDesignationIds.isEmpty) {
       _showSnackBar("Select a store or designation first");
       return;
@@ -143,7 +142,6 @@ class _CreateAnnouncementScreenState
       context: context,
       isScrollControlled: true,
       builder: (context) => EmployeeSheet(
-        // Pass null when "All Stores" is selected (empty list), or the selected store ID
         storeId: selectedStoreIds.isEmpty ? null : selectedStoreIds.first,
         selectedEmployeeIds: selectedEmployeeIds,
         onSelect: (ids, names) {
@@ -190,9 +188,6 @@ class _CreateAnnouncementScreenState
       },
     );
 
-    // Employee selection is enabled ONLY when:
-    // 1. Exactly one store is selected OR
-    // 2. Exactly one designation is selected
     final bool isEmployeeEnabled = (selectedStoreIds.length == 1 || selectedDesignationIds.length == 1);
     final bool isEmployeeDisabled = !isEmployeeEnabled;
 
