@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/app_theme/app_theme.dart';
 import '../data/provider/notification_provider.dart';
 import './widgets/notificationtile.dart';
 
@@ -46,7 +47,46 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text("Error: $e")),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: AppTheme.statusError.withOpacity(0.7),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Oops! Something went wrong",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  e.toString(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withValues(alpha: 0.7),
+                      ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => notifier.loadNotifications(isRefresh: true),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text("Try Again"),
+                ),
+              ],
+            ),
+          ),
+        ),
         data: (data) {
           if (data == null || data.records.isEmpty) {
             return Center(
