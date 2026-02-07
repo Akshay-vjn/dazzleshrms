@@ -38,7 +38,6 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
     );
   }
 
-  // APPROVE (Partial/Itemized)
   void _showPartialApprovalSheet(AppliedLeaveItem item) {
     showModalBottomSheet(
       context: context,

@@ -27,7 +27,7 @@ class _StoreSheetState extends ConsumerState<StoreSheet> {
   void initState() {
     super.initState();
     _tempSelectedIds = List.from(widget.selectedStoreIds);
-    _tempSelectedNames = []; // We will populate this on Done or keep it simple
+    _tempSelectedNames = [];
   }
 
   @override

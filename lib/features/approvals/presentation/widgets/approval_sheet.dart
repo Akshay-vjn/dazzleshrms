@@ -32,7 +32,6 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     final start = DateTime.parse(widget.fromDate);
     final end = DateTime.parse(widget.toDate);
     allDays = _getDaysInRange(start, end);
-    // Default all days to 'true' (Approved)
     daySelections = {for (var day in allDays) day: true};
   }
 

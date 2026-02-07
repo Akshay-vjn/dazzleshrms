@@ -68,7 +68,6 @@ class AnnouncementTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title + Date
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
