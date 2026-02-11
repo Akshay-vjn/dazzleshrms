@@ -1,5 +1,6 @@
 import 'package:dazzleshrms/features/announcements/presentation/announcement_screen.dart';
 import 'package:dazzleshrms/features/approvals/presentation/approval_screen.dart';
+import 'package:dazzleshrms/features/attendance_scanner/presentation/attendance_qr_scanner.dart';
 import 'package:dazzleshrms/features/employees/presentation/employees_list_screen.dart';
 import 'package:dazzleshrms/features/employees/presentation/employee_dashboard_screen.dart';
 import 'package:dazzleshrms/features/employees/presentation/employee_attendance_screen.dart';
@@ -51,6 +52,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         name: 'home',
         builder: (context, state) => const MainNavigation(),
+      ),
+      GoRoute(
+        path: '/store-qr',
+        name: 'store_qr',
+        builder: (context, state) => const AttendanceQrScan(),
       ),
       GoRoute(
         path: '/attendance',

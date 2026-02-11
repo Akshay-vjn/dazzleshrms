@@ -11,6 +11,7 @@ import '../data/models/dashboard_response.dart';
 import 'widgets/fade_slide_item.dart';
 import 'widgets/dashboard_grid.dart';
 import 'widgets/dashboard_grid_item.dart';
+import 'widgets/attendance_widget.dart';
 import '../../../core/permissions/permission_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -239,6 +240,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return const Center(child: Text("No dashboard data"));
             }
 
+            // If user role is Store, redirect to store QR screen only.
+            final role = data.role.toLowerCase();
+            if (role.contains('store')) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  context.goNamed('store_qr');
+                }
+              });
+              return const SizedBox.shrink();
+            }
+
             return Column(
               children: [
                 _buildHeader(theme, data),
@@ -251,6 +263,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       child: Column(
                         children: [
                           _buildJobtitleCard(theme, data),
+                          const SizedBox(height: 24),
+                          AttendanceWidget(
+                            animationController: _controller,
+                            intervalStart: 0.15,
+                          ),
                           const SizedBox(height: 24),
                           _buildGrid(permissions),
                           const SizedBox(height: 80),

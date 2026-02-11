@@ -93,11 +93,17 @@ class _SplashScreenState extends State<SplashScreen>
   void _startSplashFlow() {
     Timer(const Duration(milliseconds: 2500), () async {
       final token = await SessionStorage.getToken();
+      final role = await SessionStorage.getRole();
 
       if (!mounted) return;
 
       if (token != null && token.isNotEmpty) {
-        context.goNamed('home');
+        final normalizedRole = (role ?? '').toLowerCase();
+        if (normalizedRole.contains('store')) {
+          context.goNamed('store_qr');
+        } else {
+          context.goNamed('home');
+        }
       } else {
         context.goNamed('login');
       }

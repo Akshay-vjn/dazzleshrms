@@ -7,6 +7,7 @@ class SessionStorage {
   static const _keyEmployeeName = 'employeeName';
   static const _keyStoreId = 'storeId';
   static const _keyPermissions = 'permissions';
+  static const _keyRole = 'role';
 
   /// Save login/session
   static Future<void> saveSession({
@@ -15,7 +16,7 @@ class SessionStorage {
     required int employeeId,
     required String employeeName,
     required int storeId,
-
+    required String role,
     List<String>? permissions,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -29,6 +30,7 @@ class SessionStorage {
     await prefs.setInt(_keyEmployeeId, employeeId);
     await prefs.setString(_keyEmployeeName, employeeName);
     await prefs.setInt(_keyStoreId, storeId);
+    await prefs.setString(_keyRole, role);
 
     if (permissions != null) {
       await prefs.setStringList(_keyPermissions, permissions);
@@ -51,6 +53,12 @@ class SessionStorage {
   static Future<List<String>> getPermissions() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getStringList(_keyPermissions) ?? [];
+  }
+
+  /// Read stored role
+  static Future<String?> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyRole);
   }
 
   ///  Check single permission

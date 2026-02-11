@@ -91,6 +91,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
             employeeId: res.data.employee.employeeId,
             employeeName: res.data.employee.employeeName,
             storeId: res.data.employee.storeId,
+            role: res.data.employee.role,
             permissions: res.data.permissions,
           );
 
@@ -98,7 +99,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               .setPermissions(res.data.permissions);
 
           if (!mounted) return;
-          context.goNamed('home');
+          final role = (res.data.employee.role).toLowerCase();
+          debugPrint('Login role: $role');
+          if (role.contains('store')) {
+            context.goNamed('store_qr');
+          } else {
+            context.goNamed('home');
+          }
         },
         error: (err, _) {
           ScaffoldMessenger.of(context).showSnackBar(

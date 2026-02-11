@@ -73,5 +73,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to capture photos for uploads.</string>
 
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to verify attendance check-in and check-out.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs your location to verify attendance check-in and check-out.</string>
+
 </dict>
 </plist>

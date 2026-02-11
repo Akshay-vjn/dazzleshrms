@@ -48,11 +48,13 @@ class Employee {
   final int employeeId;
   final String employeeName;
   final int storeId;
+  final String role;
 
   Employee({
     required this.employeeId,
     required this.employeeName,
     required this.storeId,
+    required this.role,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class Employee {
       employeeId: json['employeeId'],
       employeeName: json['employeeName'],
       storeId: json['storeId'],
+      role: json['role'] ?? '',
     );
   }
 }

@@ -1,6 +1,6 @@
 class ApiConstants {
-  // static const String mediaBaseUrl = "http://192.168.1.183:7907/";
-  static const String mediaBaseUrl = "https://testhrms.dazzles.in/api/";
+  static const String mediaBaseUrl = "http://192.168.1.184:7907/";
+  // static const String mediaBaseUrl = "https://testhrms.dazzles.in/api/";
 
 
 
@@ -42,6 +42,11 @@ class ApiConstants {
   static const String EmployeePendingLeaves = "/team/employee/{id}/pendingleave";
   static const String ApproveEmployeeLeave = "/team/employee/approveleave";
   static const String RejectEmployeeLeave = "/team/employee/rejectleave";
+  static const String generateQr = '/attendance/generateqr';
+  static const String attendanceCheckin = '/attendance/checkin';
+  static const String qrStatus = '/attendance/qr';
+  static const String attendanceCheckout = '/attendance/checkout';
+
 
 
 
