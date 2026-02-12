@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -22,7 +23,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
   String _statusText = 'Align the QR code inside the frame';
   String? _lastScannedValue;
   DateTime? _lastScannedAt;
-  // Shorter cooldown so scanning feels snappier, while still avoiding rapid duplicates
   static const Duration _scanCooldown = Duration(milliseconds: 700);
   bool _loadingDialogShown = false;
 
@@ -55,10 +55,8 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
   Future<void> _handleCheckIn(String qrData) async {
     try {
-      // Pause camera so we don't keep detecting the same QR while processing
       await _controller.stop();
 
-      // Show loading dialog
       if (mounted) {
         _loadingDialogShown = true;
         showDialog(
@@ -70,25 +68,14 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
         );
       }
 
-      String method = 'CHECKIN';
-      try {
-        final decoded = jsonDecode(qrData);
-        if (decoded is Map<String, dynamic>) {
-          final m = decoded['method'];
-          if (m is String && m.isNotEmpty) {
-            method = m.toUpperCase();
-          }
-        }
-      } catch (_) {
-      }
-
-      final StoreQrCheckinResponse response = method == 'CHECKOUT'
-          ? await _repository.checkOut(qrData: qrData)
-          : await _repository.checkIn(qrData: qrData);
+      // Backend decides action (CHECKIN/CHECKOUT/PERMISSION_IN/PERMISSION_OUT)
+      // based on the `method` inside qrData.
+      final StoreQrCheckinResponse response =
+          await _repository.scanQr(qrData: qrData);
 
       if (!mounted) return;
       if (_loadingDialogShown && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(); // close loading
+        Navigator.of(context).pop();
       }
       _loadingDialogShown = false;
 
@@ -105,22 +92,27 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
     } catch (e) {
       if (mounted) {
         if (_loadingDialogShown && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(); // close loading if open
+          Navigator.of(context).pop();
         }
         _loadingDialogShown = false;
 
+        final String message = e is DioException &&
+                e.response?.data is Map &&
+                (e.response!.data as Map)['message'] != null
+            ? (e.response!.data as Map)['message'].toString()
+            : 'Scan failed. Please try again.';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
 
         setState(() {
-          _statusText = 'Scan failed. Please try again.';
+          _statusText = message;
         });
       }
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
-        // Give the user a moment before re-enabling scanning
         await Future<void>.delayed(_scanCooldown);
         if (mounted) {
           setState(() {
@@ -165,7 +157,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
             Expanded(
               child: Stack(
                 children: [
-                  // Camera preview (mirrored only on Android so both platforms look natural)
                   Positioned.fill(
                     child: Platform.isAndroid
                         ? Transform(
@@ -183,7 +174,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
                       onDetect: _onDetect,
                     ),
                   ),
-                  // Dark overlay with cut-out
                   Positioned.fill(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -196,11 +186,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
                         return Stack(
                           children: [
-                            // Dimmed background
                             Container(
                               color: Colors.black.withOpacity(0.45),
                             ),
-                            // Transparent cut-out with border
                             Positioned(
                               left: left,
                               top: top,

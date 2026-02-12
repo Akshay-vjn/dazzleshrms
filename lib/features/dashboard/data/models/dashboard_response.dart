@@ -28,6 +28,8 @@ class DashboardData {
   final double totalLeaves;
   final double usedLeaves;
   final double availableLeaves;
+  /// Attendance status coming from backend (e.g. ACTIVE / OFFLINE).
+  final String attendanceStatus;
 
 
   DashboardData({
@@ -37,6 +39,7 @@ class DashboardData {
     required this.totalLeaves,
     required this.usedLeaves,
     required this.availableLeaves,
+    required this.attendanceStatus,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
@@ -47,6 +50,7 @@ class DashboardData {
       totalLeaves: (json['totalLeaves'] as num).toDouble(),
       usedLeaves: (json['usedLeaves'] as num).toDouble(),
       availableLeaves: (json['availableLeaves'] as num).toDouble(),
+      attendanceStatus: (json['status'] ?? 'OFFLINE').toString(),
 
     );
   }

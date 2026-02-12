@@ -43,9 +43,10 @@ class ApiConstants {
   static const String ApproveEmployeeLeave = "/team/employee/approveleave";
   static const String RejectEmployeeLeave = "/team/employee/rejectleave";
   static const String generateQr = '/attendance/generateqr';
-  static const String attendanceCheckin = '/attendance/checkin';
   static const String qrStatus = '/attendance/qr';
-  static const String attendanceCheckout = '/attendance/checkout';
+  static const String attendanceScanQr = '/attendance/scanqr';
+  static const String permissions = '/permissions';
+  static const String permissionsGenerate = '/permissions/generate';
 
 
 

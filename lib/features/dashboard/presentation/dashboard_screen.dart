@@ -267,6 +267,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           AttendanceWidget(
                             animationController: _controller,
                             intervalStart: 0.15,
+                            attendanceStatus: data.attendanceStatus,
                           ),
                           const SizedBox(height: 24),
                           _buildGrid(permissions),

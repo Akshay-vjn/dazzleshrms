@@ -12,11 +12,13 @@ import '../../data/models/attendance_qr_status_response.dart';
 class AttendanceWidget extends StatefulWidget {
   final AnimationController animationController;
   final double intervalStart;
+  final String? attendanceStatus;
 
   const AttendanceWidget({
     super.key,
     required this.animationController,
     this.intervalStart = 0.0,
+    this.attendanceStatus,
   });
 
   @override
@@ -25,11 +27,32 @@ class AttendanceWidget extends StatefulWidget {
 
 class _AttendanceWidgetState extends State<AttendanceWidget> {
   final AttendanceqrRepo _repository = AttendanceqrRepo();
-  bool _isCheckedIn = false;
+  late String _attendanceStatus;
+
+  String _normalizeStatus(String? status) {
+    final normalized = (status ?? '').trim().toUpperCase();
+    return normalized.isEmpty ? 'OFFLINE' : normalized;
+  }
+
+  bool get _isActive => _attendanceStatus == 'ACTIVE';
+
+  @override
+  void initState() {
+    super.initState();
+    _attendanceStatus = _normalizeStatus(widget.attendanceStatus);
+  }
+
+  @override
+  void didUpdateWidget(covariant AttendanceWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final next = _normalizeStatus(widget.attendanceStatus);
+    if (next != _attendanceStatus) {
+      _attendanceStatus = next;
+    }
+  }
 
   Future<void> _handleAttendance(BuildContext context, bool isCheckIn) async {
     try {
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -38,7 +61,6 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         ),
       );
 
-      // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -59,20 +81,17 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         return;
       }
 
-      // Get current position
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
       );
 
-      // 🔍 Debug: Log the current location
       debugPrint('📍 Current Location:');
       debugPrint('   Latitude:  ${position.latitude}');
       debugPrint('   Longitude: ${position.longitude}');
       debugPrint('   Accuracy:  ${position.accuracy} meters');
 
-      // Generate QR
       final qrResponse = await _repository.generateQr(
         method: isCheckIn ? 'CHECKIN' : 'CHECKOUT',
         lat: position.latitude,
@@ -81,12 +100,13 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       );
 
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog
+        Navigator.pop(context);
+
         _showQrDialog(context, isCheckIn, qrResponse);
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog
+        Navigator.pop(context);
         _showError(context, e.toString());
       }
     }
@@ -109,13 +129,13 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       ) {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (context) => _QrDialog(
         isCheckIn: isCheckIn,
         qrResponse: qrResponse,
         onSuccess: () {
           setState(() {
-            _isCheckedIn = isCheckIn;
+            _attendanceStatus = isCheckIn ? 'ACTIVE' : 'OFFLINE';
           });
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -213,7 +233,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _isCheckedIn ? "Currently Working" : "Not Checked In",
+                          _attendanceStatus,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: textColor.withOpacity(0.6),
                           ),
@@ -228,7 +248,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: (_isCheckedIn
+                      color: (_isActive
                           ? AppTheme.statusSuccess
                           : Colors.grey)
                           .withOpacity(0.15),
@@ -242,18 +262,18 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isCheckedIn
+                            color: _isActive
                                 ? AppTheme.statusSuccess
                                 : Colors.grey,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _isCheckedIn ? "Active" : "Offline",
+                          _attendanceStatus,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _isCheckedIn
+                            color: _isActive
                                 ? AppTheme.statusSuccess
                                 : Colors.grey,
                           ),
@@ -268,9 +288,9 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => _handleAttendance(context, !_isCheckedIn),
+                  onPressed: () => _handleAttendance(context, !_isActive),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _isCheckedIn
+                    backgroundColor: _isActive
                         ? AppTheme.statusError
                         : AppTheme.statusSuccess,
                     foregroundColor: Colors.white,
@@ -280,11 +300,11 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                     ),
                   ),
                   icon: Icon(
-                    _isCheckedIn ? Icons.logout_rounded : Icons.qr_code_2,
+                    _isActive ? Icons.logout_rounded : Icons.qr_code_2,
                     size: 20,
                   ),
                   label: Text(
-                    _isCheckedIn ? "Check Out" : "Check In",
+                    _isActive ? "Check Out" : "Check In",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -327,15 +347,12 @@ class _QrDialogState extends State<_QrDialog> {
   void initState() {
     super.initState();
 
-    // Log qrSessionId from generateQr response
     debugPrint('🧾 qrSessionId from response: ${widget.qrResponse.data.qrSessionId}');
 
-    // Decode base64 image ONCE (not in build) to prevent blinking
     final qrImageBase64 = widget.qrResponse.data.qrImage;
     final base64String = qrImageBase64.split(',').last;
     _imageBytes = base64Decode(base64String);
 
-    // Calculate remaining seconds from API response
     final expiresAt = widget.qrResponse.data.expiresAt;
     final now = DateTime.now().millisecondsSinceEpoch;
     final remaining = (expiresAt - now) / 1000;
@@ -359,7 +376,6 @@ class _QrDialogState extends State<_QrDialog> {
       }
     });
 
-    // Poll QR status so that when office device scans, this dialog closes automatically
     final qrId = widget.qrResponse.data.qrSessionId;
     debugPrint('📡 Starting QR status polling for qrId=$qrId');
     _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
@@ -370,17 +386,14 @@ class _QrDialogState extends State<_QrDialog> {
         if (!mounted) return;
 
         if (!resp.error && resp.data.status != 'PENDING') {
-          // Consider any non-PENDING status as completed
           _statusTimer?.cancel();
           _countdownTimer.cancel();
 
-          // Let parent handle closing dialog & showing snackbar
           if (mounted) {
             widget.onSuccess();
           }
         }
       } catch (_) {
-        // Ignore single failures; dialog will still auto-expire via countdown
       }
     });
   }
@@ -432,7 +445,7 @@ class _QrDialogState extends State<_QrDialog> {
                         ),
                       ),
                       Text(
-                        "Show QR to office scanner",
+                        "Show QR to scanner",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.textTheme.bodyMedium?.color
                               ?.withOpacity(0.6),
@@ -506,48 +519,48 @@ class _QrDialogState extends State<_QrDialog> {
             ),
             const SizedBox(height: 20),
             // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      "Cancel",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: widget.onSuccess,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.statusSuccess,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      "Done",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: OutlinedButton(
+            //         onPressed: () => Navigator.pop(context),
+            //         style: OutlinedButton.styleFrom(
+            //           padding: const EdgeInsets.symmetric(vertical: 14),
+            //           shape: RoundedRectangleBorder(
+            //             borderRadius: BorderRadius.circular(12),
+            //           ),
+            //         ),
+            //         child: const Text(
+            //           "Cancel",
+            //           style: TextStyle(
+            //             fontSize: 15,
+            //             fontWeight: FontWeight.w600,
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //     const SizedBox(width: 12),
+            //     Expanded(
+            //       child: FilledButton(
+            //         onPressed: widget.onSuccess,
+            //         style: FilledButton.styleFrom(
+            //           backgroundColor: AppTheme.statusSuccess,
+            //           padding: const EdgeInsets.symmetric(vertical: 14),
+            //           shape: RoundedRectangleBorder(
+            //             borderRadius: BorderRadius.circular(12),
+            //           ),
+            //         ),
+            //         child: const Text(
+            //           "Done",
+            //           style: TextStyle(
+            //             fontSize: 15,
+            //             fontWeight: FontWeight.w600,
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),
