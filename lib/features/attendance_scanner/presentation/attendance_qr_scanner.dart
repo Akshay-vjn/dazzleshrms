@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:dio/dio.dart';
@@ -19,7 +18,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
   bool _isProcessing = false;
   final MobileScannerController _controller =
   MobileScannerController(facing: CameraFacing.front);
-  final StoreQrRepository _repository = StoreQrRepository();
+  final AttendanceQrRepo _repository = AttendanceQrRepo();
   String _statusText = 'Align the QR code inside the frame';
   String? _lastScannedValue;
   DateTime? _lastScannedAt;
@@ -70,7 +69,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
       // Backend decides action (CHECKIN/CHECKOUT/PERMISSION_IN/PERMISSION_OUT)
       // based on the `method` inside qrData.
-      final StoreQrCheckinResponse response =
+      final AttendanceQrResponse response =
           await _repository.scanQr(qrData: qrData);
 
       if (!mounted) return;

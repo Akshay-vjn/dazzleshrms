@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
 import 'core/app_theme/app_theme.dart';
 import 'core/app_theme/theme_provider.dart';
 import 'core/navigation/app_router.dart';
 import 'core/network/connectivity_provider.dart';
-import 'package:go_router/go_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

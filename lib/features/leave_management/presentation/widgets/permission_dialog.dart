@@ -68,7 +68,6 @@ class _PermissionDialogState extends State<PermissionDialog> {
     });
 
     try {
-      // Location permission (same flow as attendance QR)
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();

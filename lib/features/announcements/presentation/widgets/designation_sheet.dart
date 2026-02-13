@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
-import '../../../approvals/data/models/designation_model.dart';
 import '../../data/providers/announcement_provider.dart';
 
 class DesignationSheet extends ConsumerStatefulWidget {

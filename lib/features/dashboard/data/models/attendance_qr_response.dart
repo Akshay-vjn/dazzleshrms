@@ -35,7 +35,6 @@ class QrData {
   });
 
   factory QrData.fromJson(Map<String, dynamic> json) {
-    // Backend may send either `qrSessionId` or `qrId` – support both
     final dynamic idValue = json['qrSessionId'] ?? json['qrId'];
 
     return QrData(

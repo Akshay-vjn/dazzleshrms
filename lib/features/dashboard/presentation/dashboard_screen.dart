@@ -240,7 +240,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return const Center(child: Text("No dashboard data"));
             }
 
-            // If user role is Store, redirect to store QR screen only.
             final role = data.role.toLowerCase();
             if (role.contains('store')) {
               WidgetsBinding.instance.addPostFrameCallback((_) {

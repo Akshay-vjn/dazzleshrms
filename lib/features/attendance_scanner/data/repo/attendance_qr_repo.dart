@@ -4,12 +4,10 @@ import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
 import '../models/attendance_qr_model.dart';
 
-class StoreQrRepository {
+class AttendanceQrRepo {
   final Dio _dio = ApiConfig.dio;
 
-  /// Unified scan endpoint that handles CHECKIN, CHECKOUT,
-  /// PERMISSION_IN, PERMISSION_OUT based on `method` in qrData.
-  Future<StoreQrCheckinResponse> scanQr({
+  Future<AttendanceQrResponse> scanQr({
     required String qrData,
     String? reason,
   }) async {
@@ -21,7 +19,7 @@ class StoreQrRepository {
       },
     );
 
-    return StoreQrCheckinResponse.fromJson(response.data);
+    return AttendanceQrResponse.fromJson(response.data);
   }
 }
 

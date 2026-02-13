@@ -232,12 +232,12 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          _attendanceStatus,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: textColor.withOpacity(0.6),
-                          ),
-                        ),
+                        // Text(
+                        //   _attendanceStatus,
+                        //   style: theme.textTheme.bodyMedium?.copyWith(
+                        //     color: textColor.withOpacity(0.6),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
