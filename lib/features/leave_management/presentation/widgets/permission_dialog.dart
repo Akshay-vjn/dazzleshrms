@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -142,6 +143,27 @@ class _PermissionDialogState extends State<PermissionDialog> {
         builder: (_) => PermissionQrDialog(
           isPermissionIn: !_isInside,
           qrImage: qrImage,
+          initialStatus: _status,
+          onCompleted: (isPermissionIn) {
+            if (!mounted) return;
+            // Close QR dialog
+            Navigator.of(context).pop();
+            // Close permission dialog itself
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+
+            final successText =
+                isPermissionIn ? 'Permission In successful' : 'Permission Out successful';
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(successText),
+                backgroundColor: AppTheme.statusSuccess,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
         ),
       );
     } on DioException catch (e) {
@@ -299,15 +321,27 @@ class _PermissionDialogState extends State<PermissionDialog> {
   }
 }
 
-class PermissionQrDialog extends StatelessWidget {
+class PermissionQrDialog extends StatefulWidget {
   final bool isPermissionIn;
   final String qrImage;
+  final String initialStatus;
+  final void Function(bool isPermissionIn) onCompleted;
 
   const PermissionQrDialog({
     super.key,
     required this.isPermissionIn,
     required this.qrImage,
+    required this.initialStatus,
+    required this.onCompleted,
   });
+
+  @override
+  State<PermissionQrDialog> createState() => _PermissionQrDialogState();
+}
+
+class _PermissionQrDialogState extends State<PermissionQrDialog> {
+  final Dio _dio = ApiConfig.dio;
+  Timer? _statusTimer;
 
   Uint8List _decodeImage(String dataUri) {
     final base64String = dataUri.split(',').last;
@@ -315,9 +349,40 @@ class PermissionQrDialog extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    final initial = widget.initialStatus.toUpperCase();
+    _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+      try {
+        final response = await _dio.get(ApiConstants.permissions);
+        final data = response.data['data'] as Map<String, dynamic>?;
+        final status =
+            (data?['permissionStatus'] ?? '').toString().toUpperCase();
+
+        if (!mounted) return;
+        if (status.isNotEmpty && status != initial) {
+          timer.cancel();
+          widget.onCompleted(widget.isPermissionIn);
+        }
+      } catch (_) {
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _statusTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bytes = _decodeImage(qrImage);
+    final bytes = _decodeImage(widget.qrImage);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -335,7 +400,7 @@ class PermissionQrDialog extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isPermissionIn ? Icons.login : Icons.logout,
+                    widget.isPermissionIn ? Icons.login : Icons.logout,
                     color: AppTheme.PrimaryColor,
                     size: 24,
                   ),
@@ -346,7 +411,9 @@ class PermissionQrDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isPermissionIn ? "Permission In" : "Permission Out",
+                        widget.isPermissionIn
+                            ? "Permission In"
+                            : "Permission Out",
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -390,23 +457,24 @@ class PermissionQrDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  "Close",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+            // SizedBox(
+            //   width: double.infinity,
+            //   child: FilledButton(
+            //     onPressed: () => Navigator.pop(context),
+            //     child: const Text(
+            //       "Close",
+            //       style: TextStyle(
+            //         fontSize: 15,
+            //         fontWeight: FontWeight.w600,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
     );
   }
 }
+
 

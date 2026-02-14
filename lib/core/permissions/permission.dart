@@ -6,6 +6,7 @@ class Permissions {
   static const viewEmployees = 'view.employees';
   static const viewUpcomingLeaves = 'view.upcoming';
   static const viewLeaveManagement = 'view.leavemanagement';
+  static const viewPermission = 'view.permission';
   static const viewEmployeeAttendance = 'view.employeeattendance';
   static const viewEmployeeLeaves = 'view.employeeleaves';
   static const viewEmployeeApprovals = 'view.employeeapprovals';

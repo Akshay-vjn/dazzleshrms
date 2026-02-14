@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-
 import '../../data/repo/attendanceqr_repo.dart';
 import '../../data/models/attendance_qr_response.dart';
 import '../../data/models/attendance_qr_status_response.dart';
