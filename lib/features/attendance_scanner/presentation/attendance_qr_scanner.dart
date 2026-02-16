@@ -3,17 +3,14 @@ import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-
 import '../data/models/attendance_qr_model.dart';
 import '../data/repo/attendance_qr_repo.dart';
 
 class AttendanceQrScan extends StatefulWidget {
   const AttendanceQrScan({super.key});
-
   @override
   State<AttendanceQrScan> createState() => _AttendanceQrScanState();
 }
-
 class _AttendanceQrScanState extends State<AttendanceQrScan> {
   bool _isProcessing = false;
   final MobileScannerController _controller =
@@ -24,15 +21,12 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
   DateTime? _lastScannedAt;
   static const Duration _scanCooldown = Duration(milliseconds: 700);
   bool _loadingDialogShown = false;
-
   void _onDetect(BarcodeCapture capture) {
     if (_isProcessing) return;
     if (capture.barcodes.isEmpty) return;
-
     final barcode = capture.barcodes.first;
     final value = barcode.rawValue;
     if (value == null || value.isEmpty) return;
-
     final now = DateTime.now();
     final lastAt = _lastScannedAt;
     if (_lastScannedValue == value &&
@@ -67,8 +61,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
         );
       }
 
-      // Backend decides action (CHECKIN/CHECKOUT/PERMISSION_IN/PERMISSION_OUT)
-      // based on the `method` inside qrData.
       final AttendanceQrResponse response =
           await _repository.scanQr(qrData: qrData);
 
