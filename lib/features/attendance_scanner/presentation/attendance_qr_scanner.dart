@@ -2,7 +2,10 @@ import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:dazzleshrms/core/storage/session_storage.dart';
 import '../data/models/attendance_qr_model.dart';
 import '../data/repo/attendance_qr_repo.dart';
 
@@ -115,6 +118,44 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
     }
   }
 
+  void _showLogoutDialog(BuildContext context) async {
+    // Stop the scanner to prevent interference with the dialog
+    await _controller.stop();
+
+    if (!mounted) return;
+
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.statusError,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await SessionStorage.clearSession();
+      if (!mounted) return;
+      context.goNamed('login');
+    } else {
+      // Resume the scanner if user cancelled
+      if (mounted) await _controller.start();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -130,6 +171,13 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
         ),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Logout',
+            onPressed: () => _showLogoutDialog(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
