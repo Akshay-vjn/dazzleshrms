@@ -6,6 +6,7 @@ class SessionStorage {
   static const _keyEmployeeId = 'employeeId';
   static const _keyEmployeeName = 'employeeName';
   static const _keyStoreId = 'storeId';
+  static const _keyStoreName = 'storeName';
   static const _keyPermissions = 'permissions';
   static const _keyRole = 'role';
 
@@ -13,9 +14,10 @@ class SessionStorage {
   static Future<void> saveSession({
     required String token,
     String? refreshToken,
-    required int employeeId,
-    required String employeeName,
+    int? employeeId,
+    String? employeeName,
     required int storeId,
+    String? storeName,
     required String role,
     List<String>? permissions,
   }) async {
@@ -27,9 +29,20 @@ class SessionStorage {
       await prefs.setString(_keyRefreshToken, refreshToken);
     }
 
-    await prefs.setInt(_keyEmployeeId, employeeId);
-    await prefs.setString(_keyEmployeeName, employeeName);
+    if (employeeId != null) {
+      await prefs.setInt(_keyEmployeeId, employeeId);
+    }
+
+    if (employeeName != null) {
+      await prefs.setString(_keyEmployeeName, employeeName);
+    }
+
     await prefs.setInt(_keyStoreId, storeId);
+
+    if (storeName != null) {
+      await prefs.setString(_keyStoreName, storeName);
+    }
+
     await prefs.setString(_keyRole, role);
 
     if (permissions != null) {
@@ -80,6 +93,30 @@ class SessionStorage {
     }
   }
 
+  /// Get employee ID
+  static Future<int?> getEmployeeId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyEmployeeId);
+  }
+
+  /// Get employee name
+  static Future<String?> getEmployeeName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyEmployeeName);
+  }
+
+  /// Get store name
+  static Future<String?> getStoreName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyStoreName);
+  }
+
+  /// Get store ID
+  static Future<int?> getStoreId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyStoreId);
+  }
+
   /// Clear all stored session details
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,6 +126,8 @@ class SessionStorage {
     await prefs.remove(_keyEmployeeId);
     await prefs.remove(_keyEmployeeName);
     await prefs.remove(_keyStoreId);
+    await prefs.remove(_keyStoreName);
+    await prefs.remove(_keyRole);
 
     //  CLEAR PERMISSIONS
     await prefs.remove(_keyPermissions);

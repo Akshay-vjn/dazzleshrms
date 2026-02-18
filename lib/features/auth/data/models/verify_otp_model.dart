@@ -24,21 +24,31 @@ class VerifyOtpModel {
 class VerifyOtpData {
   final String token;
   final String? refreshToken;
-  final Employee employee;
+  final String role;
+  final Employee? employee;
+  final Store? store;
   final List<String> permissions;
 
   VerifyOtpData({
     required this.token,
     this.refreshToken,
-    required this.employee,
-    required this.permissions,
+    required this.role,
+    this.employee,
+    this.store,
+    this.permissions = const [],
   });
 
   factory VerifyOtpData.fromJson(Map<String, dynamic> json) {
     return VerifyOtpData(
       token: json['token'],
       refreshToken: json['refreshToken'],
-      employee: Employee.fromJson(json['employee']),
+      role: json['role'] ?? '',
+      employee: json['employee'] != null
+          ? Employee.fromJson(json['employee'])
+          : null,
+      store: json['store'] != null
+          ? Store.fromJson(json['store'])
+          : null,
       permissions: List<String>.from(json['permissions'] ?? []),
     );
   }
@@ -48,21 +58,35 @@ class Employee {
   final int employeeId;
   final String employeeName;
   final int storeId;
-  final String role;
 
   Employee({
     required this.employeeId,
     required this.employeeName,
     required this.storeId,
-    required this.role,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
     return Employee(
       employeeId: json['employeeId'],
-      employeeName: json['employeeName'],
+      employeeName: json['employeeName'] ?? '',
       storeId: json['storeId'],
-      role: json['role'] ?? '',
+    );
+  }
+}
+
+class Store {
+  final int storeId;
+  final String storeName;
+
+  Store({
+    required this.storeId,
+    required this.storeName,
+  });
+
+  factory Store.fromJson(Map<String, dynamic> json) {
+    return Store(
+      storeId: json['storeId'],
+      storeName: json['storeName'] ?? '',
     );
   }
 }

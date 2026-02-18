@@ -85,22 +85,33 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         data: (res) async {
           if (res == null || res.error) return;
 
-          await SessionStorage.saveSession(
-            token: res.data.token,
-            refreshToken: res.data.refreshToken,
-            employeeId: res.data.employee.employeeId,
-            employeeName: res.data.employee.employeeName,
-            storeId: res.data.employee.storeId,
-            role: res.data.employee.role,
-            permissions: res.data.permissions,
-          );
+          final role = res.data.role.toLowerCase();
+          debugPrint('Login role: $role');
 
-          ref.read(permissionProvider.notifier)
-              .setPermissions(res.data.permissions);
+          if (role.contains('store')) {
+            await SessionStorage.saveSession(
+              token: res.data.token,
+              refreshToken: res.data.refreshToken,
+              storeId: res.data.store!.storeId,
+              storeName: res.data.store!.storeName,
+              role: res.data.role,
+            );
+          } else {
+            await SessionStorage.saveSession(
+              token: res.data.token,
+              refreshToken: res.data.refreshToken,
+              employeeId: res.data.employee!.employeeId,
+              employeeName: res.data.employee!.employeeName,
+              storeId: res.data.employee!.storeId,
+              role: res.data.role,
+              permissions: res.data.permissions,
+            );
+
+            ref.read(permissionProvider.notifier)
+                .setPermissions(res.data.permissions);
+          }
 
           if (!mounted) return;
-          final role = (res.data.employee.role).toLowerCase();
-          debugPrint('Login role: $role');
           if (role.contains('store')) {
             context.goNamed('store_qr');
           } else {
