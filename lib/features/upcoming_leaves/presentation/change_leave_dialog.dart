@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/providers/change_leave_provider.dart';
+import '../../leave/data/providers/leave_type_provider.dart';
+import '../../leave/data/models/leave_type_model.dart';
 
 class ChangeLeaveDialog extends ConsumerStatefulWidget {
   final int logId;
@@ -17,6 +19,14 @@ class _ChangeLeaveDialogState
     extends ConsumerState<ChangeLeaveDialog> {
   String? selectedType;
   int? selectedTypeId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(leaveTypeProvider.notifier).loadLeaveTypes();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,32 +96,55 @@ class _ChangeLeaveDialogState
 
                 const SizedBox(height: 20),
 
-                DropdownButtonFormField<String>(
-                  value: selectedType,
-                  decoration: InputDecoration(
-                    hintText: "Select new leave type",
-                    filled: true,
-                    fillColor:
-                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: "HDO", child: Text("Half Day Out")),
-                    DropdownMenuItem(value: "HDI", child: Text("Half Day In")),
-                    DropdownMenuItem(value: "Absent", child: Text("Absent")),
-                  ],
-                  onChanged: (val) {
-                    setState(() {
-                      selectedType = val;
-                      selectedTypeId = val == "HDO"
-                          ? 5
-                          : val == "HDI"
-                          ? 6
-                          : 4;
-                    });
+                Consumer(
+                  builder: (context, ref, child) {
+                    final leaveTypesState = ref.watch(leaveTypeProvider);
+
+                    return leaveTypesState.when(
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      error: (e, _) => Center(
+                        child: Text(
+                          "Error loading leave types",
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                      ),
+                      data: (types) {
+                        return DropdownButtonFormField<LeaveType>(
+                          value: types.any((t) => t.leaveId == selectedTypeId)
+                              ? types.firstWhere((t) => t.leaveId == selectedTypeId)
+                              : null,
+                          decoration: InputDecoration(
+                            hintText: "Select new leave type",
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceVariant
+                                .withOpacity(0.4),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          items: types.map((type) {
+                            return DropdownMenuItem<LeaveType>(
+                              value: type,
+                              child: Text(type.leaveType),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                selectedType = val.leaveType;
+                                selectedTypeId = val.leaveId;
+                              });
+                            }
+                          },
+                        );
+                      },
+                    );
                   },
                 ),
 
