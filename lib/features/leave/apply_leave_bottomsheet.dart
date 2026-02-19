@@ -210,14 +210,20 @@ class _ApplyLeaveFormSheetState
                                   setState(() {
                                     if (isFrom) {
                                       fromDate = selectedDay;
-                                      if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                          selectedLeaveTypeName?.toLowerCase() == 'hdo') {
+                                      final type = selectedLeaveTypeName?.toLowerCase().trim();
+                                      if (type == 'hdi' ||
+                                          type == 'hdo' ||
+                                          type == 'half day in' ||
+                                          type == 'half day out') {
                                         toDate = selectedDay;
                                       }
                                     } else {
                                       toDate = selectedDay;
-                                      if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                          selectedLeaveTypeName?.toLowerCase() == 'hdo') {
+                                      final type = selectedLeaveTypeName?.toLowerCase().trim();
+                                      if (type == 'hdi' ||
+                                          type == 'hdo' ||
+                                          type == 'half day in' ||
+                                          type == 'half day out') {
                                         fromDate = selectedDay;
                                       }
                                     }
@@ -371,8 +377,11 @@ class _ApplyLeaveFormSheetState
                                 selectedLeaveTypeId = v;
                                 selectedLeaveTypeName = selectedType.leaveType;
                                 
-                                if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                    selectedLeaveTypeName?.toLowerCase() == 'hdo') {
+                                final type = selectedLeaveTypeName?.toLowerCase().trim();
+                                if (type == 'hdi' ||
+                                    type == 'hdo' ||
+                                    type == 'half day in' ||
+                                    type == 'half day out') {
                                   if (fromDate != null) {
                                     toDate = fromDate;
                                   } else if (toDate != null) {
