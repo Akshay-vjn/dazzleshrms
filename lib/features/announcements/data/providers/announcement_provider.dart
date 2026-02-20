@@ -36,6 +36,18 @@ final allEmployeesProvider = FutureProvider<List<Employee>>((ref) async {
   return repo.fetchAllEmployees();
 });
 
+/// Provider for fetching employees by storeId and/or designationId
+final employeesByStoreAndDesignationProvider = FutureProvider.family<
+    List<Employee>, ({int? storeId, int? designationId})>(
+  (ref, params) async {
+    final repo = ref.watch(announcementRepositoryProvider);
+    return repo.fetchEmployeesByStoreAndDesignation(
+      storeId: params.storeId,
+      designationId: params.designationId,
+    );
+  },
+);
+
 final employeeAnnouncementsProvider = FutureProvider<EmployeeAnnouncementResponse>((ref) async {
   final repo = ref.watch(announcementRepositoryProvider);
   return repo.fetchEmployeeAnnouncements();

@@ -143,6 +143,7 @@ class _CreateAnnouncementScreenState
       isScrollControlled: true,
       builder: (context) => EmployeeSheet(
         storeId: selectedStoreIds.isEmpty ? null : selectedStoreIds.first,
+        designationId: selectedDesignationIds.isEmpty ? null : selectedDesignationIds.first,
         selectedEmployeeIds: selectedEmployeeIds,
         onSelect: (ids, names) {
           setState(() {

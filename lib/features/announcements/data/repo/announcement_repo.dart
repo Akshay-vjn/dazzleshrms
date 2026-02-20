@@ -134,6 +134,31 @@ class AnnouncementRepository {
     }
   }
 
+  /// Fetch employees filtered by storeId and/or designationId
+  Future<List<Employee>> fetchEmployeesByStoreAndDesignation({
+    int? storeId,
+    int? designationId,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (storeId != null) queryParams['storeId'] = storeId;
+      if (designationId != null) queryParams['designationId'] = designationId;
+
+      final response = await _dio.get(
+        ApiConstants.storeEmployees,
+        queryParameters: queryParams,
+      );
+      
+      if (response.data == null || response.data['error'] == true) {
+        throw Exception(response.data?['message'] ?? "Failed to fetch employees");
+      }
+      return EmployeeResponse.fromJson(response.data).data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Failed to fetch employees";
+      throw (message);
+    }
+  }
+
   /// Fetch all employees without store filter (for "All Stores" selection)
   Future<List<Employee>> fetchAllEmployees() async {
     try {

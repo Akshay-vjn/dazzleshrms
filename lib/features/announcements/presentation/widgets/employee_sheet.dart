@@ -7,12 +7,14 @@ import '../../data/providers/announcement_provider.dart';
 
 class EmployeeSheet extends ConsumerStatefulWidget {
   final int? storeId;
+  final int? designationId;
   final List<int> selectedEmployeeIds;
   final Function(List<int>, List<String>) onSelect;
 
   const EmployeeSheet({
     super.key,
     this.storeId,
+    this.designationId,
     required this.selectedEmployeeIds,
     required this.onSelect,
   });
@@ -37,9 +39,12 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    final employeesAsync = widget.storeId == null
+    final employeesAsync = (widget.storeId == null && widget.designationId == null)
         ? ref.watch(allEmployeesProvider)
-        : ref.watch(employeesProvider(widget.storeId!));
+        : ref.watch(employeesByStoreAndDesignationProvider((
+            storeId: widget.storeId,
+            designationId: widget.designationId,
+          )));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

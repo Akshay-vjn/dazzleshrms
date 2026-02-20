@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String mediaBaseUrl = "http://192.168.1.183:7907/";
+  static const String mediaBaseUrl = "http://192.168.1.183:7907/api";
   // static const String mediaBaseUrl = "https://testhrms.dazzles.in/api/api";
   //    static const String mediaBaseUrl = "https://hrms.dazzles.in/api/api/";
 
@@ -31,6 +31,7 @@ class ApiConstants {
   static const String rejectAnnouncement = "/announcement/reject";
   static const String stores = "/stores";
   static const String employeesByStore = "/stores";
+  static const String storeEmployees = "/stores/employees";
   static const String usedLeaves = "/leave/used";
   static const String getEmployeeAnnouncements = "/announcement/employee";
   static const String notifications = "/notification";
