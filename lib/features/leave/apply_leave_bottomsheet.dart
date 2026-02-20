@@ -362,9 +362,10 @@ class _ApplyLeaveFormSheetState
                           return DropdownButtonFormField<int>(
                             value: selectedLeaveTypeId,
                             hint: const Text("Select leave type"),
-                            decoration: const InputDecoration(
-                              fillColor: AppTheme.surfaceDark,
-                              filled: true,
+                            decoration: InputDecoration(
+                              fillColor: theme.brightness == Brightness.dark
+                                  ? AppTheme.surfaceDark
+                                  : null,
                             ),
                             items: types
                                 .map(
@@ -442,10 +443,11 @@ class _ApplyLeaveFormSheetState
                       TextField(
                         controller: reasonCtrl,
                         maxLines: 2,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: "Enter reason",
-                          fillColor: AppTheme.surfaceDark,
-                          filled: true,
+                          fillColor: theme.brightness == Brightness.dark
+                              ? AppTheme.surfaceDark
+                              : null,
                         ),
                       ),
                     ],

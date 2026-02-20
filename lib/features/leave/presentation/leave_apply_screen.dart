@@ -63,7 +63,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   }
 
   void _showUsedLeavesDialog() {
-    // Invalidate the provider to force a fresh fetch when dialog opens
     ref.invalidate(usedLeavesProvider);
     
     showDialog(
@@ -399,7 +398,6 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                             ],
                           ),
 
-                          // Reject reason and dates (if any)
                           if (hasRejectInfo) ...[
                             const SizedBox(height: 10),
                             Column(
