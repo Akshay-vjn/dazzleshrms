@@ -24,7 +24,6 @@ class AnnouncementRepository {
         "announcement": announcement,
       };
 
-      // Send IDs as arrays (not comma-separated strings)
       if (storeIds != null && storeIds.isNotEmpty) {
         data["storeIds"] = storeIds;
       }
@@ -38,8 +37,6 @@ class AnnouncementRepository {
       FormData formData;
       
       if (attachmentPath != null) {
-        // When there's an attachment, we need to send as FormData
-        // For FormData, we need to send array values differently
         final Map<String, dynamic> formDataMap = {
           "title": title,
           "announcement": announcement,
@@ -68,7 +65,6 @@ class AnnouncementRepository {
         
         formData = FormData.fromMap(formDataMap);
       } else {
-        // Without attachment, send as regular JSON
         final response = await _dio.post(
           ApiConstants.announcement,
           data: data,
