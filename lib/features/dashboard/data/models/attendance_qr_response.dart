@@ -26,12 +26,14 @@ class QrData {
   final int qrSessionId;
   final int issuedAt;
   final int expiresAt;
+  final int? sessionPin;
 
   QrData({
     required this.qrImage,
     required this.qrSessionId,
     required this.issuedAt,
     required this.expiresAt,
+    this.sessionPin,
   });
 
   factory QrData.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class QrData {
       qrSessionId: (idValue as num?)?.toInt() ?? 0,
       issuedAt: (json['issuedAt'] as num?)?.toInt() ?? 0,
       expiresAt: (json['expiresAt'] as num?)?.toInt() ?? 0,
+      sessionPin: (json['sessionPin'] as num?)?.toInt(),
     );
   }
 

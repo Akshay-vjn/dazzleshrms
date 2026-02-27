@@ -64,7 +64,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
 
   void _showUsedLeavesDialog() {
     ref.invalidate(usedLeavesProvider);
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,

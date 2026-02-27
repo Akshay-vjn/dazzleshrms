@@ -25,7 +25,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
   late final AnimationController _controller;
   void _showUsedLeavesDialog() {
     ref.invalidate(usedLeavesProvider);
-    
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -46,8 +46,8 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                   Text(
                     "Used Leaves",
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
@@ -91,8 +91,8 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                             child: Text(
                               "No used leaves found",
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).hintColor,
-                                  ),
+                                color: Theme.of(context).hintColor,
+                              ),
                             ),
                           );
                         }
@@ -214,9 +214,9 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
   Widget _buildBalanceCard(ThemeData theme, DashboardData data) {
     final isDark = theme.brightness == Brightness.dark;
     final cardGradientStart =
-        isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
+    isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
     final cardGradientEnd =
-        isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
+    isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
     final statBg = Colors.white.withValues(alpha: 0.15);
 
     return FadeSlideItem(
@@ -277,32 +277,32 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
           onTap: onTap,
           child: Container(
 
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(12),
-        ),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(12),
+            ),
 
-        child: Column(
-          children: [
-            Text(
-              formatLeave(value),
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            child: Column(
+              children: [
+                Text(
+                  formatLeave(value),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-    )
+          ),
+        )
     );
   }
 
@@ -383,7 +383,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             Expanded(
               child: dashboardState.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text(e.toString())),
                 data: (data) {
                   if (data == null) {

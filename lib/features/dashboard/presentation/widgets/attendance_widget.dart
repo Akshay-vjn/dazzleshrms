@@ -483,6 +483,17 @@ class _QrDialogState extends State<_QrDialog> {
               ),
             ),
             const SizedBox(height: 16),
+            // Session PIN
+            if (widget.qrResponse.data.sessionPin != null) ...[
+              Text(
+                'PIN : ${widget.qrResponse.data.sessionPin}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             // Timer
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

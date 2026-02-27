@@ -8,14 +8,16 @@ class AttendanceQrRepo {
   final Dio _dio = ApiConfig.dio;
 
   Future<AttendanceQrResponse> scanQr({
-    required String qrData,
+    String? qrData,
     String? reason,
+    int? sessionPin,
   }) async {
     final response = await _dio.post(
       ApiConstants.attendanceScanQr,
       data: {
-        'qrData': qrData,
+        if (qrData != null && qrData.isNotEmpty) 'qrData': qrData,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
+        if (sessionPin != null) 'sessionPin': sessionPin,
       },
     );
 
