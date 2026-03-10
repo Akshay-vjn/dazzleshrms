@@ -36,14 +36,23 @@ final allEmployeesProvider = FutureProvider<List<Employee>>((ref) async {
   return repo.fetchAllEmployees();
 });
 
-/// Provider for fetching employees by storeId and/or designationId
+/// Provider for fetching employees by storeIds and/or designationIds (supports multiple)
+/// Key format: "storeId1,storeId2|designationId1,designationId2"
 final employeesByStoreAndDesignationProvider = FutureProvider.family<
-    List<Employee>, ({int? storeId, int? designationId})>(
-  (ref, params) async {
+    List<Employee>, String>(
+  (ref, key) async {
+    final parts = key.split('|');
+    final storeIds = parts[0].isEmpty
+        ? <int>[]
+        : parts[0].split(',').map(int.parse).toList();
+    final designationIds = parts.length > 1 && parts[1].isNotEmpty
+        ? parts[1].split(',').map(int.parse).toList()
+        : <int>[];
+
     final repo = ref.watch(announcementRepositoryProvider);
     return repo.fetchEmployeesByStoreAndDesignation(
-      storeId: params.storeId,
-      designationId: params.designationId,
+      storeIds: storeIds,
+      designationIds: designationIds,
     );
   },
 );

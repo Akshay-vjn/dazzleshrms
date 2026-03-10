@@ -6,15 +6,15 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../../data/providers/announcement_provider.dart';
 
 class EmployeeSheet extends ConsumerStatefulWidget {
-  final int? storeId;
-  final int? designationId;
+  final List<int>? storeIds;
+  final List<int>? designationIds;
   final List<int> selectedEmployeeIds;
   final Function(List<int>, List<String>) onSelect;
 
   const EmployeeSheet({
     super.key,
-    this.storeId,
-    this.designationId,
+    this.storeIds,
+    this.designationIds,
     required this.selectedEmployeeIds,
     required this.onSelect,
   });
@@ -39,12 +39,10 @@ class _EmployeeSheetState extends ConsumerState<EmployeeSheet> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    final employeesAsync = (widget.storeId == null && widget.designationId == null)
-        ? ref.watch(allEmployeesProvider)
-        : ref.watch(employeesByStoreAndDesignationProvider((
-            storeId: widget.storeId,
-            designationId: widget.designationId,
-          )));
+    final storeKey = (widget.storeIds ?? []).join(',');
+    final designationKey = (widget.designationIds ?? []).join(',');
+    final employeesAsync = ref.watch(
+        employeesByStoreAndDesignationProvider('$storeKey|$designationKey'));
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,

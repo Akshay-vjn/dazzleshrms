@@ -130,19 +130,20 @@ class AnnouncementRepository {
     }
   }
 
-  /// Fetch employees filtered by storeId and/or designationId
+  /// Fetch employees filtered by storeId and/or designationId (supports multiple)
   Future<List<Employee>> fetchEmployeesByStoreAndDesignation({
-    int? storeId,
-    int? designationId,
+    List<int>? storeIds,
+    List<int>? designationIds,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (storeId != null) queryParams['storeId'] = storeId;
-      if (designationId != null) queryParams['designationId'] = designationId;
+      final body = <String, dynamic>{
+        'storeId': storeIds ?? [],
+        'designationId': designationIds ?? [],
+      };
 
       final response = await _dio.get(
         ApiConstants.storeEmployees,
-        queryParameters: queryParams,
+        data: body,
       );
       
       if (response.data == null || response.data['error'] == true) {

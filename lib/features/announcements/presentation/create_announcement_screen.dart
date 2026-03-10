@@ -128,22 +128,13 @@ class _CreateAnnouncementScreenState
   }
 
   void _showEmployeeSheet() {
-    if (selectedStoreIds.length > 1 || selectedDesignationIds.length > 1) {
-      _showSnackBar("Employee selection is only available for a single store/designation");
-      return;
-    }
-
-    if (selectedStoreIds.isEmpty && selectedDesignationIds.isEmpty) {
-      _showSnackBar("Select a store or designation first");
-      return;
-    }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => EmployeeSheet(
-        storeId: selectedStoreIds.isEmpty ? null : selectedStoreIds.first,
-        designationId: selectedDesignationIds.isEmpty ? null : selectedDesignationIds.first,
+        storeIds: selectedStoreIds.isEmpty ? null : selectedStoreIds,
+        designationIds: selectedDesignationIds.isEmpty ? null : selectedDesignationIds,
         selectedEmployeeIds: selectedEmployeeIds,
         onSelect: (ids, names) {
           setState(() {
@@ -189,8 +180,7 @@ class _CreateAnnouncementScreenState
       },
     );
 
-    final bool isEmployeeEnabled = (selectedStoreIds.length == 1 || selectedDesignationIds.length == 1);
-    final bool isEmployeeDisabled = !isEmployeeEnabled;
+
 
     return Scaffold(
       appBar: AppBar(title: const Text("New Announcement")),
@@ -267,33 +257,26 @@ class _CreateAnnouncementScreenState
                   const SizedBox(height: 20),
 
                   InkWell(
-                    onTap: isEmployeeDisabled ? null : _showEmployeeSheet,
-                    child: Opacity(
-                      opacity: isEmployeeDisabled ? 0.5 : 1,
-                      child: InputDecorator(
-                        decoration:
-                        _selectorDecoration(context, "Employee"),
-                        child: Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                  isEmployeeDisabled
-                                      ? (selectedStoreIds.length > 1 || selectedDesignationIds.length > 1
-                                          ? "Not applicable for multiple selections"
-                                          : "Select employee")
-                                      : (selectedEmployeeNames.isEmpty
-                                          ? "All Employees"
-                                          : selectedEmployeeNames.join(', ')),
-                                style: theme.textTheme.bodyMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                    onTap: _showEmployeeSheet,
+                    child: InputDecorator(
+                      decoration:
+                      _selectorDecoration(context, "Employee"),
+                      child: Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedEmployeeNames.isEmpty
+                                  ? "All Employees"
+                                  : selectedEmployeeNames.join(', '),
+                              style: theme.textTheme.bodyMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const Icon(Icons.arrow_drop_down, size: 22),
-                          ],
-                        ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, size: 22),
+                        ],
                       ),
                     ),
                   ),

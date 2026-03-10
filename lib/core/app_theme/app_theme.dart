@@ -16,6 +16,8 @@ class AppTheme {
   static const Color surfaceDarkVariant = Color(0xFF1E293B);
   static const Color bottomBg = Color(0xFF151515);
   static const Color surfaceBlack = Color(0xFF0F0F0F);
+  static const Color dark = Color(0xFF212528);
+
 
 
 
