@@ -415,7 +415,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     style:
                                     theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white
+                                      color: isDark ? Colors.white : Colors.black,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
