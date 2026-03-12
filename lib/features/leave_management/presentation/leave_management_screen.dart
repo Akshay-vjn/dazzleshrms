@@ -86,7 +86,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                         ),
                       ),
                       data: (data) {
-                        if (data.records.isEmpty) {
+                        if (data.isEmpty) {
                           return Center(
                             child: Text(
                               "No used leaves found",
@@ -98,10 +98,10 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                         }
 
                         return ListView.separated(
-                          itemCount: data.records.length,
+                          itemCount: data.length,
                           separatorBuilder: (_, __) => const Divider(),
                           itemBuilder: (context, index) {
-                            final item = data.records[index];
+                            final item = data[index];
                             return ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(

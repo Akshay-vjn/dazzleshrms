@@ -105,21 +105,17 @@ class EmployeeLeaveRepository {
     return EmployeeLeaveResponse.fromJson(response.data);
   }
 
-  Future<UsedLeaveResponse> getEmployeeUsedLeaves(int employeeId, {int page = 1, int limit = 10}) async {
+  Future<List<UsedLeaveItem>> getEmployeeUsedLeaves(int employeeId) async {
     final String url = ApiConstants.EmployeeUsedLeaves.replaceFirst("{id}", employeeId.toString());
     final Response response = await ApiConfig.dio.get(
       url,
-      queryParameters: {
-        'page': page,
-        'limit': limit,
-      },
     );
 
     if (response.data == null || response.data['error'] == true) {
       throw Exception(response.data?['message'] ?? "Failed to load used leaves");
     }
 
-    return UsedLeaveResponse.fromJson(response.data);
+    return UsedLeaveResponse.fromJson(response.data).data;
   }
 
   Future<void> applyEmployeeLeave(int employeeId, {

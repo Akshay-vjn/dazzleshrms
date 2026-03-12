@@ -1,5 +1,5 @@
 class UsedLeaveResponse {
-  final UsedLeaveData data;
+  final List<UsedLeaveItem> data;
   final String message;
   final bool error;
 
@@ -11,35 +11,12 @@ class UsedLeaveResponse {
 
   factory UsedLeaveResponse.fromJson(Map<String, dynamic> json) {
     return UsedLeaveResponse(
-      data: UsedLeaveData.fromJson(json['data'] ?? {}),
-      message: json['message'] ?? '',
-      error: json['error'] ?? false,
-    );
-  }
-}
-
-class UsedLeaveData {
-  final int totalItems;
-  final int totalPages;
-  final int currentPage;
-  final List<UsedLeaveItem> records;
-
-  UsedLeaveData({
-    required this.totalItems,
-    required this.totalPages,
-    required this.currentPage,
-    required this.records,
-  });
-
-  factory UsedLeaveData.fromJson(Map<String, dynamic> json) {
-    return UsedLeaveData(
-      totalItems: json['totalItems'] ?? 0,
-      totalPages: json['totalPages'] ?? 0,
-      currentPage: json['currentPage'] ?? 1,
-      records: (json['data'] as List?)
+      data: (json['data'] as List?)
               ?.map((e) => UsedLeaveItem.fromJson(e))
               .toList() ??
           [],
+      message: json['message'] ?? '',
+      error: json['error'] ?? false,
     );
   }
 }
@@ -48,11 +25,13 @@ class UsedLeaveItem {
   final String date;
   final String leaveType;
   final double daysTaken;
+  final String source;
 
   UsedLeaveItem({
     required this.date,
     required this.leaveType,
     required this.daysTaken,
+    required this.source,
   });
 
   factory UsedLeaveItem.fromJson(Map<String, dynamic> json) {
@@ -60,7 +39,7 @@ class UsedLeaveItem {
       date: json['date'] ?? '',
       leaveType: json['leaveType'] ?? '',
       daysTaken: (json['daysTaken'] as num?)?.toDouble() ?? 0.0,
+      source: json['source'] ?? '',
     );
   }
 }
-

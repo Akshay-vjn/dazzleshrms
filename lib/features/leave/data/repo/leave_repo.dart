@@ -23,16 +23,9 @@ class LeaveRepository {
     return LeaveModel.fromJson(response.data);
   }
   
-  Future<UsedLeaveData> fetchUsedLeaves({
-    int page = 1,
-    int limit = 10,
-  }) async {
+  Future<List<UsedLeaveItem>> fetchUsedLeaves() async {
     final response = await ApiConfig.dio.get(
       ApiConstants.usedLeaves,
-      queryParameters: {
-        "page": page,
-        "limit": limit,
-      },
     );
 
     if (response.data == null) {
@@ -47,12 +40,7 @@ class LeaveRepository {
     try {
       return UsedLeaveResponse.fromJson(response.data).data;
     } catch (e) {
-      return UsedLeaveData(
-        totalItems: 0,
-        totalPages: 0,
-        currentPage: page,
-        records: [],
-      );
+      return [];
     }
   }
 }

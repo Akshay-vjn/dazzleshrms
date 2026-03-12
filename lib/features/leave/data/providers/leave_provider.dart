@@ -14,7 +14,7 @@ StateNotifierProvider<LeaveNotifier, AsyncValue<LeaveData?>>(
       (ref) => LeaveNotifier(ref.read(leaveRepositoryProvider)),
 );
 
-final usedLeavesProvider = FutureProvider<UsedLeaveData>((ref) async {
+final usedLeavesProvider = FutureProvider<List<UsedLeaveItem>>((ref) async {
   final repo = ref.watch(leaveRepositoryProvider);
   return repo.fetchUsedLeaves();
 });

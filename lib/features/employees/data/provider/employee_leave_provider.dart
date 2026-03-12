@@ -32,7 +32,7 @@ class EmployeeLeavesNotifier extends StateNotifier<AsyncValue<EmployeeLeaveRespo
 }
 
 // Used Leaves Family Provider
-final usedLeavesFamilyProvider = FutureProvider.family<UsedLeaveResponse, int>((ref, employeeId) async {
+final usedLeavesFamilyProvider = FutureProvider.family<List<UsedLeaveItem>, int>((ref, employeeId) async {
   return ref.read(employeeLeaveRepositoryProvider).getEmployeeUsedLeaves(employeeId);
 });
 

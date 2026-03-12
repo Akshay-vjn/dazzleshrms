@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
-import '../../leave/data/models/used_leave_model.dart';
 import '../data/provider/employee_leave_provider.dart';
 import '../data/models/employee_leave_model.dart';
 import '../../leave/presentation/widgets/balance_box.dart';
@@ -143,9 +142,8 @@ class _EmployeeLeaveScreenState extends ConsumerState<EmployeeLeaveScreen> {
                           ],
                         ),
                       ),
-                      data: (UsedLeaveResponse response) {
-                        final data = response.data;
-                        if (data.records.isEmpty) {
+                      data: (data) {
+                        if (data.isEmpty) {
                           return Center(
                             child: Text(
                               "No used leaves found",
@@ -157,10 +155,10 @@ class _EmployeeLeaveScreenState extends ConsumerState<EmployeeLeaveScreen> {
                         }
 
                         return ListView.separated(
-                          itemCount: data.records.length,
+                          itemCount: data.length,
                           separatorBuilder: (_, ___) => const Divider(),
                           itemBuilder: (context, index) {
-                            final item = data.records[index];
+                            final item = data[index];
                             return ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(
