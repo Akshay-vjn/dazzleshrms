@@ -55,4 +55,31 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileData?>> {
       rethrow;
     }
   }
+
+  Future<void> removeProfileImage() async {
+    final currentData = state.valueOrNull;
+    if (currentData == null) return;
+
+    // Optimistic UI update so the avatar clears immediately.
+    state = AsyncValue.data(
+      ProfileData(
+        name: currentData.name,
+        code: currentData.code,
+        designation: currentData.designation,
+        mobile: currentData.mobile,
+        profileImage: '',
+        joiningDate: currentData.joiningDate,
+        role: currentData.role,
+        store: currentData.store,
+      ),
+    );
+
+    try {
+      await _repository.removeProfileImage();
+    } catch (e, st) {
+      // Roll back if the server rejects the removal.
+      state = AsyncValue.data(currentData);
+      throw AsyncValue.error(e, st);
+    }
+  }
 }

@@ -60,4 +60,33 @@ class ProfileRepository {
       throw (message);
     }
   }
+
+  Future<void> removeProfileImage() async {
+    try {
+      // Backend contract isn't explicit here; this follows the same multipart
+      // update endpoint and sends an empty image to clear it.
+      final formData = FormData.fromMap({'image': ''});
+      final response = await _dio.put(
+        ApiConstants.profile,
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+
+      final data = response.data;
+      if (data is Map && data['error'] == false) {
+        return;
+      }
+      throw (data is Map ? (data['message'] ?? 'Failed to remove profile image') : 'Failed to remove profile image');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 502) {
+        throw 'Service is temporarily unavailable (502). Please try again later.';
+      }
+      if (e.response?.statusCode == 500) {
+        throw 'Internal Server Error. Please try again later.';
+      }
+      final message =
+          e.response?.data?['message'] ?? 'Failed to remove profile image';
+      throw (message);
+    }
+  }
 }

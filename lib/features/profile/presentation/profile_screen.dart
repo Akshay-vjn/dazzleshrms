@@ -31,6 +31,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   late List<Animation<double>> _cardFadeAnimations;
 
   bool _isUploadingImage = false;
+  String _lastAvatarImageUrl = '';
+
+  Future<void> _evictAvatarUrl(String url) async {
+    if (url.isEmpty) return;
+    try {
+      await CachedNetworkImage.evictFromCache(url);
+      await CachedNetworkImageProvider(url).evict();
+      PaintingBinding.instance.imageCache.evict(NetworkImage(url));
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    } catch (_) {
+    }
+  }
 
   @override
   void initState() {
@@ -140,6 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: hasImage
                 ? ClipOval(
                     child: CachedNetworkImage(
+                      key: ValueKey(imageUrl),
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       width: 100,
@@ -252,6 +265,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void _showImagePickerSheet() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final currentProfileImage =
+        ref.read(profileProvider).valueOrNull?.profileImage ?? '';
+    final currentImageUrl = _getFullImageUrl(currentProfileImage);
+    final canRemove = currentProfileImage.isNotEmpty;
 
     showModalBottomSheet(
       context: context,
@@ -327,11 +344,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   _pickAndUploadImage(ImageSource.gallery);
                 },
               ),
+              if (canRemove) ...[
+                const SizedBox(height: 6),
+                ListTile(
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.statusError.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppTheme.statusError,
+                    ),
+                  ),
+                  title: const Text('Remove Photo'),
+                  subtitle: Text(
+                    'Remove your current profile photo',
+                    style: TextStyle(color: theme.hintColor, fontSize: 12),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _removeProfilePhoto(currentImageUrl);
+                  },
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _removeProfilePhoto(String currentImageUrl) async {
+    try {
+      setState(() => _isUploadingImage = true);
+
+      await _evictAvatarUrl(currentImageUrl);
+
+      await ref.read(profileProvider.notifier).removeProfileImage();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile image removed successfully'),
+            backgroundColor: AppTheme.dGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove image: $e'),
+            backgroundColor: AppTheme.statusError,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
   }
 
   Future<void> _pickAndUploadImage(ImageSource source) async {
@@ -510,6 +593,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             );
           }
 
+          final currentAvatarUrl = _getFullImageUrl(data.profileImage);
+          if (_lastAvatarImageUrl.isNotEmpty && currentAvatarUrl.isEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await _evictAvatarUrl(_lastAvatarImageUrl);
+            });
+          }
+          _lastAvatarImageUrl = currentAvatarUrl;
+
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
@@ -530,9 +621,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  AppTheme.dTeal,  // was Color(0xFF4F46E5)
-                                  AppTheme.dGreen, // was Color(0xFF7C3AED)
-                                  AppTheme.dTeal,  // was Color(0xFF8B5CF6)
+                                  AppTheme.dTeal,
+                                  AppTheme.dGreen,
+                                  AppTheme.dTeal,
                                 ],
                                 stops: [0.0, 0.5, 1.0],
                               ),
@@ -973,7 +1064,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 }
 
-/// WhatsApp-style full-screen profile image viewer
 class _ProfileImageViewer extends StatefulWidget {
   final String name;
   final String profileImage;
@@ -1033,17 +1123,14 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
   void _onVerticalDragUpdate(DragUpdateDetails details) {
     setState(() {
       _dragOffset += details.delta.dy;
-      // Scale decreases as user drags further
       _dragScale = (1 - (_dragOffset.abs() / 600)).clamp(0.5, 1.0);
     });
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
     if (_dragOffset.abs() > 100 || details.velocity.pixelsPerSecond.dy.abs() > 500) {
-      // Dismiss
       _dismiss();
     } else {
-      // Snap back
       setState(() {
         _dragOffset = 0;
         _dragScale = 1.0;
@@ -1063,7 +1150,6 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
     final hasImage = widget.imageUrl.isNotEmpty;
     final letter = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
 
-    // Background fades based on drag
     final bgOpacity = _isDragging
         ? (1 - (_dragOffset.abs() / 400)).clamp(0.3, 1.0)
         : 1.0;
@@ -1075,7 +1161,6 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
           backgroundColor: Colors.black.withValues(alpha: _backgroundOpacity.value * bgOpacity),
           body: Stack(
             children: [
-              // Dismiss on tap background
               GestureDetector(
                 onTap: _dismiss,
                 child: Container(color: Colors.transparent),
@@ -1086,7 +1171,6 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
                 opacity: _contentOpacity,
                 child: Column(
                   children: [
-                    // Top bar (WhatsApp style)
                     SafeArea(
                       bottom: false,
                       child: Container(
@@ -1118,7 +1202,7 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
                       ),
                     ),
 
-                    // Image area — centered, swipeable
+                    // Image
                     Expanded(
                       child: GestureDetector(
                         onVerticalDragStart: _onVerticalDragStart,
