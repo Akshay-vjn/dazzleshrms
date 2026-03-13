@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
@@ -27,6 +28,7 @@ class AttendanceWidget extends StatefulWidget {
 class _AttendanceWidgetState extends State<AttendanceWidget> {
   final AttendanceqrRepo _repository = AttendanceqrRepo();
   late String _attendanceStatus;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   String _normalizeStatus(String? status) {
     final normalized = (status ?? '').trim().toUpperCase();
@@ -39,6 +41,15 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   void initState() {
     super.initState();
     _attendanceStatus = _normalizeStatus(widget.attendanceStatus);
+  }
+
+  Future<void> _playSuccessSound(bool isCheckIn) async {
+    try {
+      final soundPath = 'audio/notification.mp3';
+      await _audioPlayer.play(AssetSource(soundPath));
+    } catch (_) {
+      // If sound fails, silently ignore so UI flow is not affected.
+    }
   }
 
   @override
@@ -136,6 +147,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
           setState(() {
             _attendanceStatus = isCheckIn ? 'ACTIVE' : 'OFFLINE';
           });
+          _playSuccessSound(isCheckIn);
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -317,6 +329,12 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 }
 

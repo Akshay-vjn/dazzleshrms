@@ -105,10 +105,14 @@ class EmployeeLeaveRepository {
     return EmployeeLeaveResponse.fromJson(response.data);
   }
 
-  Future<List<UsedLeaveItem>> getEmployeeUsedLeaves(int employeeId) async {
+  Future<List<UsedLeaveItem>> getEmployeeUsedLeaves(int employeeId, {int page = 1, int limit = 10}) async {
     final String url = ApiConstants.EmployeeUsedLeaves.replaceFirst("{id}", employeeId.toString());
     final Response response = await ApiConfig.dio.get(
       url,
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+      },
     );
 
     if (response.data == null || response.data['error'] == true) {

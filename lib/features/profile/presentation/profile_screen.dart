@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'dart:math' as math;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dazzleshrms/core/api_constants/api_constants.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/app_theme/theme_provider.dart';
 import 'package:dazzleshrms/core/storage/session_storage.dart';
@@ -7,6 +10,7 @@ import 'package:dazzleshrms/features/profile/data/providers/profile_provider.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -25,6 +29,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   late List<AnimationController> _cardControllers;
   late List<Animation<Offset>> _cardSlideAnimations;
   late List<Animation<double>> _cardFadeAnimations;
+
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -94,79 +100,310 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     super.dispose();
   }
 
-  Widget _buildAvatar(String name) {
+  String _getFullImageUrl(String profileImage) {
+    if (profileImage.isEmpty) return '';
+    return '${ApiConstants.mediaBaseUrl}$profileImage';
+  }
+
+  Widget _buildAvatar(String name, String profileImage) {
     final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final imageUrl = _getFullImageUrl(profileImage);
+    final hasImage = imageUrl.isNotEmpty;
+
     return GestureDetector(
-      onTap: () => _showAvatarPopup(context, name),
-      child: Container(
-        width: 88,
-        height: 88,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppTheme.dTeal,  // was Color(0xFF6366F1) Indigo
-              AppTheme.dGreen, // was Color(0xFF8B5CF6) Purple / Color(0xFFA855F7) Light purple
-            ],
-          ),
-        ),
-        child: Center(
-          child: Text(
-            letter,
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+      onTap: () => _showAvatarPopup(context, name, profileImage),
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: hasImage
+                  ? null
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.dTeal,
+                        AppTheme.dGreen,
+                      ],
+                    ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.dTeal.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
+            child: hasImage
+                ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      width: 100,
+                      height: 100,
+                      placeholder: (context, url) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppTheme.dTeal, AppTheme.dGreen],
+                          ),
+                        ),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppTheme.dTeal, AppTheme.dGreen],
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            letter,
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      letter,
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+          ),
+          // Edit icon overlay
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => _showImagePickerSheet(),
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppTheme.PrimaryColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          // Upload indicator overlay
+          if (_isUploadingImage)
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showImagePickerSheet() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: theme.dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                'Change Profile Photo',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.PrimaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppTheme.PrimaryColor,
+                  ),
+                ),
+                title: const Text('Take a Photo'),
+                subtitle: Text(
+                  'Use your camera',
+                  style: TextStyle(color: theme.hintColor, fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.dTeal.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library_rounded,
+                    color: AppTheme.dTeal,
+                  ),
+                ),
+                title: const Text('Choose from Gallery'),
+                subtitle: Text(
+                  'Select from your photos',
+                  style: TextStyle(color: theme.hintColor, fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.gallery);
+                },
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _showAvatarPopup(BuildContext context, String name) {
-    final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.7),
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Hero(
-              tag: 'profile_avatar',
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.dTeal,  // was Color(0xFF6366F1) Indigo
-                      AppTheme.dGreen, // was Color(0xFFA855F7) Light purple
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    letter,
-                    style: const TextStyle(
-                      fontSize: 80,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final file = File(pickedFile.path);
+      await ref.read(profileProvider.notifier).updateProfileImage(file);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile image updated successfully'),
+            backgroundColor: AppTheme.dGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update image: $e'),
+            backgroundColor: AppTheme.statusError,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
+  }
+
+  void _showAvatarPopup(BuildContext context, String name, String profileImage) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        barrierDismissible: false,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return _ProfileImageViewer(
+            name: name,
+            profileImage: profileImage,
+            imageUrl: _getFullImageUrl(profileImage),
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 250),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
       ),
     );
   }
@@ -456,7 +693,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           child: Center(
                             child: ScaleTransition(
                               scale: _scaleAnimation,
-                              child: _buildAvatar(data.name),
+                              child: _buildAvatar(data.name, data.profileImage),
                             ),
                           ),
                         ),
@@ -729,6 +966,228 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// WhatsApp-style full-screen profile image viewer
+class _ProfileImageViewer extends StatefulWidget {
+  final String name;
+  final String profileImage;
+  final String imageUrl;
+
+  const _ProfileImageViewer({
+    required this.name,
+    required this.profileImage,
+    required this.imageUrl,
+  });
+
+  @override
+  State<_ProfileImageViewer> createState() => _ProfileImageViewerState();
+}
+
+class _ProfileImageViewerState extends State<_ProfileImageViewer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _backgroundOpacity;
+  late Animation<double> _contentOpacity;
+
+  double _dragOffset = 0;
+  double _dragScale = 1.0;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _backgroundOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _contentOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragStart(DragStartDetails details) {
+    setState(() => _isDragging = true);
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.delta.dy;
+      // Scale decreases as user drags further
+      _dragScale = (1 - (_dragOffset.abs() / 600)).clamp(0.5, 1.0);
+    });
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffset.abs() > 100 || details.velocity.pixelsPerSecond.dy.abs() > 500) {
+      // Dismiss
+      _dismiss();
+    } else {
+      // Snap back
+      setState(() {
+        _dragOffset = 0;
+        _dragScale = 1.0;
+        _isDragging = false;
+      });
+    }
+  }
+
+  void _dismiss() {
+    _animationController.reverse().then((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = widget.imageUrl.isNotEmpty;
+    final letter = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+
+    // Background fades based on drag
+    final bgOpacity = _isDragging
+        ? (1 - (_dragOffset.abs() / 400)).clamp(0.3, 1.0)
+        : 1.0;
+
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Scaffold(
+          backgroundColor: Colors.black.withValues(alpha: _backgroundOpacity.value * bgOpacity),
+          body: Stack(
+            children: [
+              // Dismiss on tap background
+              GestureDetector(
+                onTap: _dismiss,
+                child: Container(color: Colors.transparent),
+              ),
+
+              // Content
+              FadeTransition(
+                opacity: _contentOpacity,
+                child: Column(
+                  children: [
+                    // Top bar (WhatsApp style)
+                    SafeArea(
+                      bottom: false,
+                      child: Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: _dismiss,
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                widget.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Image area — centered, swipeable
+                    Expanded(
+                      child: GestureDetector(
+                        onVerticalDragStart: _onVerticalDragStart,
+                        onVerticalDragUpdate: _onVerticalDragUpdate,
+                        onVerticalDragEnd: _onVerticalDragEnd,
+                        child: Center(
+                          child: Transform.translate(
+                            offset: Offset(0, _dragOffset),
+                            child: Transform.scale(
+                              scale: _dragScale,
+                              child: hasImage
+                                  ? InteractiveViewer(
+                                      minScale: 1.0,
+                                      maxScale: 4.0,
+                                      child: CachedNetworkImage(
+                                        imageUrl: widget.imageUrl,
+                                        fit: BoxFit.contain,
+                                        width: MediaQuery.of(context).size.width,
+                                        placeholder: (context, url) => SizedBox(
+                                          width: MediaQuery.of(context).size.width,
+                                          height: MediaQuery.of(context).size.width,
+                                          child: Container(
+                                            color: Colors.grey[900],
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            _buildLetterFallback(letter),
+                                      ),
+                                    )
+                                  : _buildLetterFallback(letter),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLetterFallback(String letter) {
+    final size = MediaQuery.of(context).size.width * 0.7;
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.dTeal, AppTheme.dGreen],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          letter,
+          style: TextStyle(
+            fontSize: size * 0.4,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),
