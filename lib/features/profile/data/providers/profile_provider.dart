@@ -33,7 +33,6 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileData?>> {
     try {
       final newImagePath = await _repository.updateProfileImage(imageFile);
 
-      // Update the current state with the new profile image
       final currentData = state.valueOrNull;
       if (currentData != null) {
         state = AsyncValue.data(
@@ -60,7 +59,6 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileData?>> {
     final currentData = state.valueOrNull;
     if (currentData == null) return;
 
-    // Optimistic UI update so the avatar clears immediately.
     state = AsyncValue.data(
       ProfileData(
         name: currentData.name,
@@ -77,7 +75,6 @@ class ProfileNotifier extends StateNotifier<AsyncValue<ProfileData?>> {
     try {
       await _repository.removeProfileImage();
     } catch (e, st) {
-      // Roll back if the server rejects the removal.
       state = AsyncValue.data(currentData);
       throw AsyncValue.error(e, st);
     }
