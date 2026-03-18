@@ -241,7 +241,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             }
 
             final role = data.role.toLowerCase();
-            if (role.contains('store')) {
+            if (role == 'store') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
                   context.goNamed('store_qr');

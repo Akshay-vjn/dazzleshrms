@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (token != null && token.isNotEmpty) {
         final normalizedRole = (role ?? '').toLowerCase();
-        if (normalizedRole.contains('store')) {
+        if (normalizedRole == 'store') {
           context.goNamed('store_qr');
         } else {
           context.goNamed('home');

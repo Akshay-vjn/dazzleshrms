@@ -88,7 +88,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           final role = res.data.role.toLowerCase();
           debugPrint('Login role: $role');
 
-          if (role.contains('store')) {
+          if (role == 'store') {
             await SessionStorage.saveSession(
               token: res.data.token,
               refreshToken: res.data.refreshToken,
@@ -112,7 +112,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           }
 
           if (!mounted) return;
-          if (role.contains('store')) {
+          if (role == 'store') {
             context.goNamed('store_qr');
           } else {
             context.goNamed('home');

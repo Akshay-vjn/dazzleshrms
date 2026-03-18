@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,9 +49,17 @@ class _ChangeLeaveDialogState
           }
         },
         error: (e, _) {
+          String errorMessage = 'Something went wrong';
+          if (e is DioException) {
+            errorMessage = e.response?.data?['message'] ?? errorMessage;
+          }
+
+          Navigator.pop(context);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString()),
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
             ),
           );

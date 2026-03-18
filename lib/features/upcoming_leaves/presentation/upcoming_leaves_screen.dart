@@ -141,23 +141,34 @@ class _UpcomingLeaveScreenState
                       return InkWell(
                         borderRadius: BorderRadius.circular(14),
                         onTap: () async {
-                          if (item.status.toLowerCase() ==
-                              'rejected') {
+                          if (item.status.toLowerCase() == 'rejected' ||
+                              item.status.toLowerCase() == 'cancelled by employee') {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(
-                                  "This leave is already rejected and can’t be modified.",
+                                  "This leave is already ${item.status.toLowerCase()} and can’t be modified.",
                                 ),
                                 backgroundColor: Colors.red,
-                                behavior:
-                                SnackBarBehavior.floating,
+                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                             return;
                           }
 
-                          final changed =
-                          await showDialog<bool>(
+                          if (item.type.toLowerCase() == 'present') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "This leave can't be modified.",
+                                ),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+
+                          final changed = await showDialog<bool>(
                             context: context,
                             builder: (_) =>
                                 ChangeLeaveDialog(
@@ -224,29 +235,25 @@ class _UpcomingLeaveScreenState
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: item.status
-                                      .toLowerCase() ==
-                                      'rejected'
-                                      ? Colors.red
-                                      .withOpacity(0.15)
-                                      : (isPending || item.status.toLowerCase() == 'applied')
-                                      ? Colors.amber
-                                      .withOpacity(0.15)
-                                      : Colors.green
-                                      .withOpacity(0.15),
-                                  borderRadius:
-                                  BorderRadius.circular(10),
+                                  color: (item.status.toLowerCase() == 'rejected' ||
+                                          item.status.toLowerCase() == 'cancelled by employee')
+                                      ? Colors.red.withOpacity(0.15)
+                                      : (isPending ||
+                                              item.status.toLowerCase() == 'applied')
+                                          ? Colors.amber.withOpacity(0.15)
+                                          : Colors.green.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   item.status,
                                   style: TextStyle(
-                                    color: item.status
-                                        .toLowerCase() ==
-                                        'rejected'
+                                    color: (item.status.toLowerCase() == 'rejected' ||
+                                            item.status.toLowerCase() == 'cancelled by employee')
                                         ? Colors.red
-                                        : (isPending || item.status.toLowerCase() == 'applied')
-                                        ? Colors.orange[800]
-                                        : Colors.green,
+                                        : (isPending ||
+                                                item.status.toLowerCase() == 'applied')
+                                            ? Colors.orange[800]
+                                            : Colors.green,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
