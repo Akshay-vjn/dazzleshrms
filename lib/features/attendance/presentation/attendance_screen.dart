@@ -19,6 +19,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   int _currentPage = 1;
   final int _limit = 10;
   bool _isLoadingMore = false;
+  bool _isSummaryExpanded = false;
 
   final List<AttendanceItem> _items = [];
 
@@ -147,14 +148,19 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               child: ListView.separated(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
-                itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+                itemCount: _items.length + (_isLoadingMore ? 1 : 0) + 1,
                 separatorBuilder: (_, __) => const SizedBox(height: 20),
                 itemBuilder: (context, index) {
-                  if (index == _items.length) {
+                  if (index == 0) {
+                    return _buildSummaryCard(context, attendanceData);
+                  }
+
+                  final listIndex = index - 1;
+                  if (listIndex == _items.length) {
                     return const AttendanceShimmerItem();
                   }
 
-                  final item = _items[index];
+                  final item = _items[listIndex];
                   final statusColor = _statusColor(item.status);
 
                   final theme = Theme.of(context);
@@ -216,5 +222,137 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Widget _buildSummaryCard(BuildContext context, AttendanceData attendanceData) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final summaryCounts = attendanceData.summary.counts;
+    final sortedCounts = summaryCounts.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: theme.dividerColor.withOpacity(0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Total Leaves",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        attendanceData.totalItems.toString(),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.PrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    setState(() {
+                      _isSummaryExpanded = !_isSummaryExpanded;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          attendanceData.summary.month.isEmpty
+                              ? "Month"
+                              : attendanceData.summary.month,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _isSummaryExpanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          color: AppTheme.PrimaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_isSummaryExpanded) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              if (sortedCounts.isEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "No leave counts available",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: sortedCounts
+                      .map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  entry.key,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                              Text(
+                                entry.value.toString(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.PrimaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

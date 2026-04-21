@@ -6,6 +6,9 @@ import 'package:dazzleshrms/features/employees/presentation/employee_dashboard_s
 import 'package:dazzleshrms/features/employees/presentation/employee_attendance_screen.dart';
 import 'package:dazzleshrms/features/employees/presentation/employee_leave_screen.dart';
 import 'package:dazzleshrms/features/employees/presentation/employee_pending_leaves_screen.dart';
+import 'package:dazzleshrms/features/employees/presentation/team_employee_approvals_screen.dart';
+import 'package:dazzleshrms/features/permissions_in_and_out/presentation/permisssion_screen.dart';
+import 'package:dazzleshrms/features/permissions_in_and_out/presentation/permission_approvals_screen.dart';
 import 'package:dazzleshrms/features/employees/presentation/employee_upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
@@ -82,6 +85,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/leave-management',
         name: 'leave_management',
         builder: (context, state) => const LeaveManagementScreen(),
+      ),
+      GoRoute(
+        path: '/employee-approvals',
+        name: 'employee_approvals',
+        builder: (context, state) => const TeamEmployeeApprovalsScreen(),
+      ),
+      GoRoute(
+        path: '/permissions',
+        name: 'permissions',
+        builder: (context, state) => const PermisssionScreen(),
+      ),
+      GoRoute(
+        path: '/permission-approvals',
+        name: 'permission_approvals',
+        builder: (context, state) => const PermissionApprovalsScreen(),
       ),
       GoRoute(
         path: '/announcement',

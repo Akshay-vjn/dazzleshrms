@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dazzleshrms/core/api_config/api_config.dart';
 import 'package:dazzleshrms/core/api_constants/api_constants.dart';
@@ -186,6 +187,19 @@ class _PermissionDialogState extends State<PermissionDialog> {
     }
   }
 
+  Future<void> _openApplySheet() async {
+    final isApplied = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const PermissionApplySheet(),
+    );
+    if (!mounted) return;
+    if (isApplied != null) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -313,8 +327,221 @@ class _PermissionDialogState extends State<PermissionDialog> {
                   ),
                 ),
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openApplySheet,
+                  icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                  label: const Text(
+                    "Apply",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class PermissionApplySheet extends StatefulWidget {
+  const PermissionApplySheet({super.key});
+
+  @override
+  State<PermissionApplySheet> createState() => _PermissionApplySheetState();
+}
+
+class _PermissionApplySheetState extends State<PermissionApplySheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _reasonController = TextEditingController();
+  final _appliedOutTimeController = TextEditingController();
+  final _appliedInTimeController = TextEditingController();
+  final Dio _dio = ApiConfig.dio;
+
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    _appliedOutTimeController.dispose();
+    _appliedInTimeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickTime(TextEditingController controller) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked == null) return;
+    final now = DateTime.now();
+    final selected = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+    controller.text = DateFormat('H:mm').format(selected);
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _submitting = true);
+    try {
+      final response = await _dio.post(
+        ApiConstants.permissionsApply,
+        data: {
+          "reason": _reasonController.text.trim(),
+          "appliedOutTime": _appliedOutTimeController.text.trim(),
+          "appliedInTime": _appliedInTimeController.text.trim(),
+        },
+      );
+
+      if (!mounted) return;
+      final message =
+          response.data?["message"]?.toString() ?? "Mid permission applied successfully";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppTheme.statusSuccess,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final message =
+          e.response?.data?["message"]?.toString() ?? "Failed to apply permission";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppTheme.statusError,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pop(false);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong. Please try again."),
+          backgroundColor: AppTheme.statusError,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pop(false);
+    } finally {
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Material(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "Apply Permission",
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _appliedOutTimeController,
+                    readOnly: true,
+                    onTap: () => _pickTime(_appliedOutTimeController),
+                    decoration: const InputDecoration(
+                      labelText: "Applied Out Time",
+                      suffixIcon: Icon(Icons.access_time_rounded),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Applied Out Time is required";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _appliedInTimeController,
+                    readOnly: true,
+                    onTap: () => _pickTime(_appliedInTimeController),
+                    decoration: const InputDecoration(
+                      labelText: "Applied In Time",
+                      suffixIcon: Icon(Icons.access_time_rounded),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Applied In Time is required";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _reasonController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: "Reason",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return "Reason is required";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _submitting ? null : _submit,
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text("Submit"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -396,7 +623,7 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withOpacity(0.12),
+                    color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -422,7 +649,7 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
                         "Show this QR to the scanner",
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.textTheme.bodyMedium?.color
-                              ?.withOpacity(0.6),
+                              ?.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -442,7 +669,7 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

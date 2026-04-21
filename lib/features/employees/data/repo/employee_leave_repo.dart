@@ -47,6 +47,22 @@ class EmployeeLeaveRepository {
     return EmployeePendingLeaveResponse.fromJson(response.data);
   }
 
+  Future<EmployeePendingLeaveResponse> getTeamEmployeePendingLeaves({int page = 1, int limit = 10}) async {
+    final Response response = await ApiConfig.dio.get(
+      ApiConstants.TeamEmployeePendingLeaves,
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+      },
+    );
+
+    if (response.data == null || response.data['error'] == true) {
+      throw Exception(response.data?['message'] ?? "Failed to load team pending leaves");
+    }
+
+    return EmployeePendingLeaveResponse.fromJson(response.data);
+  }
+
 
   //approve
   Future<void> approveEmployeeLeave({

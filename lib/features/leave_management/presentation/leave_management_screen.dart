@@ -10,7 +10,6 @@ import '../../dashboard/presentation/widgets/fade_slide_item.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
 import '../../leave/data/providers/leave_provider.dart';
-import 'widgets/permission_dialog.dart';
 
 class LeaveManagementScreen extends ConsumerStatefulWidget {
   const LeaveManagementScreen({super.key});
@@ -138,14 +137,6 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
           ),
         ),
       ),
-    );
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => const PermissionDialog(),
     );
   }
 
@@ -354,17 +345,31 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
+
         if (permissions.contains(Permissions.viewPermission))
           DashboardGridItem(
             icon: Icons.access_time_rounded,
             label: "Permissions",
-            onTap: _showPermissionDialog,
+            onTap: () => context.pushNamed('permissions'),
             animation: _controller,
             intervalStart: 0.35,
             gradientStart: AppTheme.dTeal,
             gradientEnd: AppTheme.dGreen,
             iconColor: AppTheme.gridIconColor,
           ),
+
+        if (permissions.contains(Permissions.viewEmployeeApprovals))
+          DashboardGridItem(
+            icon: Icons.groups_rounded,
+            label: "Employee Approvals",
+            onTap: () => context.pushNamed('employee_approvals'),
+            animation: _controller,
+            intervalStart: 0.28,
+            gradientStart: AppTheme.dGrid1,
+            gradientEnd: AppTheme.dGrid1,
+            iconColor: AppTheme.gridIconColor,
+          ),
+
       ],
     );
   }

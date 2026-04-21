@@ -1,8 +1,7 @@
 class ApiConstants {
-  // static const String mediaBaseUrl = "http://192.168.1.183:7907/api";
+  static const String mediaBaseUrl = "http://192.168.1.183:7907/api";
   // static const String mediaBaseUrl = "https://testhrms.dazzles.in/api/api";
-     static const String mediaBaseUrl = "httpsps://hrms.hrmsdazzles.in/api/api/";
-
+  // static const String mediaBaseUrl = "httpsps://hrms.hrmsdazzles.in/api/api/";
 
 
 
@@ -43,6 +42,7 @@ class ApiConstants {
   static const String EmployeeApplyLeave = "/team/employee/{id}/leave";
   static const String EmployeeUpcomingLeaves = "/team/employee/{id}/upcoming";
   static const String EmployeePendingLeaves = "/team/employee/{id}/pendingleave";
+  static const String TeamEmployeePendingLeaves = "/team/employee/pendingleave";
   static const String ApproveEmployeeLeave = "/team/employee/approveleave";
   static const String RejectEmployeeLeave = "/team/employee/rejectleave";
   static const String generateQr = '/attendance/generateqr';
@@ -50,6 +50,14 @@ class ApiConstants {
   static const String attendanceScanQr = '/attendance/scanqr';
   static const String permissions = '/permissions';
   static const String permissionsGenerate = '/permissions/generate';
+  static const String permissionsApply = '/permissions/apply';
+  static const String attendancePermissionApply = '/attendancepermission/apply';
+  static const String attendancePermissionPending = '/attendancepermission/pending';
+  static const String attendancePermissionApprove = '/attendancepermission/approve';
+  static const String attendancePermissionReject = '/attendancepermission/reject';
+  static const String midPermissionPending = '/permissions/pending';
+  static const String midPermissionApprove = '/permissions/approve';
+  static const String midPermissionReject = '/permissions/reject';
 
 
 

@@ -25,6 +25,15 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
   late Map<DateTime, bool> daySelections;
   late List<DateTime> allDays;
   final TextEditingController reasonCtrl = TextEditingController();
+  int? _selectedQuickReasonIndex;
+
+  static const List<String> _quickRejectReasons = [
+    "Leave Rejected: Not approved due to current work requirements.",
+    "Leave Rejected: Unable to approve for the requested dates.",
+    "Leave Rejected: Not approved due to team availability constraints.",
+    "Leave Rejected: Kindly apply for alternate dates.",
+    "Leave Rejected: Not approved as per company policy.",
+  ];
 
   @override
   void initState() {
@@ -33,10 +42,12 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     final end = DateTime.parse(widget.toDate);
     allDays = _getDaysInRange(start, end);
     daySelections = {for (var day in allDays) day: true};
+    reasonCtrl.addListener(_onReasonTextChanged);
   }
 
   @override
   void dispose() {
+    reasonCtrl.removeListener(_onReasonTextChanged);
     reasonCtrl.dispose();
     super.dispose();
   }
@@ -50,6 +61,30 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
   }
 
   bool get _hasRejectedDays => daySelections.values.any((isApproved) => !isApproved);
+
+  void _onReasonTextChanged() {
+    if (_selectedQuickReasonIndex != null) {
+      final selectedText = _quickRejectReasons[_selectedQuickReasonIndex!];
+      if (reasonCtrl.text != selectedText) {
+        setState(() => _selectedQuickReasonIndex = null);
+      }
+    }
+  }
+
+  void _onQuickReasonToggled(int index) {
+    setState(() {
+      if (_selectedQuickReasonIndex == index) {
+        _selectedQuickReasonIndex = null;
+        reasonCtrl.clear();
+      } else {
+        _selectedQuickReasonIndex = index;
+        reasonCtrl.text = _quickRejectReasons[index];
+        reasonCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: reasonCtrl.text.length),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -92,6 +92,28 @@ class EmployeePendingLeavesNotifier extends StateNotifier<AsyncValue<EmployeePen
   }
 }
 
+final teamEmployeePendingLeavesProvider = StateNotifierProvider<TeamEmployeePendingLeavesNotifier, AsyncValue<EmployeePendingLeaveResponse?>>(
+  (ref) => TeamEmployeePendingLeavesNotifier(ref),
+);
+
+class TeamEmployeePendingLeavesNotifier extends StateNotifier<AsyncValue<EmployeePendingLeaveResponse?>> {
+  final Ref ref;
+  TeamEmployeePendingLeavesNotifier(this.ref) : super(const AsyncLoading());
+
+  Future<void> loadPendingLeaves({int page = 1, int limit = 10}) async {
+    if (page == 1) {
+      state = const AsyncLoading();
+    }
+    try {
+      final repository = ref.read(employeeLeaveRepositoryProvider);
+      final data = await repository.getTeamEmployeePendingLeaves(page: page, limit: limit);
+      state = AsyncData(data);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+}
+
 // Approval Provider
 final employeeLeaveApprovalProvider = StateNotifierProvider<EmployeeLeaveApprovalNotifier, AsyncValue<void>>(
   (ref) => EmployeeLeaveApprovalNotifier(ref),

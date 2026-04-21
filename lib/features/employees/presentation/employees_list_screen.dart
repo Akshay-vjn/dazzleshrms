@@ -71,19 +71,33 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen>
         ),
         data: (response) {
           final employees = response?.data.data ?? [];
-          if (employees.isEmpty) {
-            return const Center(child: Text("No team members found"));
-          }
+          final totalMembers = response?.data.totalItems ?? employees.length;
 
           return RefreshIndicator(
             onRefresh: _refresh,
             color: AppTheme.PrimaryColor,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              itemCount: employees.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: employees.isEmpty ? 2 : employees.length + 1,
               itemBuilder: (context, index) {
-                final employee = employees[index];
-                final delay = (index * 0.05).clamp(0.0, 0.5);
+                if (index == 0) {
+                  return _buildMembersCountCard(
+                    context: context,
+                    totalMembers: totalMembers,
+                  );
+                }
+
+                if (employees.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.only(top: 100),
+                    child: Center(child: Text("No team members found")),
+                  );
+                }
+
+                final employeeIndex = index - 1;
+                final employee = employees[employeeIndex];
+                final delay = (employeeIndex * 0.05).clamp(0.0, 0.5);
 
                 return FadeSlideItem(
                   animation: _controller,
@@ -215,6 +229,72 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen>
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildMembersCountCard({
+    required BuildContext context,
+    required int totalMembers,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.groups_2_outlined,
+              color: AppTheme.PrimaryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Total Team Members",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  totalMembers.toString(),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.PrimaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
