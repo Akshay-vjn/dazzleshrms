@@ -259,7 +259,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Total Leaves",
+                        "Total ",
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                         ),

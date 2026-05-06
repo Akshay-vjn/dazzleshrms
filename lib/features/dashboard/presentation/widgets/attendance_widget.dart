@@ -48,7 +48,6 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       final soundPath = 'audio/notification.mp3';
       await _audioPlayer.play(AssetSource(soundPath));
     } catch (_) {
-      // If sound fails, silently ignore so UI flow is not affected.
     }
   }
 

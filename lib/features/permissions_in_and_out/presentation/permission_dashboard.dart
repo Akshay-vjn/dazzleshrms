@@ -113,7 +113,15 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                 ),
                 const SizedBox(height: 12),
                 if (_selectedHistory(data).isEmpty)
-                  const Text("No permission history")
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.4, // adjust if needed
+                    child: const Center(
+                      child: Text(
+                        "No permission history",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  )
                 else
                   ..._selectedHistory(data).map((item) => _HistoryTile(item: item)),
               ],
