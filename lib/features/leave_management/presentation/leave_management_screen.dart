@@ -358,7 +358,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             iconColor: AppTheme.gridIconColor,
           ),
 
-        if (permissions.contains(Permissions.viewEmployeeApprovals))
+        if (permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(
             icon: Icons.groups_rounded,
             label: "Employee Approvals",

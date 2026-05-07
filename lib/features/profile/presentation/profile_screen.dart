@@ -114,7 +114,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   String _getFullImageUrl(String profileImage) {
     if (profileImage.isEmpty) return '';
-    return '${ApiConstants.mediaBaseUrl}$profileImage';
+    final url = '${ApiConstants.mediaBaseUrl}$profileImage';
+    return url;
   }
 
   Widget _buildAvatar(String name, String profileImage) {

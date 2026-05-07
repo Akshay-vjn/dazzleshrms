@@ -41,6 +41,13 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+
+      # Fix: objective_c.framework dSYM missing error on App Store Connect upload.
+      # Setting DEBUG_INFORMATION_FORMAT to 'dwarf' prevents an incomplete dSYM
+      # from being generated for this pod, which causes the upload to fail.
+      if target.name == 'objective_c'
+        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'
+      end
     end
   end
 end

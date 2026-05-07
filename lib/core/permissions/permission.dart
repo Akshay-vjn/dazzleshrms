@@ -12,6 +12,16 @@ class Permissions {
   static const viewEmployeeApprovals = 'view.employeeapprovals';
   static const viewEmployeeUpcoming = 'view.employeeupcoming';
   static const viewCreateAnnouncement = 'view.createannouncement';
+  static const viewPermissionApproveIcon = 'view.permissionapproveicon';
+  static const viewPermissionScanner = 'view.permissionscanner';
+  static const viewEarlyLate = 'view.earlylate';
+  static const viewAllTeamApproval = 'view.allteamapproval';
+
+
+
+
+
+
 
 
 
