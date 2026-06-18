@@ -19,14 +19,55 @@ class AttendanceQrScan extends StatefulWidget {
 
 class _AttendanceQrScanState extends State<AttendanceQrScan> {
   bool _isProcessing = false;
-  final MobileScannerController _controller =
-      MobileScannerController(facing: CameraFacing.front);
+  final MobileScannerController _controller = MobileScannerController(
+    facing: CameraFacing.front,
+  );
   final AttendanceQrRepo _repository = AttendanceQrRepo();
   String _statusText = 'Align the QR code inside the frame';
   String? _lastScannedValue;
   DateTime? _lastScannedAt;
   static const Duration _scanCooldown = Duration(milliseconds: 700);
   bool _loadingDialogShown = false;
+  bool _controllerDisposed = false;
+
+  Future<void> _stopScanner() async {
+    if (_controllerDisposed) return;
+    try {
+      await _controller.stop();
+    } on MobileScannerException catch (_) {
+      // Ignore scanner lifecycle errors when the widget is being torn down.
+    }
+  }
+
+  Future<void> _startScanner() async {
+    if (!mounted || _controllerDisposed) return;
+    try {
+      await _controller.start();
+    } on MobileScannerException catch (_) {
+      // Ignore scanner lifecycle errors when the widget is no longer active.
+    }
+  }
+
+  void _closeLoadingDialog() {
+    if (!mounted || !_loadingDialogShown) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    _loadingDialogShown = false;
+  }
+
+  String _resolveErrorMessage(Object error) {
+    if (error is DioException) {
+      final responseData = error.response?.data;
+      if (responseData is Map && responseData['message'] != null) {
+        return responseData['message'].toString();
+      }
+
+      if (error.message != null && error.message!.trim().isNotEmpty) {
+        return error.message!.trim();
+      }
+    }
+
+    return 'Failed. Please try again.';
+  }
 
   void _onDetect(BarcodeCapture capture) {
     if (_isProcessing) return;
@@ -55,12 +96,15 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
   Future<void> _handleScan({String? qrData, int? sessionPin}) async {
     try {
-      if (qrData != null) await _controller.stop();
+      if (qrData != null) {
+        await _stopScanner();
+      }
 
       if (mounted) {
         _loadingDialogShown = true;
         showDialog(
           context: context,
+          useRootNavigator: true,
           barrierDismissible: false,
           builder: (_) => const Center(child: CircularProgressIndicator()),
         );
@@ -72,10 +116,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
       );
 
       if (!mounted) return;
-      if (_loadingDialogShown && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-      _loadingDialogShown = false;
+      _closeLoadingDialog();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -89,16 +130,8 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
       });
     } catch (e) {
       if (mounted) {
-        if (_loadingDialogShown && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-        _loadingDialogShown = false;
-
-        final String message = e is DioException &&
-                e.response?.data is Map &&
-                (e.response!.data as Map)['message'] != null
-            ? (e.response!.data as Map)['message'].toString()
-            : 'Failed. Please try again.';
+        _closeLoadingDialog();
+        final String message = _resolveErrorMessage(e);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -117,14 +150,13 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
             _statusText = 'Align the QR code inside the frame';
           });
         }
-        await _controller.start();
-
+        await _startScanner();
       }
     }
   }
 
   void _showPinEntry() async {
-    await _controller.stop();
+    await _stopScanner();
     if (!mounted) return;
 
     final pinController = TextEditingController();
@@ -149,12 +181,12 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
     // User cancelled or invalid — resume scanner
     if (mounted && !_isProcessing) {
-      await _controller.start();
+      await _startScanner();
     }
   }
 
-  void _showLogoutDialog(BuildContext context) async {
-    await _controller.stop();
+  void _showLogoutDialog() async {
+    await _stopScanner();
     if (!mounted) return;
 
     final shouldLogout = await showDialog<bool>(
@@ -182,7 +214,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
       if (!mounted) return;
       context.goNamed('login');
     } else {
-      if (mounted) await _controller.start();
+      if (mounted) {
+        await _startScanner();
+      }
     }
   }
 
@@ -205,7 +239,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',
-            onPressed: () => _showLogoutDialog(context),
+            onPressed: _showLogoutDialog,
           ),
         ],
       ),
@@ -218,8 +252,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
               child: Text(
                 'Please show your attendance QR towards the camera.',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: Colors.white.withOpacity(0.85)),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -246,8 +281,11 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
                   Positioned.fill(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final size = math.min(
-                                constraints.maxWidth, constraints.maxHeight) *
+                        final size =
+                            math.min(
+                              constraints.maxWidth,
+                              constraints.maxHeight,
+                            ) *
                             0.7;
                         final left = (constraints.maxWidth - size) / 2;
                         final top = (constraints.maxHeight - size) / 2;
@@ -255,7 +293,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
                         return Stack(
                           children: [
                             Container(
-                              color: Colors.black.withOpacity(0.45),
+                              color: Colors.black.withValues(alpha: 0.45),
                             ),
                             Positioned(
                               left: left,
@@ -266,7 +304,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                      color: Colors.white, width: 3),
+                                    color: Colors.white,
+                                    width: 3,
+                                  ),
                                 ),
                               ),
                             ),
@@ -298,8 +338,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
                             width: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           ),
                       ],
@@ -310,8 +351,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
             ),
             // Enter PIN button
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
               child: GestureDetector(
                 onTap: _isProcessing ? null : _showPinEntry,
                 child: Container(
@@ -348,6 +388,7 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
   @override
   void dispose() {
+    _controllerDisposed = true;
     _controller.dispose();
     super.dispose();
   }
@@ -427,9 +468,11 @@ class _PinDialogState extends State<_PinDialog> {
               ),
               submittedPinTheme: pinTheme.copyWith(
                 decoration: pinTheme.decoration!.copyWith(
-                  color: AppTheme.PrimaryColor.withOpacity(0.15),
+                  color: AppTheme.PrimaryColor.withValues(alpha: 0.15),
                   border: Border.all(
-                      color: AppTheme.PrimaryColor.withOpacity(0.5), width: 1.5),
+                    color: AppTheme.PrimaryColor.withValues(alpha: 0.5),
+                    width: 1.5,
+                  ),
                 ),
               ),
               onCompleted: (pin) {
@@ -437,7 +480,6 @@ class _PinDialogState extends State<_PinDialog> {
               },
             ),
           ],
-
         ),
       ),
     );

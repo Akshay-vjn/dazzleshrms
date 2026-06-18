@@ -114,7 +114,7 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                 const SizedBox(height: 12),
                 if (_selectedHistory(data).isEmpty)
                   SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.4, // adjust if needed
+                    height: MediaQuery.of(context).size.height * 0.4,
                     child: const Center(
                       child: Text(
                         "No permission history",

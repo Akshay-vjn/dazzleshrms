@@ -42,8 +42,6 @@ class _RejectionSheetState extends State<RejectionSheet> {
   }
 
   void _onReasonTextChanged() {
-    // If the user manually edits the text to something different
-    // from the selected quick reason, deselect the toggle
     if (_selectedQuickReasonIndex != null) {
       final selectedText = _quickRejectReasons[_selectedQuickReasonIndex!];
       if (_reasonController.text != selectedText) {
@@ -55,11 +53,9 @@ class _RejectionSheetState extends State<RejectionSheet> {
   void _onQuickReasonToggled(int index) {
     setState(() {
       if (_selectedQuickReasonIndex == index) {
-        // Deselect – clear the text field
         _selectedQuickReasonIndex = null;
         _reasonController.clear();
       } else {
-        // Select – populate the text field
         _selectedQuickReasonIndex = index;
         _reasonController.text = _quickRejectReasons[index];
         _reasonController.selection = TextSelection.fromPosition(
@@ -104,12 +100,12 @@ class _RejectionSheetState extends State<RejectionSheet> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.PrimaryColor.withOpacity(0.12), // 🔹 low opacity bg
+                      color: AppTheme.PrimaryColor.withOpacity(0.12),
                     ),
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close),
-                      color: AppTheme.PrimaryColor, // 🔹 icon color
+                      color: AppTheme.PrimaryColor,
                       splashRadius: 22,
                     ),
                   ),
