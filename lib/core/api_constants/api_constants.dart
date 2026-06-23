@@ -1,7 +1,7 @@
 class ApiConstants {
-  // static const String mediaBaseUrl = "http://192.168.1.184:7907/api";
+  static const String mediaBaseUrl = "http://192.168.1.184:7907/api";
   // static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
-  static const String mediaBaseUrl = "https://hrms.dazzles.in";
+  // static const String mediaBaseUrl = "https://hrms.dazzles.in";
 
 
 
@@ -58,6 +58,8 @@ class ApiConstants {
   static const String midPermissionPending = '/permissions/pending';
   static const String midPermissionApprove = '/permissions/approve';
   static const String midPermissionReject = '/permissions/reject';
+  static const String generateBreakQr = '/break/generate';
+  static const String breakQrStatus = '/break/status';
 
 
 

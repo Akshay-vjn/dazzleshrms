@@ -1,19 +1,12 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
 import '../../../../core/storage/session_storage.dart';
 import '../models/attendance_qr_model.dart';
 
 class AttendanceQrRepo {
-  AttendanceQrRepo()
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: '${ApiConstants.mediaBaseUrl}/api/api',
-          connectTimeout: const Duration(seconds: 20),
-          receiveTimeout: const Duration(seconds: 20),
-          headers: const {'Content-Type': 'application/json'},
-        ),
-      );
+  AttendanceQrRepo({Dio? dio}) : _dio = dio ?? ApiConfig.dio;
 
   final Dio _dio;
 

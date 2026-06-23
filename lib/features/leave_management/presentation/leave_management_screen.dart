@@ -10,6 +10,7 @@ import '../../dashboard/presentation/widgets/fade_slide_item.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
 import '../../leave/data/providers/leave_provider.dart';
+import '../../break_time/presentation/break_helper.dart';
 
 class LeaveManagementScreen extends ConsumerStatefulWidget {
   const LeaveManagementScreen({super.key});
@@ -357,6 +358,16 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.dGreen,
             iconColor: AppTheme.gridIconColor,
           ),
+        DashboardGridItem(
+          icon: Icons.free_breakfast_rounded,
+          label: "Break",
+          onTap: () => BreakHelper.handleBreakIconClick(context),
+          animation: _controller,
+          intervalStart: 0.18,
+          gradientStart: AppTheme.gridGradient1Start,
+          gradientEnd: AppTheme.dTeal,
+          iconColor: AppTheme.gridIconColor,
+        ),
 
         if (permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(

@@ -35,7 +35,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
     try {
       await _controller.stop();
     } on MobileScannerException catch (_) {
-      // Ignore scanner lifecycle errors when the widget is being torn down.
     }
   }
 
@@ -44,7 +43,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
     try {
       await _controller.start();
     } on MobileScannerException catch (_) {
-      // Ignore scanner lifecycle errors when the widget is no longer active.
     }
   }
 
@@ -61,10 +59,27 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
         return responseData['message'].toString();
       }
 
-      if (error.message != null && error.message!.trim().isNotEmpty) {
-        return error.message!.trim();
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'Connection timed out. Please try again.';
+        case DioExceptionType.connectionError:
+          return 'Unable to connect to the server. Check your network.';
+        case DioExceptionType.badResponse:
+          if (error.response?.statusCode == 404) {
+            return 'Attendance scanning service is unavailable.';
+          }
+          return 'Unable to process attendance. Please try again.';
+        case DioExceptionType.cancel:
+          return 'The request was cancelled.';
+        case DioExceptionType.badCertificate:
+        case DioExceptionType.unknown:
+          return 'Something went wrong. Please try again.';
       }
     }
+
+    if (error is String && error.trim().isNotEmpty) return error.trim();
 
     return 'Failed. Please try again.';
   }
@@ -179,7 +194,6 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
       }
     }
 
-    // User cancelled or invalid — resume scanner
     if (mounted && !_isProcessing) {
       await _startScanner();
     }
