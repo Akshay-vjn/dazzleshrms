@@ -13,6 +13,7 @@ import 'package:dazzleshrms/features/employees/presentation/employee_upcoming_le
 import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
+import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
 import 'package:dazzleshrms/core/widgets/no_internet_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,9 +47,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'otp',
         builder: (context, state) {
           final mobile = state.extra as String?;
-          return OtpVerificationScreen(
-            mobileNumber: mobile ?? '',
-          );
+          return OtpVerificationScreen(mobileNumber: mobile ?? '');
         },
       ),
       GoRoute(
@@ -85,6 +84,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/leave-management',
         name: 'leave_management',
         builder: (context, state) => const LeaveManagementScreen(),
+      ),
+      GoRoute(
+        path: '/break-dashboard',
+        name: 'break_dashboard',
+        builder: (context, state) => const BreakDashboardScreen(),
       ),
       GoRoute(
         path: '/employee-approvals',
@@ -177,5 +181,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-

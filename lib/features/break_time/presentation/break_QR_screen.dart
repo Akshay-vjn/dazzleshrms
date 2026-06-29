@@ -11,7 +11,7 @@ import '../../dashboard/data/models/attendance_qr_response.dart';
 import '../data/models/break_status_response.dart';
 import '../data/repo/breakqr_repo.dart';
 
-class BreakHelper {
+class BreakQR {
   static final BreakqrRepo _repository = BreakqrRepo();
   static final AudioPlayer _audioPlayer = AudioPlayer();
 

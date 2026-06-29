@@ -23,11 +23,7 @@ class BreakqrRepo {
 
       final request = AttendanceQrRequest(
         method: method,
-        location: LocationData(
-          lat: lat,
-          lng: lng,
-          accuracy: accuracy,
-        ),
+        location: LocationData(lat: lat, lng: lng, accuracy: accuracy),
       );
 
       final response = await _dio.get(
@@ -35,8 +31,10 @@ class BreakqrRepo {
         data: request.toJson(),
       );
 
-      developer.log('generateQr raw response: ${response.data}',
-          name: 'BreakRepository');
+      developer.log(
+        'generateQr raw response: ${response.data}',
+        name: 'BreakRepository',
+      );
       developer.log('Break QR generated successfully', name: 'BreakRepository');
 
       return AttendanceQrResponse.fromJson(response.data);

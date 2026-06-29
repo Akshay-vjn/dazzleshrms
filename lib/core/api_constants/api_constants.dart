@@ -1,10 +1,7 @@
 class ApiConstants {
-  static const String mediaBaseUrl = "http://192.168.1.184:7907/api";
-  // static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
+  // static const String mediaBaseUrl = "http://192.168.1.183:7907/api";
+  static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
   // static const String mediaBaseUrl = "https://hrms.dazzles.in";
-
-
-
 
   static const String sendOtp = "/auth/send-otp";
   static const String verifyOtp = "/auth/verify-otp";
@@ -41,7 +38,8 @@ class ApiConstants {
   static const String EmployeeUsedLeaves = "/team/employee/{id}/usedleaves";
   static const String EmployeeApplyLeave = "/team/employee/{id}/leave";
   static const String EmployeeUpcomingLeaves = "/team/employee/{id}/upcoming";
-  static const String EmployeePendingLeaves = "/team/employee/{id}/pendingleave";
+  static const String EmployeePendingLeaves =
+      "/team/employee/{id}/pendingleave";
   static const String TeamEmployeePendingLeaves = "/team/employee/pendingleave";
   static const String ApproveEmployeeLeave = "/team/employee/approveleave";
   static const String RejectEmployeeLeave = "/team/employee/rejectleave";
@@ -52,26 +50,16 @@ class ApiConstants {
   static const String permissionsGenerate = '/permissions/generate';
   static const String permissionsApply = '/permissions/apply';
   static const String attendancePermissionApply = '/attendancepermission/apply';
-  static const String attendancePermissionPending = '/attendancepermission/pending';
-  static const String attendancePermissionApprove = '/attendancepermission/approve';
-  static const String attendancePermissionReject = '/attendancepermission/reject';
+  static const String attendancePermissionPending =
+      '/attendancepermission/pending';
+  static const String attendancePermissionApprove =
+      '/attendancepermission/approve';
+  static const String attendancePermissionReject =
+      '/attendancepermission/reject';
   static const String midPermissionPending = '/permissions/pending';
   static const String midPermissionApprove = '/permissions/approve';
   static const String midPermissionReject = '/permissions/reject';
   static const String generateBreakQr = '/break/generate';
   static const String breakQrStatus = '/break/status';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  static const String breakHistory = '/break/history';
 }

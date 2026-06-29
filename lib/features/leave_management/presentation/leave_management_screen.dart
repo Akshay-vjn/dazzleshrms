@@ -10,7 +10,6 @@ import '../../dashboard/presentation/widgets/fade_slide_item.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
 import '../../leave/data/providers/leave_provider.dart';
-import '../../break_time/presentation/break_helper.dart';
 
 class LeaveManagementScreen extends ConsumerStatefulWidget {
   const LeaveManagementScreen({super.key});
@@ -30,9 +29,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
       context: context,
       barrierDismissible: true,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: Container(
           constraints: const BoxConstraints(maxHeight: 400),
           padding: const EdgeInsets.all(20),
@@ -63,9 +60,8 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                   builder: (context, ref, child) {
                     final state = ref.watch(usedLeavesProvider);
                     return state.when(
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -73,7 +69,9 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                             Text(
                               "Error: ${e.toString()}",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Theme.of(context).colorScheme.error),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             FilledButton(
@@ -90,9 +88,10 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                           return Center(
                             child: Text(
                               "No used leaves found",
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).hintColor,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).hintColor,
+                                  ),
                             ),
                           );
                         }
@@ -106,7 +105,9 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                               contentPadding: EdgeInsets.zero,
                               title: Text(
                                 item.leaveType,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               subtitle: Text(item.date),
                               trailing: Container(
@@ -173,9 +174,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.15),
-          ),
+          bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.15)),
         ),
       ),
       child: FadeSlideItem(
@@ -205,10 +204,12 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
 
   Widget _buildBalanceCard(ThemeData theme, DashboardData data) {
     final isDark = theme.brightness == Brightness.dark;
-    final cardGradientStart =
-    isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
-    final cardGradientEnd =
-    isDark ? const Color(0xFF334155) : const Color(0xFF1E293B);
+    final cardGradientStart = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFF0F172A);
+    final cardGradientEnd = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFF1E293B);
     final statBg = Colors.white.withValues(alpha: 0.15);
 
     return FadeSlideItem(
@@ -258,43 +259,39 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
   }
 
   Widget _leaveStatCard(
-      String label,
-      double value,
-      Color bg, {
-        VoidCallback? onTap,
-      }) {
+    String label,
+    double value,
+    Color bg, {
+    VoidCallback? onTap,
+  }) {
     return Expanded(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-
-            child: Column(
-              children: [
-                Text(
-                  formatLeave(value),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ],
-            ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
           ),
-        )
+
+          child: Column(
+            children: [
+              Text(
+                formatLeave(value),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(label, style: const TextStyle(color: Colors.white70)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -361,9 +358,9 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
         DashboardGridItem(
           icon: Icons.free_breakfast_rounded,
           label: "Break",
-          onTap: () => BreakHelper.handleBreakIconClick(context),
+          onTap: () => context.pushNamed('break_dashboard'),
           animation: _controller,
-          intervalStart: 0.18,
+          intervalStart: 0.45,
           gradientStart: AppTheme.gridGradient1Start,
           gradientEnd: AppTheme.dTeal,
           iconColor: AppTheme.gridIconColor,
@@ -380,7 +377,6 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.dGrid1,
             iconColor: AppTheme.gridIconColor,
           ),
-
       ],
     );
   }
@@ -398,8 +394,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             _buildHeader(theme),
             Expanded(
               child: dashboardState.when(
-                loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text(e.toString())),
                 data: (data) {
                   if (data == null) {
