@@ -132,17 +132,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
 
-  Widget _buildJobtitleCard(ThemeData theme, DashboardData data) {
-    return FadeSlideItem(
-      animation: _controller,
-      intervalStart: 0.1,
-      child: _JobTitleCard(
-        role: data.role,
-        store: data.store,
-        theme: theme,
-      ),
-    );
-  }
+  // Widget _buildJobtitleCard(ThemeData theme, DashboardData data) {
+  //   return FadeSlideItem(
+  //     animation: _controller,
+  //     intervalStart: 0.1,
+  //     child: _JobTitleCard(
+  //       role: data.role,
+  //       store: data.store,
+  //       theme: theme,
+  //     ),
+  //   );
+  // }
 
 
   Widget _buildGrid(Set<String> permissions) {
@@ -261,7 +261,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          _buildJobtitleCard(theme, data),
+                          // _buildJobtitleCard(theme, data),
                           const SizedBox(height: 24),
                           AttendanceWidget(
                             animationController: _controller,

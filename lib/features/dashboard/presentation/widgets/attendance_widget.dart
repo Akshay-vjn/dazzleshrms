@@ -8,6 +8,8 @@ import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import '../../data/repo/attendanceqr_repo.dart';
 import '../../data/models/attendance_qr_response.dart';
 import '../../data/models/attendance_qr_status_response.dart';
+import 'package:dazzleshrms/features/break_time/data/repo/breakqr_repo.dart';
+import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
 
 class AttendanceWidget extends StatefulWidget {
   final AnimationController animationController;
@@ -29,6 +31,9 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   final AttendanceqrRepo _repository = AttendanceqrRepo();
   late String _attendanceStatus;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final BreakqrRepo _breakRepository = BreakqrRepo();
+  bool _isOnBreak = false;
+  bool _loadingBreakStatus = false;
 
   String _normalizeStatus(String? status) {
     final normalized = (status ?? '').trim().toUpperCase();
@@ -41,6 +46,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   void initState() {
     super.initState();
     _attendanceStatus = _normalizeStatus(widget.attendanceStatus);
+    _loadBreakStatus();
   }
 
   Future<void> _playSuccessSound(bool isCheckIn) async {
@@ -57,6 +63,119 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
     final next = _normalizeStatus(widget.attendanceStatus);
     if (next != _attendanceStatus) {
       _attendanceStatus = next;
+      _loadBreakStatus();
+    }
+  }
+
+  Future<void> _loadBreakStatus() async {
+    if (_attendanceStatus != 'ACTIVE') {
+      setState(() {
+        _isOnBreak = false;
+      });
+      return;
+    }
+    setState(() {
+      _loadingBreakStatus = true;
+    });
+    try {
+      final response = await _breakRepository.getBreakStatus();
+      if (mounted) {
+        setState(() {
+          _isOnBreak = response.data.isOnBreak;
+          _loadingBreakStatus = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loadingBreakStatus = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleBreak(BuildContext context) async {
+    final bool isBreakOut = !_isOnBreak;
+    final String method = isBreakOut ? 'BREAK_OUT' : 'BREAK_IN';
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (context.mounted) {
+            Navigator.pop(context);
+            _showError(context, 'Location permission is required');
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted) {
+          Navigator.pop(context);
+          _showError(context, 'Location permission is permanently denied. Please enable it in settings.');
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final qrResponse = await _breakRepository.generateQr(
+        method: method,
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracy: position.accuracy,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Pop loading
+
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => BreakQrDialog(
+            isBreakOut: isBreakOut,
+            qrResponse: qrResponse,
+            onCompleted: () async {
+              if (mounted) {
+                setState(() {
+                  _isOnBreak = isBreakOut;
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isBreakOut
+                          ? '✓ Break started successfully'
+                          : '✓ Break ended successfully',
+                    ),
+                    backgroundColor: AppTheme.statusSuccess,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        _showError(context, e.toString());
+      }
     }
   }
 
@@ -145,6 +264,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         onSuccess: () {
           setState(() {
             _attendanceStatus = isCheckIn ? 'ACTIVE' : 'OFFLINE';
+            _isOnBreak = false; // Reset break status on attendance action
           });
           _playSuccessSound(isCheckIn);
           Navigator.pop(context);
@@ -258,8 +378,10 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: (_isActive
+                      color: ((_isActive && !_isOnBreak)
                           ? AppTheme.statusSuccess
+                          : _isOnBreak
+                          ? AppTheme.statusWarning
                           : Colors.grey)
                           .withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
@@ -272,19 +394,23 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isActive
+                            color: (_isActive && !_isOnBreak)
                                 ? AppTheme.statusSuccess
+                                : _isOnBreak
+                                ? AppTheme.statusWarning
                                 : Colors.grey,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _attendanceStatus,
+                          _isOnBreak ? 'ON BREAK' : _attendanceStatus,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _isActive
+                            color: (_isActive && !_isOnBreak)
                                 ? AppTheme.statusSuccess
+                                : _isOnBreak
+                                ? AppTheme.statusWarning
                                 : Colors.grey,
                           ),
                         ),
@@ -294,35 +420,52 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Action Button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () => _handleAttendance(context, !_isActive),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _isActive
-                        ? AppTheme.statusError
-                        : AppTheme.statusSuccess,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              // Action Buttons
+              if (_isActive)
+                Column(
+                  children: [
+                    // Check Out Button (tonal/muted)
+                    SizedBox(
+                      width: double.infinity,
+                      child: _TonalButton(
+                        onPressed: _isOnBreak
+                            ? null
+                            : () => _handleAttendance(context, false),
+                        color: AppTheme.statusError,
+                        icon: Icons.logout_rounded,
+                        label: "Check Out",
+                      ),
                     ),
-                  ),
-                  icon: Icon(
-                    _isActive ? Icons.logout_rounded : Icons.qr_code_2,
-                    size: 20,
-                  ),
-                  label: Text(
-                    _isActive ? "Check Out" : "Check In",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
+                    const SizedBox(height: 12),
+                    // Break Action Button (tonal/muted)
+                    SizedBox(
+                      width: double.infinity,
+                      child: _TonalButton(
+                        onPressed:
+                        _loadingBreakStatus ? null : () => _handleBreak(context),
+                        color:
+                        _isOnBreak ? AppTheme.statusSuccess : AppTheme.statusWarning,
+                        icon: _isOnBreak
+                            ? Icons.play_arrow_rounded
+                            : Icons.coffee_rounded,
+                        label: _loadingBreakStatus
+                            ? "Loading..."
+                            : (_isOnBreak ? "Break In" : "Break Out"),
+                        isLoading: _loadingBreakStatus,
+                      ),
                     ),
+                  ],
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: _TonalButton(
+                    onPressed: () => _handleAttendance(context, true),
+                    color: AppTheme.statusSuccess,
+                    icon: Icons.qr_code_2,
+                    label: "Check In",
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -334,6 +477,74 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
+  }
+}
+
+/// A soft, tonal-style button (tinted background + colored icon/text)
+/// used for secondary actions like "Check Out" and "Break Out/In" so they
+/// read as calm and on-theme rather than alarming solid-fill buttons.
+class _TonalButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Color color;
+  final IconData icon;
+  final String label;
+  final bool isLoading;
+
+  const _TonalButton({
+    required this.onPressed,
+    required this.color,
+    required this.icon,
+    required this.label,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool disabled = onPressed == null;
+    final Color effectiveColor = disabled ? color.withOpacity(0.4) : color;
+
+    return Material(
+      color: color.withOpacity(disabled ? 0.06 : 0.12),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withOpacity(disabled ? 0.15 : 0.28),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              isLoading
+                  ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
+                ),
+              )
+                  : Icon(icon, size: 20, color: effectiveColor),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: effectiveColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -397,7 +608,7 @@ class _QrDialogState extends State<_QrDialog> {
     _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       try {
         final AttendanceQrStatusResponse resp =
-            await _repo.getQrStatus(qrId: qrId);
+        await _repo.getQrStatus(qrId: qrId);
 
         if (!mounted) return;
 
