@@ -10,6 +10,7 @@ import '../../data/models/attendance_qr_response.dart';
 import '../../data/models/attendance_qr_status_response.dart';
 import 'package:dazzleshrms/features/break_time/data/repo/breakqr_repo.dart';
 import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class AttendanceWidget extends StatefulWidget {
   final AnimationController animationController;
@@ -429,7 +430,38 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                       width: double.infinity,
                       child: _TonalButton(
                         onPressed: _isOnBreak
-                            ? null
+                            ? () {
+                                ScaffoldMessenger.of(context)
+                                    .hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            'Please end your break before checking out.',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: AppTheme.statusWarning,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
                             : () => _handleAttendance(context, false),
                         color: AppTheme.statusError,
                         icon: Icons.logout_rounded,
@@ -443,6 +475,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                       child: _TonalButton(
                         onPressed:
                         _loadingBreakStatus ? null : () => _handleBreak(context),
+                        onLongPress: () => context.pushNamed('break_dashboard'),
                         color:
                         _isOnBreak ? AppTheme.statusSuccess : AppTheme.statusWarning,
                         icon: _isOnBreak
@@ -480,11 +513,10 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   }
 }
 
-/// A soft, tonal-style button (tinted background + colored icon/text)
-/// used for secondary actions like "Check Out" and "Break Out/In" so they
-/// read as calm and on-theme rather than alarming solid-fill buttons.
+
 class _TonalButton extends StatelessWidget {
   final VoidCallback? onPressed;
+  final VoidCallback? onLongPress;
   final Color color;
   final IconData icon;
   final String label;
@@ -492,6 +524,7 @@ class _TonalButton extends StatelessWidget {
 
   const _TonalButton({
     required this.onPressed,
+    this.onLongPress,
     required this.color,
     required this.icon,
     required this.label,
@@ -504,17 +537,18 @@ class _TonalButton extends StatelessWidget {
     final Color effectiveColor = disabled ? color.withOpacity(0.4) : color;
 
     return Material(
-      color: color.withOpacity(disabled ? 0.06 : 0.12),
+      color: color.withOpacity(disabled ? 0.18 : 0.36),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onPressed,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: color.withOpacity(disabled ? 0.15 : 0.28),
+              color: color.withOpacity(disabled ? 0.35 : 0.68),
               width: 1,
             ),
           ),

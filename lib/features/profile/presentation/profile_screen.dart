@@ -861,31 +861,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                 //  LOGOUT
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.statusError.withOpacity(0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.statusError,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: () async {
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Material(
+                    color: AppTheme.statusError.withValues(alpha: 0.36),
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: () async {
                         final shouldLogout = await showDialog<bool>(
                           context: context,
-                          barrierColor: Colors.black.withOpacity(0.5),
+                          barrierColor: Colors.black.withValues(alpha: 0.5),
                           builder: (context) => Dialog(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
@@ -993,12 +977,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           context.goNamed('login');
                         }
                       },
-                      icon: const Icon(Icons.logout_rounded),
-                      label: const Text(
-                        "Logout",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppTheme.statusError.withValues(alpha: 0.68),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.logout_rounded,
+                              size: 20,
+                              color: AppTheme.statusError,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              "Logout",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.statusError,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

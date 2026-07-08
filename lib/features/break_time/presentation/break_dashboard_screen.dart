@@ -4,15 +4,11 @@ import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'package:dazzleshrms/features/dashboard/presentation/widgets/dashboard_grid.dart';
-import 'package:dazzleshrms/features/dashboard/presentation/widgets/dashboard_grid_item.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 import '../../dashboard/data/models/attendance_qr_response.dart';
 import '../data/models/break_history_response.dart';
-import '../data/models/break_status_response.dart';
 import '../data/repo/break_history_repo.dart';
 import '../data/repo/breakqr_repo.dart';
 
@@ -23,47 +19,27 @@ class BreakDashboardScreen extends StatefulWidget {
   State<BreakDashboardScreen> createState() => _BreakDashboardScreenState();
 }
 
-class _BreakDashboardScreenState extends State<BreakDashboardScreen>
-    with SingleTickerProviderStateMixin {
-  final BreakqrRepo _repo = BreakqrRepo();
+class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   final BreakHistoryRepo _historyRepo = BreakHistoryRepo();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _displayDateFormat = DateFormat('dd MMM yyyy');
   final DateFormat _timeFormat = DateFormat('hh:mm a');
 
-  late final AnimationController _controller;
   bool _loading = true;
   bool _loadingHistory = false;
-  bool _generatingQr = false;
   String? _error;
-  BreakStatusData? _status;
   BreakHistoryData? _history;
   late DateTime _selectedDate;
 
   String get _selectedDateStr => _dateFormat.format(_selectedDate);
   bool get _isToday =>
       _dateFormat.format(_selectedDate) == _dateFormat.format(DateTime.now());
-  bool get _isBreakOut =>
-      (_status?.currentAction ?? 'BREAK_OUT') == 'BREAK_OUT';
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
-    });
     _loadDashboard();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   Future<void> _loadDashboard() async {
@@ -73,12 +49,10 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen>
     });
 
     try {
-      final status = await _repo.getBreakStatus();
       final history = await _historyRepo.getBreakHistory(date: _selectedDateStr);
 
       if (!mounted) return;
       setState(() {
-        _status = status.data;
         _history = history.data;
         _loading = false;
       });
@@ -127,94 +101,6 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen>
       setState(() => _selectedDate = picked);
       _loadHistory();
     }
-  }
-
-  Future<void> _generateBreakQr() async {
-    if (_generatingQr) return;
-    setState(() => _generatingQr = true);
-
-    try {
-      final statusResponse = await _repo.getBreakStatus();
-      final currentAction = statusResponse.data.currentAction;
-      final isBreakOut = currentAction == 'BREAK_OUT';
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) _showError('Location permission is required');
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          _showError(
-            'Location permission is permanently denied. Please enable it in settings.',
-          );
-        }
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
-      final qrResponse = await _repo.generateQr(
-        method: currentAction,
-        lat: position.latitude,
-        lng: position.longitude,
-        accuracy: position.accuracy,
-      );
-
-      if (!mounted) return;
-      setState(() => _status = statusResponse.data);
-
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (_) => BreakQrDialog(
-          isBreakOut: isBreakOut,
-          qrResponse: qrResponse,
-          onCompleted: () async {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-            _showSuccess(
-              isBreakOut
-                  ? 'Break started successfully'
-                  : 'Break ended successfully',
-            );
-            await _loadDashboard();
-          },
-        ),
-      );
-    } catch (e) {
-      if (mounted) _showError(e.toString());
-    } finally {
-      if (mounted) setState(() => _generatingQr = false);
-    }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.statusError,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showSuccess(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppTheme.statusSuccess,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   String _formatMinutes(int minutes) {
@@ -270,10 +156,6 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen>
       );
     }
 
-    final actionLabel = _isBreakOut ? 'Break Out' : 'Break In';
-    final actionIcon = _isBreakOut
-        ? Icons.logout_rounded
-        : Icons.login_rounded;
     final history = _history;
     final breaks = history?.breaks ?? [];
 
@@ -285,84 +167,13 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DashboardGrid(
-              animation: _controller,
-              items: [
-                DashboardGridItem(
-                  icon: actionIcon,
-                  label: actionLabel,
-                  onTap: _generatingQr ? () {} : _generateBreakQr,
-                  animation: _controller,
-                  intervalStart: 0.12,
-                  gradientStart: _isBreakOut
-                      ? AppTheme.statusError
-                      : AppTheme.statusSuccess,
-                  gradientEnd: _isBreakOut
-                      ? AppTheme.gridGradient3End
-                      : AppTheme.dGreen,
-                  iconColor: AppTheme.gridIconColor,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Break History',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.PrimaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppTheme.PrimaryColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 14,
-                          color: AppTheme.PrimaryColor,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _isToday ? 'Today' : _displayDateFormat.format(_selectedDate),
-                          style: TextStyle(
-                            color: AppTheme.PrimaryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          Icons.arrow_drop_down_rounded,
-                          size: 20,
-                          color: AppTheme.PrimaryColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             if (_loadingHistory)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
                 child: Center(child: CircularProgressIndicator()),
               )
             else
-            if (breaks.isEmpty)
+              if (breaks.isEmpty)
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.3,
                   child: const Center(
@@ -395,14 +206,54 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Break'),
-      ),
-      body: Stack(
-        children: [
-          _buildBody(theme),
-          if (_generatingQr) const _DotLoadingOverlay(),
+        title: const Text('Break History'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Center(
+              child: GestureDetector(
+                onTap: _pickDate,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isToday ? 'Today' : _displayDateFormat.format(_selectedDate),
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_drop_down_rounded,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
+      body: _buildBody(theme),
     );
   }
 }
@@ -653,12 +504,6 @@ class _BreakHistoryTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Text(
-                //   'Break',
-                //   style: theme.textTheme.titleMedium?.copyWith(
-                //     fontWeight: FontWeight.w700,
-                //   ),
-                // ),
                 const SizedBox(height: 7),
                 Text(
                   'Date: ${item.date}',
@@ -687,75 +532,6 @@ class _BreakHistoryTile extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A full-screen semi-transparent overlay with three bouncing dots.
-class _DotLoadingOverlay extends StatefulWidget {
-  const _DotLoadingOverlay();
-
-  @override
-  State<_DotLoadingOverlay> createState() => _DotLoadingOverlayState();
-}
-
-class _DotLoadingOverlayState extends State<_DotLoadingOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.35),
-      child: Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                final delay = index * 0.2;
-                final t = (_controller.value - delay) % 1.0;
-                final bounce = t < 0.5
-                    ? (t * 2.0)
-                    : (1.0 - (t - 0.5) * 2.0);
-                final offset = -8.0 * bounce;
-
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Transform.translate(
-                    offset: Offset(0, offset),
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: AppTheme.PrimaryColor
-                            .withValues(alpha: 0.6 + 0.4 * bounce),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-        ),
       ),
     );
   }
