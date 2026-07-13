@@ -22,7 +22,6 @@ class BreakDashboardScreen extends StatefulWidget {
 class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   final BreakHistoryRepo _historyRepo = BreakHistoryRepo();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
-  final DateFormat _displayDateFormat = DateFormat('dd MMM yyyy');
   final DateFormat _timeFormat = DateFormat('hh:mm a');
 
   bool _loading = true;
@@ -49,7 +48,9 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
     });
 
     try {
-      final history = await _historyRepo.getBreakHistory(date: _selectedDateStr);
+      final history = await _historyRepo.getBreakHistory(
+        date: _selectedDateStr,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -68,7 +69,9 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   Future<void> _loadHistory() async {
     setState(() => _loadingHistory = true);
     try {
-      final history = await _historyRepo.getBreakHistory(date: _selectedDateStr);
+      final history = await _historyRepo.getBreakHistory(
+        date: _selectedDateStr,
+      );
       if (!mounted) return;
       setState(() {
         _history = history.data;
@@ -87,10 +90,18 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       firstDate: DateTime(2024),
       lastDate: DateTime.now(),
       builder: (context, child) {
+        final theme = Theme.of(context);
+        final actionColor = theme.brightness == Brightness.light
+            ? AppTheme.textPrimaryLight
+            : AppTheme.PrimaryColor;
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppTheme.PrimaryColor,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: actionColor),
             ),
           ),
           child: child!,
@@ -172,28 +183,27 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
                 padding: EdgeInsets.only(top: 40),
                 child: Center(child: CircularProgressIndicator()),
               )
-            else
-              if (breaks.isEmpty)
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.3,
-                  child: const Center(
-                    child: Text(
-                      'No break history',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                )
-              else
-                ...breaks.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _BreakHistoryTile(
-                      item: item,
-                      timeFormat: _formatTime,
-                      minutesFormat: _formatMinutes,
-                    ),
+            else if (breaks.isEmpty)
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.3,
+                child: const Center(
+                  child: Text(
+                    'No break history',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
+              )
+            else
+              ...breaks.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _BreakHistoryTile(
+                    item: item,
+                    timeFormat: _formatTime,
+                    minutesFormat: _formatMinutes,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -209,44 +219,30 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
         title: const Text('Break History'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Center(
-              child: GestureDetector(
-                onTap: _pickDate,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 14,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _isToday ? 'Today' : _displayDateFormat.format(_selectedDate),
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Icon(
-                        Icons.arrow_drop_down_rounded,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: _pickDate,
+              icon: const Icon(Icons.calendar_month_rounded, size: 20),
+              label: Text(
+                _isToday
+                    ? 'Today'
+                    : DateFormat('dd MMM').format(_selectedDate),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.brightness == Brightness.light
+                    ? AppTheme.textPrimaryLight
+                    : AppTheme.PrimaryColor,
+                backgroundColor: theme.brightness == Brightness.light
+                    ? AppTheme.PrimaryColor.withValues(alpha: 0.18)
+                    : Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
@@ -388,8 +384,9 @@ class _BreakQrDialogState extends State<BreakQrDialog> {
                       Text(
                         'Show this QR to the scanner',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color
-                              ?.withValues(alpha: 0.6),
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -434,10 +431,11 @@ class _BreakQrDialogState extends State<BreakQrDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: (_secondsLeft <= 10
-                        ? AppTheme.statusError
-                        : AppTheme.PrimaryColor)
-                    .withValues(alpha: 0.1),
+                color:
+                    (_secondsLeft <= 10
+                            ? AppTheme.statusError
+                            : AppTheme.PrimaryColor)
+                        .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -505,10 +503,7 @@ class _BreakHistoryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 7),
-                Text(
-                  'Date: ${item.date}',
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text('Date: ${item.date}', style: theme.textTheme.bodyMedium),
                 Text(
                   'Time: ${timeFormat(item.breakOutTime)} - ${timeFormat(item.breakInTime)}',
                   style: theme.textTheme.bodyMedium,

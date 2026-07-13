@@ -535,6 +535,10 @@ class _TonalButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool disabled = onPressed == null;
     final Color effectiveColor = disabled ? color.withOpacity(0.4) : color;
+    final Color foregroundColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : effectiveColor;
 
     return Material(
       color: color.withOpacity(disabled ? 0.18 : 0.36),
@@ -564,14 +568,14 @@ class _TonalButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
                 ),
               )
-                  : Icon(icon, size: 20, color: effectiveColor),
+                  : Icon(icon, size: 20, color: foregroundColor),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: effectiveColor,
+                  color: foregroundColor,
                 ),
               ),
             ],
