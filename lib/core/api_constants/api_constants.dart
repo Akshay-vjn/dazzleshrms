@@ -1,7 +1,7 @@
 class ApiConstants {
   // static const String mediaBaseUrl = "http://192.168.1.183:7907/api";
-  static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
-  // static const String mediaBaseUrl = "https://hrms.dazzles.in";
+  // static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
+  static const String mediaBaseUrl = "https://hrms.dazzles.in";
 
   static const String sendOtp = "/auth/send-otp";
   static const String verifyOtp = "/auth/verify-otp";

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
 import '../../../core/permissions/permission.dart';
+import '../../notifications/data/provider/notification_provider.dart';
 import '../../notifications/presentation/notification_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../data/providers/dashboard_provider.dart';
@@ -36,6 +37,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(dashboardProvider.notifier).loadDashboard();
+      checkUnreadNotifications(ref);
     });
   }
 
@@ -48,6 +50,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _refresh() async {
     _controller.reset();
     _controller.forward();
+    ref.read(showNotificationDotProvider.notifier).state = false;
+    checkUnreadNotifications(ref);
     await ref.read(dashboardProvider.notifier).loadDashboard();
   }
 
@@ -107,22 +111,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ),
             GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NotificationScreen(),
-                ),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppTheme.PrimaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                ),
+              onTap: () {
+                // Immediately dismiss the green dot
+                ref.read(showNotificationDotProvider.notifier).state = false;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationScreen(),
+                  ),
+                );
+              },
+              child: Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.PrimaryColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                    ),
+                  ),
+                  // Green dot for unread notifications
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final showDot = ref.watch(showNotificationDotProvider);
+                      return showDot
+                          ? Positioned(
+                              right: 0,
+                              top: 0,
+                              child: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink();
+                    },
+                  ),
+                ],
               ),
             ),
           ],

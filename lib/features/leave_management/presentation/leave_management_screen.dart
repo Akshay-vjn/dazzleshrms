@@ -355,16 +355,16 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.dGreen,
             iconColor: AppTheme.gridIconColor,
           ),
-        DashboardGridItem(
-          icon: Icons.free_breakfast_rounded,
-          label: "Break",
-          onTap: () => context.pushNamed('break_dashboard'),
-          animation: _controller,
-          intervalStart: 0.45,
-          gradientStart: AppTheme.gridGradient1Start,
-          gradientEnd: AppTheme.dTeal,
-          iconColor: AppTheme.gridIconColor,
-        ),
+        // DashboardGridItem(
+        //   icon: Icons.free_breakfast_rounded,
+        //   label: "Break",
+        //   onTap: () => context.pushNamed('break_dashboard'),
+        //   animation: _controller,
+        //   intervalStart: 0.45,
+        //   gradientStart: AppTheme.gridGradient1Start,
+        //   gradientEnd: AppTheme.dTeal,
+        //   iconColor: AppTheme.gridIconColor,
+        // ),
 
         if (permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(
@@ -372,7 +372,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             label: "Employee Approvals",
             onTap: () => context.pushNamed('employee_approvals'),
             animation: _controller,
-            intervalStart: 0.28,
+            intervalStart: 0.45,
             gradientStart: AppTheme.dGrid1,
             gradientEnd: AppTheme.dGrid1,
             iconColor: AppTheme.gridIconColor,

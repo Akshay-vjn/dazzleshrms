@@ -21,7 +21,7 @@ class _MainNavigationState extends State<MainNavigation>
 
   final _screens = const [
     DashboardScreen(),
-    NotificationScreen(),
+    // NotificationScreen(),
     EmployeeAnnouncementScreen(),
     ProfileScreen()
   ];
@@ -113,28 +113,28 @@ class _MainNavigationState extends State<MainNavigation>
                 onTap: () => _onTap(0),
                 activeColor: AppTheme.navIconSelected,
               ),
+              // _NavItem(
+              //   icon: Icons.notification_add_outlined,
+              //   label: "Notification",
+              //   isActive: _currentIndex == 1,
+              //   animation: _controller,
+              //   onTap: () => _onTap(1),
+              //   activeColor: AppTheme.navIconSelected,
+              // ),
               _NavItem(
-                icon: Icons.notification_add_outlined,
-                label: "Notification",
+                icon: Icons.newspaper_outlined,
+                label: "Announcement",
                 isActive: _currentIndex == 1,
                 animation: _controller,
                 onTap: () => _onTap(1),
                 activeColor: AppTheme.navIconSelected,
               ),
               _NavItem(
-                icon: Icons.newspaper_outlined,
-                label: "Announcement",
+                icon: Icons.person_outline,
+                label: "Profile",
                 isActive: _currentIndex == 2,
                 animation: _controller,
                 onTap: () => _onTap(2),
-                activeColor: AppTheme.navIconSelected,
-              ),
-              _NavItem(
-                icon: Icons.person_outline,
-                label: "Profile",
-                isActive: _currentIndex == 3,
-                animation: _controller,
-                onTap: () => _onTap(3),
                 activeColor: AppTheme.navIconSelected,
               ),
             ],

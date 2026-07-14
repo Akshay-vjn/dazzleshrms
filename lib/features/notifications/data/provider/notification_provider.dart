@@ -64,3 +64,23 @@ final allNotificationsProvider =
     StateNotifierProvider<NotificationNotifier, AsyncValue<NotificationData?>>(
   (ref) => NotificationNotifier(ref.read(notificationRepositoryProvider)),
 );
+
+/// Controls whether the green notification dot is visible.
+/// Set to true when unread notifications are detected, false when user opens notifications.
+final showNotificationDotProvider = StateProvider<bool>((ref) => false);
+
+/// Checks the API for unread notifications and updates the dot provider.
+/// Only sets it to true if unread exist — never resets to false
+/// (that only happens when the user taps the notification icon).
+Future<void> checkUnreadNotifications(WidgetRef ref) async {
+  try {
+    final repo = ref.read(notificationRepositoryProvider);
+    final data = await repo.fetchAllNotifications(page: 1, limit: 10);
+    final hasUnread = data.records.any((item) => !item.isRead);
+    if (hasUnread) {
+      ref.read(showNotificationDotProvider.notifier).state = true;
+    }
+  } catch (_) {
+    // Silently ignore — don't change the dot state on error
+  }
+}
