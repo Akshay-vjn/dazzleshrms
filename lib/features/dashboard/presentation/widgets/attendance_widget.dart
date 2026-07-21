@@ -265,7 +265,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         onSuccess: () {
           setState(() {
             _attendanceStatus = isCheckIn ? 'ACTIVE' : 'OFFLINE';
-            _isOnBreak = false; // Reset break status on attendance action
+            _isOnBreak = false;
           });
           _playSuccessSound(isCheckIn);
           Navigator.pop(context);

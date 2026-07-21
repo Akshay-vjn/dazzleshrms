@@ -84,7 +84,7 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                   const SizedBox(height: 16),
                 ],
                 widget.actions,
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
                 Text(
                   "History",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
