@@ -5,10 +5,12 @@ import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 import '../../dashboard/data/models/attendance_qr_response.dart';
 import '../data/models/break_history_response.dart';
+import '../data/models/break_status_response.dart';
 import '../data/repo/break_history_repo.dart';
 import '../data/repo/breakqr_repo.dart';
 
@@ -21,14 +23,20 @@ class BreakDashboardScreen extends StatefulWidget {
 
 class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   final BreakHistoryRepo _historyRepo = BreakHistoryRepo();
+  final BreakqrRepo _breakRepo = BreakqrRepo();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _timeFormat = DateFormat('hh:mm a');
 
   bool _loading = true;
   bool _loadingHistory = false;
+  bool _loadingBreakStatus = false;
   String? _error;
   BreakHistoryData? _history;
   late DateTime _selectedDate;
+
+  // Break status
+  bool _isOnBreak = false;
+  String _currentAction = 'BREAK_OUT';
 
   String get _selectedDateStr => _dateFormat.format(_selectedDate);
   bool get _isToday =>
@@ -48,13 +56,19 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
     });
 
     try {
-      final history = await _historyRepo.getBreakHistory(
-        date: _selectedDateStr,
-      );
+      final results = await Future.wait([
+        _historyRepo.getBreakHistory(date: _selectedDateStr),
+        _breakRepo.getBreakStatus(),
+      ]);
 
       if (!mounted) return;
+      final history = results[0] as BreakHistoryResponse;
+      final status = results[1] as BreakStatusResponse;
+
       setState(() {
         _history = history.data;
+        _isOnBreak = status.data.isOnBreak;
+        _currentAction = status.data.currentAction;
         _loading = false;
       });
     } catch (e) {
@@ -81,6 +95,116 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       if (!mounted) return;
       setState(() => _loadingHistory = false);
     }
+  }
+
+  Future<void> _loadBreakStatus() async {
+    try {
+      final status = await _breakRepo.getBreakStatus();
+      if (!mounted) return;
+      setState(() {
+        _isOnBreak = status.data.isOnBreak;
+        _currentAction = status.data.currentAction;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _handleBreak(BuildContext context) async {
+    final bool isBreakOut = !_isOnBreak;
+    final String method = isBreakOut ? 'BREAK_OUT' : 'BREAK_IN';
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (context.mounted) {
+            Navigator.pop(context);
+            _showError(context, 'Location permission is required');
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted) {
+          Navigator.pop(context);
+          _showError(context,
+              'Location permission is permanently denied. Please enable it in settings.');
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final qrResponse = await _breakRepo.generateQr(
+        method: method,
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracy: position.accuracy,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // Pop loading
+
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => BreakQrDialog(
+            isBreakOut: isBreakOut,
+            qrResponse: qrResponse,
+            onCompleted: () async {
+              if (mounted) {
+                setState(() {
+                  _isOnBreak = isBreakOut;
+                });
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isBreakOut
+                          ? '✓ Break started successfully'
+                          : '✓ Break ended successfully',
+                    ),
+                    backgroundColor: AppTheme.statusSuccess,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                // Refresh history and status after break action
+                _loadHistory();
+                _loadBreakStatus();
+              }
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        _showError(context, e.toString());
+      }
+    }
+  }
+
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppTheme.statusError,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _pickDate() async {
@@ -125,6 +249,150 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   String _formatTime(DateTime? dateTime) {
     if (dateTime == null) return '--';
     return _timeFormat.format(dateTime.toLocal());
+  }
+
+  Widget _buildBreakActionButton(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
+    final textColor = isDark ? Colors.white : Colors.black.withValues(alpha: 0.85);
+    final buttonColor = _isOnBreak ? AppTheme.statusSuccess : AppTheme.statusWarning;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: AppTheme.PrimaryColor.withValues(alpha: isDark ? 0.35 : 0.18),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.coffee,
+                    color: AppTheme.PrimaryColor,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Break",
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Status Indicator
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: buttonColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: buttonColor,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isOnBreak ? 'ON BREAK' : 'ACTIVE',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: buttonColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Action Button
+            SizedBox(
+              width: double.infinity,
+              child: _TonalButton(
+                onPressed:
+                    _loadingBreakStatus ? null : () => _handleBreak(context),
+                color: buttonColor,
+                icon: _isOnBreak
+                    ? Icons.input
+                    : Icons.output,
+                label: _loadingBreakStatus
+                    ? "Loading..."
+                    : (_isOnBreak ? "Break In" : "Break Out"),
+                isLoading: _loadingBreakStatus,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePickerButton(ThemeData theme) {
+    return TextButton.icon(
+      onPressed: _pickDate,
+      icon: const Icon(Icons.calendar_month_rounded, size: 20),
+      label: Text(
+        _isToday
+            ? 'Today'
+            : DateFormat('dd MMM').format(_selectedDate),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: theme.brightness == Brightness.light
+            ? AppTheme.textPrimaryLight
+            : AppTheme.PrimaryColor,
+        backgroundColor: theme.brightness == Brightness.light
+            ? AppTheme.PrimaryColor.withValues(alpha: 0.18)
+            : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: const Size(0, 40),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
   }
 
   Widget _buildBody(ThemeData theme) {
@@ -178,6 +446,26 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Break In/Out button card
+            _buildBreakActionButton(theme),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Break History',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black.withValues(alpha: 0.85),
+                  ),
+                ),
+                _buildDatePickerButton(theme),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             if (_loadingHistory)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
@@ -185,7 +473,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
               )
             else if (breaks.isEmpty)
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.3,
+                height: MediaQuery.of(context).size.height * 0.2,
                 child: const Center(
                   child: Text(
                     'No break history',
@@ -216,38 +504,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Break History'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton.icon(
-              onPressed: _pickDate,
-              icon: const Icon(Icons.calendar_month_rounded, size: 20),
-              label: Text(
-                _isToday
-                    ? 'Today'
-                    : DateFormat('dd MMM').format(_selectedDate),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: theme.brightness == Brightness.light
-                    ? AppTheme.textPrimaryLight
-                    : AppTheme.PrimaryColor,
-                backgroundColor: theme.brightness == Brightness.light
-                    ? AppTheme.PrimaryColor.withValues(alpha: 0.18)
-                    : Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ],
+        title: const Text(''),
       ),
       body: _buildBody(theme),
     );
@@ -527,6 +784,79 @@ class _BreakHistoryTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TonalButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final VoidCallback? onLongPress;
+  final Color color;
+  final IconData icon;
+  final String label;
+  final bool isLoading;
+
+  const _TonalButton({
+    required this.onPressed,
+    this.onLongPress,
+    required this.color,
+    required this.icon,
+    required this.label,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool disabled = onPressed == null;
+    final Color effectiveColor = disabled ? color.withValues(alpha: 0.4) : color;
+    final Color foregroundColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : effectiveColor;
+
+    return Material(
+      color: color.withValues(alpha: disabled ? 0.18 : 0.36),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onPressed,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: color.withValues(alpha: disabled ? 0.35 : 0.68),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              isLoading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(effectiveColor),
+                      ),
+                    )
+                  : Icon(icon, size: 20, color: foregroundColor),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: foregroundColor,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -186,7 +186,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Leave"),
+        // title: const Text("Leave"),
       ),
 
       floatingActionButton: Padding(

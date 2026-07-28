@@ -310,36 +310,16 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.gridGradient1End,
             iconColor: AppTheme.gridIconColor,
           ),
-        if (permissions.contains(Permissions.viewApplyLeave))
+        if (permissions.contains(Permissions.viewApplyLeave) ||
+            permissions.contains(Permissions.viewUpcomingLeaves) ||
+            permissions.contains(Permissions.viewApprovals))
           DashboardGridItem(
-            icon: Icons.calendar_month_rounded,
-            label: "Apply Leave",
-            onTap: () => context.pushNamed('apply_leave'),
+            icon: Icons.event_available_rounded,
+            label: "Leaves",
+            onTap: () => context.pushNamed('leaves'),
             animation: _controller,
             intervalStart: 0.2,
-            gradientStart: AppTheme.gridGradient2Start,
-            gradientEnd: AppTheme.gridGradient2End,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        if (permissions.contains(Permissions.viewApprovals))
-          DashboardGridItem(
-            icon: Icons.check_circle_outline_rounded,
-            label: "Approvals",
-            onTap: () => context.pushNamed('approvals'),
-            animation: _controller,
-            intervalStart: 0.25,
             gradientStart: AppTheme.gridGradient3Start,
-            gradientEnd: AppTheme.gridGradient3End,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        if (permissions.contains(Permissions.viewUpcomingLeaves))
-          DashboardGridItem(
-            icon: Icons.upcoming,
-            label: "Upcoming Leaves",
-            onTap: () => context.pushNamed('upcoming_leaves'),
-            animation: _controller,
-            intervalStart: 0.3,
-            gradientStart: AppTheme.gridGradient2Start,
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
@@ -411,7 +391,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          _buildBalanceCard(theme, data),
+                          // _buildBalanceCard(theme, data),
                           const SizedBox(height: 24),
                           _buildGrid(permissionState),
                           const SizedBox(height: 80),

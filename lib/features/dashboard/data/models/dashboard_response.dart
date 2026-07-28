@@ -42,6 +42,26 @@ class DashboardData {
     required this.attendanceStatus,
   });
 
+  DashboardData copyWith({
+    String? name,
+    String? role,
+    String? store,
+    double? totalLeaves,
+    double? usedLeaves,
+    double? availableLeaves,
+    String? attendanceStatus,
+  }) {
+    return DashboardData(
+      name: name ?? this.name,
+      role: role ?? this.role,
+      store: store ?? this.store,
+      totalLeaves: totalLeaves ?? this.totalLeaves,
+      usedLeaves: usedLeaves ?? this.usedLeaves,
+      availableLeaves: availableLeaves ?? this.availableLeaves,
+      attendanceStatus: attendanceStatus ?? this.attendanceStatus,
+    );
+  }
+
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
       name: json['name'],

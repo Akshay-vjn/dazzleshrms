@@ -25,6 +25,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  String _currentAttendanceStatus = 'OFFLINE';
 
   @override
   void initState() {
@@ -112,7 +113,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
             GestureDetector(
               onTap: () {
-                // Immediately dismiss the green dot
                 ref.read(showNotificationDotProvider.notifier).state = false;
                 Navigator.push(
                   context,
@@ -134,7 +134,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: Colors.white,
                     ),
                   ),
-                  // Green dot for unread notifications
                   Consumer(
                     builder: (context, ref, _) {
                       final showDot = ref.watch(showNotificationDotProvider);
@@ -182,9 +181,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
 
   Widget _buildGrid(Set<String> permissions) {
+    final isCheckedIn = _currentAttendanceStatus.toUpperCase() == 'ACTIVE';
     return DashboardGrid(
       animation: _controller,
       items: [
+        if (isCheckedIn)
+        DashboardGridItem(
+          icon: Icons.free_breakfast_rounded,
+          label: "Break",
+          onTap: () => context.pushNamed('break_dashboard'),
+          animation: _controller,
+          intervalStart: 0.35,
+          gradientStart: AppTheme.gridGradient2Start,
+          gradientEnd: AppTheme.dGrid1,
+          iconColor: AppTheme.gridIconColor,
+        ),
         if (permissions.contains(Permissions.viewLeaveManagement))
         DashboardGridItem(
           icon: Icons.event_note_rounded,
@@ -218,7 +229,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.dGrid1,
           iconColor: AppTheme.gridIconColor,
         ),
-
       ],
     );
   }
@@ -276,6 +286,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return const Center(child: Text("No dashboard data"));
             }
 
+            // Sync local attendance status with backend data
+            if (_currentAttendanceStatus != data.attendanceStatus.toUpperCase()) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _currentAttendanceStatus = data.attendanceStatus.toUpperCase();
+                  });
+                }
+              });
+            }
+
             final role = data.role.toLowerCase();
             if (role == 'store') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -303,6 +324,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             animationController: _controller,
                             intervalStart: 0.15,
                             attendanceStatus: data.attendanceStatus,
+                            onStatusChanged: (newStatus) {
+                              setState(() {
+                                _currentAttendanceStatus = newStatus;
+                              });
+                              ref
+                                  .read(dashboardProvider.notifier)
+                                  .updateAttendanceStatus(newStatus);
+                              ref
+                                  .read(dashboardProvider.notifier)
+                                  .refreshSilently();
+                            },
                           ),
                           const SizedBox(height: 24),
                           _buildGrid(permissions),

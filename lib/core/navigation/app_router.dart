@@ -13,6 +13,7 @@ import 'package:dazzleshrms/features/employees/presentation/employee_upcoming_le
 import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
+import 'package:dazzleshrms/features/leave_management/presentation/leaves_screen.dart';
 import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
 import 'package:dazzleshrms/core/widgets/no_internet_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,6 +85,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/leave-management',
         name: 'leave_management',
         builder: (context, state) => const LeaveManagementScreen(),
+      ),
+      GoRoute(
+        path: '/leaves',
+        name: 'leaves',
+        builder: (context, state) => const LeavesScreen(),
       ),
       GoRoute(
         path: '/break-dashboard',

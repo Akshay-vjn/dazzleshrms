@@ -28,6 +28,23 @@ class DashboardNotifier
       state = AsyncValue.error(e, st);
     }
   }
+
+  void updateAttendanceStatus(String newStatus) {
+    state.whenData((data) {
+      if (data != null) {
+        state = AsyncValue.data(data.copyWith(attendanceStatus: newStatus));
+      }
+    });
+  }
+
+  Future<void> refreshSilently() async {
+    try {
+      final response = await _repository.fetchDashboard();
+      state = AsyncValue.data(response.data);
+    } catch (_) {
+      // Keep existing data on silent refresh error
+    }
+  }
 }
 
 
