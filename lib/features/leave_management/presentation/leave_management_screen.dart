@@ -312,7 +312,7 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
           ),
         if (permissions.contains(Permissions.viewApplyLeave) ||
             permissions.contains(Permissions.viewUpcomingLeaves) ||
-            permissions.contains(Permissions.viewApprovals))
+            permissions.contains(Permissions.viewPermission))
           DashboardGridItem(
             icon: Icons.event_available_rounded,
             label: "Leaves",
@@ -323,38 +323,16 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
-
-        if (permissions.contains(Permissions.viewPermission))
+        if (permissions.contains(Permissions.viewApprovals) ||
+            permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(
-            icon: Icons.access_time_rounded,
-            label: "Permissions",
-            onTap: () => context.pushNamed('permissions'),
+            icon: Icons.check_circle_outline_rounded,
+            label: "Approvals",
+            onTap: () => context.pushNamed('approvals'),
             animation: _controller,
-            intervalStart: 0.35,
+            intervalStart: 0.25,
             gradientStart: AppTheme.dTeal,
             gradientEnd: AppTheme.dGreen,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        // DashboardGridItem(
-        //   icon: Icons.free_breakfast_rounded,
-        //   label: "Break",
-        //   onTap: () => context.pushNamed('break_dashboard'),
-        //   animation: _controller,
-        //   intervalStart: 0.45,
-        //   gradientStart: AppTheme.gridGradient1Start,
-        //   gradientEnd: AppTheme.dTeal,
-        //   iconColor: AppTheme.gridIconColor,
-        // ),
-
-        if (permissions.contains(Permissions.viewAllTeamApproval))
-          DashboardGridItem(
-            icon: Icons.groups_rounded,
-            label: "Employee Approvals",
-            onTap: () => context.pushNamed('employee_approvals'),
-            animation: _controller,
-            intervalStart: 0.45,
-            gradientStart: AppTheme.dGrid1,
-            gradientEnd: AppTheme.dGrid1,
             iconColor: AppTheme.gridIconColor,
           ),
       ],

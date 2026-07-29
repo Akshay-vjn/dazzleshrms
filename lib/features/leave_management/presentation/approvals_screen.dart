@@ -8,14 +8,14 @@ import '../../dashboard/presentation/widgets/fade_slide_item.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid.dart';
 import '../../dashboard/presentation/widgets/dashboard_grid_item.dart';
 
-class LeavesScreen extends ConsumerStatefulWidget {
-  const LeavesScreen({super.key});
+class ApprovalsScreen extends ConsumerStatefulWidget {
+  const ApprovalsScreen({super.key});
 
   @override
-  ConsumerState<LeavesScreen> createState() => _LeavesScreenState();
+  ConsumerState<ApprovalsScreen> createState() => _ApprovalsScreenState();
 }
 
-class _LeavesScreenState extends ConsumerState<LeavesScreen>
+class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -39,7 +39,6 @@ class _LeavesScreenState extends ConsumerState<LeavesScreen>
     _controller.dispose();
     super.dispose();
   }
-
   Widget _buildHeader(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
@@ -63,7 +62,7 @@ class _LeavesScreenState extends ConsumerState<LeavesScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              "Leaves",
+              "Approvals",
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -78,37 +77,26 @@ class _LeavesScreenState extends ConsumerState<LeavesScreen>
     return DashboardGrid(
       animation: _controller,
       items: [
-        if (permissions.contains(Permissions.viewApplyLeave))
+        if (permissions.contains(Permissions.viewApprovals))
           DashboardGridItem(
-            icon: Icons.calendar_month_rounded,
-            label: "Apply Leave",
-            onTap: () => context.pushNamed('apply_leave'),
+            icon: Icons.check_circle_outline_rounded,
+            label: "Leave Approvals",
+            onTap: () => context.pushNamed('leave_approvals'),
             animation: _controller,
             intervalStart: 0.15,
-            gradientStart: AppTheme.gridGradient2Start,
-            gradientEnd: AppTheme.gridGradient2End,
+            gradientStart: AppTheme.gridGradient1Start,
+            gradientEnd: AppTheme.gridGradient1End,
             iconColor: AppTheme.gridIconColor,
           ),
-        if (permissions.contains(Permissions.viewUpcomingLeaves))
+        if (permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(
-            icon: Icons.upcoming,
-            label: "Upcoming Leaves",
-            onTap: () => context.pushNamed('upcoming_leaves'),
+            icon: Icons.groups_rounded,
+            label: "Employee Approvals",
+            onTap: () => context.pushNamed('employee_approvals'),
             animation: _controller,
             intervalStart: 0.2,
-            gradientStart: AppTheme.gridGradient2Start,
-            gradientEnd: AppTheme.gridGradient3End,
-            iconColor: AppTheme.gridIconColor,
-          ),
-        if (permissions.contains(Permissions.viewPermission))
-          DashboardGridItem(
-            icon: Icons.access_time_rounded,
-            label: "Permissions",
-            onTap: () => context.pushNamed('permissions'),
-            animation: _controller,
-            intervalStart: 0.35,
-            gradientStart: AppTheme.dTeal,
-            gradientEnd: AppTheme.dGreen,
+            gradientStart: AppTheme.dGrid1,
+            gradientEnd: AppTheme.dGrid1,
             iconColor: AppTheme.gridIconColor,
           ),
       ],
