@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
+import '../../data/providers/approvals_provider.dart';
+import 'leave_approval_clash_banner.dart';
 
-class ApprovalSheet extends StatefulWidget {
+class ApprovalSheet extends ConsumerStatefulWidget {
+  final int? leaveRoasterId;
   final String employeeName;
   final String fromDate;
   final String toDate;
@@ -11,6 +15,7 @@ class ApprovalSheet extends StatefulWidget {
 
   const ApprovalSheet({
     super.key,
+    this.leaveRoasterId,
     required this.employeeName,
     required this.fromDate,
     required this.toDate,
@@ -18,10 +23,10 @@ class ApprovalSheet extends StatefulWidget {
   });
 
   @override
-  State<ApprovalSheet> createState() => _ApprovalSheetState();
+  ConsumerState<ApprovalSheet> createState() => _ApprovalSheetState();
 }
 
-class _ApprovalSheetState extends State<ApprovalSheet> {
+class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
   late Map<DateTime, bool> daySelections;
   late List<DateTime> allDays;
   final TextEditingController reasonCtrl = TextEditingController();
@@ -43,6 +48,11 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     allDays = _getDaysInRange(start, end);
     daySelections = {for (var day in allDays) day: true};
     reasonCtrl.addListener(_onReasonTextChanged);
+    if (widget.leaveRoasterId != null) {
+      Future.microtask(() {
+        ref.invalidate(leaveApprovalClashProvider(widget.leaveRoasterId!));
+      });
+    }
   }
 
   @override
@@ -92,6 +102,9 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
     final theme = Theme.of(context);
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
@@ -136,6 +149,32 @@ class _ApprovalSheetState extends State<ApprovalSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (widget.leaveRoasterId != null) ...[
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final clashAsync = ref.watch(
+                          leaveApprovalClashProvider(widget.leaveRoasterId!),
+                        );
+
+                        return clashAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          ),
+                          error: (e, _) => const SizedBox.shrink(),
+                          data: (clashData) =>
+                              LeaveApprovalClashBanner(clashData: clashData),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

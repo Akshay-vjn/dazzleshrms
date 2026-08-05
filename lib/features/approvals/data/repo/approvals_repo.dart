@@ -4,6 +4,7 @@ import '../../../../core/api_constants/api_constants.dart';
 import '../../../announcements/data/models/store_model.dart';
 import '../models/applied_leave_model.dart';
 import '../models/designation_model.dart';
+import '../models/leave_approval_clash_model.dart';
 
 class LeaveApprovalRepository {
   final Dio _dio = ApiConfig.dio;
@@ -77,5 +78,18 @@ class LeaveApprovalRepository {
       final message = e.response?.data?['message'] ?? 'Failed to fetch stores';
       throw (message);
     }
+  }
+
+  Future<LeaveApprovalClashResponse> fetchLeaveApprovalClash({
+    required int leaveRoasterId,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.leaveApprovalClash,
+      data: {"leaveRoasterId": leaveRoasterId},
+    );
+
+    return LeaveApprovalClashResponse.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
   }
 }

@@ -3,6 +3,7 @@ import '../../../announcements/data/models/store_model.dart';
 import '../models/designation_model.dart';
 
 import '../models/applied_leave_model.dart';
+import '../models/leave_approval_clash_model.dart';
 import '../repo/approvals_repo.dart';
 
 
@@ -51,4 +52,11 @@ final designationProvider = FutureProvider<List<Designation>>((ref) async {
 final storeProvider = FutureProvider<List<Store>>((ref) async {
   final repo = ref.read(leaveApprovalRepositoryProvider);
   return repo.fetchStores();
+});
+
+final leaveApprovalClashProvider =
+    FutureProvider.family.autoDispose<LeaveApprovalClashResponse, int>(
+        (ref, leaveRoasterId) async {
+  final repo = ref.read(leaveApprovalRepositoryProvider);
+  return repo.fetchLeaveApprovalClash(leaveRoasterId: leaveRoasterId);
 });

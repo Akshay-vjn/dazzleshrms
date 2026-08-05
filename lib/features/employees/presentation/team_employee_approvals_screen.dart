@@ -65,6 +65,7 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => ApprovalSheet(
+        leaveRoasterId: item.leaveRoasterId,
         employeeName: item.employeeName,
         fromDate: item.fromDate,
         toDate: item.toDate,

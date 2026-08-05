@@ -5,9 +5,12 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../leave/data/models/blocked_date_model.dart';
+import '../../../leave/data/models/leave_clash_calendar_model.dart';
 import '../../../leave/data/providers/blocked_date_provider.dart';
+import '../../../leave/data/providers/leave_clash_calendar_provider.dart';
 import '../../../leave/data/providers/leave_type_provider.dart';
 import '../../../leave/data/models/leave_type_model.dart';
+import '../../../leave/presentation/widgets/leave_clash_warning_dialog.dart';
 import '../../data/provider/employee_leave_provider.dart';
 
 
@@ -62,9 +65,17 @@ class _ApplyEmployeeLeaveFormSheetState
   String _formatDisplayDate(DateTime date) =>
       DateFormat('dd-MM-yyyy').format(date);
 
+  Color? _leaveClashColor(double percentage) {
+    if (percentage >= 50) return AppTheme.statusError;
+    if (percentage >= 30) return Colors.orange.shade800;
+    return null;
+  }
 
   Future<void> _pickDate({required bool isFrom}) async {
     ref.invalidate(blockedDateProvider);
+    ref.invalidate(leaveClashCalendarProvider);
+    ref.read(leaveClashCalendarFocusedDayProvider.notifier).state =
+        DateTime.now();
 
     await showDialog(
       context: context,
@@ -72,6 +83,15 @@ class _ApplyEmployeeLeaveFormSheetState
       builder: (_) => Consumer(
         builder: (context, ref, _) {
           final blockedAsync = ref.watch(blockedDateProvider);
+          final calendarFocusedDay = ref.watch(
+            leaveClashCalendarFocusedDayProvider,
+          );
+          final clashAsync = ref.watch(
+            leaveClashCalendarProvider((
+              month: calendarFocusedDay.month,
+              year: calendarFocusedDay.year,
+            )),
+          );
 
           return Dialog(
             shape: RoundedRectangleBorder(
@@ -101,6 +121,11 @@ class _ApplyEmployeeLeaveFormSheetState
                         for (final b in blockedDates)
                           DateTime(b.date.year, b.date.month, b.date.day): b
                       };
+                      final clashMap = <DateTime, LeaveClashCalendarDay>{
+                        for (final day in clashAsync.valueOrNull ?? const [])
+                          DateTime(day.date.year, day.date.month, day.date.day):
+                              day,
+                      };
 
                       return Padding(
                         padding: const EdgeInsets.all(16),
@@ -124,7 +149,7 @@ class _ApplyEmployeeLeaveFormSheetState
                               child: TableCalendar(
                                 firstDay: DateTime.now(),
                                 lastDay: DateTime(2100),
-                                focusedDay: DateTime.now(),
+                                focusedDay: calendarFocusedDay,
 
                                 rowHeight: 38,
 
@@ -151,10 +176,15 @@ class _ApplyEmployeeLeaveFormSheetState
 
                                     if (blockedMap.containsKey(d)) {
                                       return Container(
-                                        margin: const EdgeInsets.all(6),
+                                        margin: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.red.shade500,
+                                          color: AppTheme.statusError
+                                              .withOpacity(0.9),
                                           shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppTheme.statusError,
+                                            width: 1.2,
+                                          ),
                                         ),
                                         alignment: Alignment.center,
                                         child: Text(
@@ -162,15 +192,159 @@ class _ApplyEmployeeLeaveFormSheetState
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600,
+                                            fontSize: 13,
                                           ),
                                         ),
                                       );
                                     }
-                                    return null;
+                                    final clash = clashMap[d];
+                                    if (clash != null) {
+                                      final color =
+                                          _leaveClashColor(clash.percentage);
+                                      if (color != null) {
+                                        return Container(
+                                          margin: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: color.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: color,
+                                              width: 1.2,
+                                            ),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            '${day.day}',
+                                            style: TextStyle(
+                                              color: color,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+
+                                    final isDark = Theme.of(context).brightness ==
+                                        Brightness.dark;
+                                    final defaultBorderColor = isDark
+                                        ? Colors.white.withOpacity(0.2)
+                                        : Colors.grey.shade400;
+
+                                    return Container(
+                                      margin: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: defaultBorderColor,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '${day.day}',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.color,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  todayBuilder: (context, day, _) {
+                                    final d = DateTime(day.year, day.month, day.day);
+
+                                    if (blockedMap.containsKey(d)) {
+                                      return Container(
+                                        margin: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.statusError
+                                              .withOpacity(0.9),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppTheme.statusError,
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          '${day.day}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    final clash = clashMap[d];
+                                    final clashColor = clash != null
+                                        ? _leaveClashColor(clash.percentage)
+                                        : null;
+                                    final color = clashColor ?? AppTheme.PrimaryColor;
+
+                                    return Container(
+                                      margin: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.15),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: color,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '${day.day}',
+                                        style: TextStyle(
+                                          color: color,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  disabledBuilder: (context, day, _) {
+                                    final isDark = Theme.of(context).brightness ==
+                                        Brightness.dark;
+                                    final disabledBorderColor = isDark
+                                        ? Colors.white.withOpacity(0.08)
+                                        : Colors.grey.shade300;
+
+                                    return Container(
+                                      margin: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: disabledBorderColor,
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '${day.day}',
+                                        style: TextStyle(
+                                          color: Theme.of(context).disabledColor,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    );
                                   },
                                 ),
 
-                                onDaySelected: (selectedDay, _) {
+                                onPageChanged: (focusedDay) {
+                                  ref.read(leaveClashCalendarFocusedDayProvider.notifier).state =
+                                      focusedDay;
+                                },
+
+                                onDaySelected: (selectedDay, _) async {
                                   final d = DateTime(
                                     selectedDay.year,
                                     selectedDay.month,
@@ -203,6 +377,19 @@ class _ApplyEmployeeLeaveFormSheetState
                                       ),
                                     );
                                     return;
+                                  }
+
+                                  final clash = clashMap[d];
+                                  if (clash != null && clash.percentage >= 30) {
+                                    final shouldContinue = await showDialog<bool>(
+                                      context: context,
+                                      builder: (_) => LeaveClashWarningDialog(
+                                        clash: clash,
+                                      ),
+                                    );
+                                    if (shouldContinue != true || !context.mounted) {
+                                      return;
+                                    }
                                   }
 
                                   setState(() {
@@ -278,6 +465,7 @@ class _ApplyEmployeeLeaveFormSheetState
 
               ref.read(employeeLeavesProvider(widget.employeeId).notifier).loadLeaves();
               ref.invalidate(usedLeavesFamilyProvider(widget.employeeId));
+              ref.invalidate(leaveClashCalendarProvider);
 
               Future.delayed(const Duration(milliseconds: 800), () {
                 if (context.mounted) Navigator.pop(context);

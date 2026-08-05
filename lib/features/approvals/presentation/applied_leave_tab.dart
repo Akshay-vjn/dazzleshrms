@@ -42,6 +42,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => ApprovalSheet(
+        leaveRoasterId: item.leaveRoasterId,
         employeeName: item.employeeName,
         fromDate: item.fromDate,
         toDate: item.toDate,
@@ -404,9 +405,9 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                           if (item.designation != null)
                             Text(
                               "Designation:${item.designation}",
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                            ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                             ),
                           const SizedBox(height: 6),
                           Text(
