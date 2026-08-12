@@ -42,7 +42,6 @@ class ApiConfig {
         },
         onError: (error, handler) async {
           final statusCode = error.response?.statusCode;
-
           if (statusCode == 401 &&
               !_handlingUnauthorized && 
               !_isRefreshTokenRequest(error.requestOptions)) {

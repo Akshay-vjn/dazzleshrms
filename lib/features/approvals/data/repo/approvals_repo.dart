@@ -8,7 +8,6 @@ import '../models/leave_approval_clash_model.dart';
 
 class LeaveApprovalRepository {
   final Dio _dio = ApiConfig.dio;
-
   Future<AppliedLeaveData> fetchAppliedLeaves({
     required int page,
     required int limit,

@@ -310,16 +310,36 @@ class _LeaveManagementScreenState extends ConsumerState<LeaveManagementScreen>
             gradientEnd: AppTheme.gridGradient1End,
             iconColor: AppTheme.gridIconColor,
           ),
-        if (permissions.contains(Permissions.viewApplyLeave) ||
-            permissions.contains(Permissions.viewUpcomingLeaves) ||
-            permissions.contains(Permissions.viewPermission))
+        if (permissions.contains(Permissions.viewApplyLeave))
           DashboardGridItem(
-            icon: Icons.event_available_rounded,
-            label: "Leaves",
-            onTap: () => context.pushNamed('leaves'),
+            icon: Icons.calendar_month_rounded,
+            label: "Apply Leave",
+            onTap: () => context.pushNamed('apply_leave'),
             animation: _controller,
             intervalStart: 0.2,
-            gradientStart: AppTheme.gridGradient3Start,
+            gradientStart: AppTheme.gridGradient2Start,
+            gradientEnd: AppTheme.gridGradient2End,
+            iconColor: AppTheme.gridIconColor,
+          ),
+        if (permissions.contains(Permissions.viewUpcomingLeaves))
+          DashboardGridItem(
+            icon: Icons.upcoming,
+            label: "Upcoming Leaves",
+            onTap: () => context.pushNamed('upcoming_leaves'),
+            animation: _controller,
+            intervalStart: 0.25,
+            gradientStart: AppTheme.gridGradient2Start,
+            gradientEnd: AppTheme.gridGradient3End,
+            iconColor: AppTheme.gridIconColor,
+          ),
+        if (permissions.contains(Permissions.viewPermission))
+          DashboardGridItem(
+            icon: Icons.access_time_rounded,
+            label: "Permissions",
+            onTap: () => context.pushNamed('permissions'),
+            animation: _controller,
+            intervalStart: 0.3,
+            gradientStart: AppTheme.gridGradient1Start,
             gradientEnd: AppTheme.gridGradient3End,
             iconColor: AppTheme.gridIconColor,
           ),
