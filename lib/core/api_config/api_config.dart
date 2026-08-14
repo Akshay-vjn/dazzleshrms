@@ -7,8 +7,8 @@ import '../../features/auth/data/models/refresh_token_model.dart';
 import '../api_constants/api_constants.dart';
 
 class ApiConfig {
-  // static const String _baseUrl = "http://192.168.2.189:7907/api";
-  static const String _baseUrl = "https://testhrms.dazzles.in/api/api/";
+  static const String _baseUrl = "http://192.168.2.189:7907/api";
+  // static const String _baseUrl = "https://testhrms.dazzles.in/api/api/";
   //  static const String _baseUrl = "https://hrms.dazzles.in/api/api/";
 
 

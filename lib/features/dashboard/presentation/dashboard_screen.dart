@@ -229,6 +229,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.dGrid1,
           iconColor: AppTheme.gridIconColor,
         ),
+        DashboardGridItem(
+          icon: Icons.bar_chart_rounded,
+          label: "Break Reports",
+          onTap: () => context.pushNamed('break_reports'),
+          animation: _controller,
+          intervalStart: 0.35,
+          gradientStart: AppTheme.gridGradient1Start,
+          gradientEnd: AppTheme.gridGradient1End,
+          iconColor: AppTheme.gridIconColor,
+        ),
       ],
     );
   }

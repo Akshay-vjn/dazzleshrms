@@ -1,6 +1,6 @@
 class ApiConstants {
-  // static const String mediaBaseUrl = "http://192.168.2.189:7907/api";
-  static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
+  static const String mediaBaseUrl = "http://192.168.2.189:7907/api";
+  // static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
   // static const String mediaBaseUrl = "https://hrms.dazzles.in";
 
   static const String sendOtp = "/auth/send-otp";
@@ -64,4 +64,5 @@ class ApiConstants {
   static const String generateBreakQr = '/break/generate';
   static const String breakQrStatus = '/break/status';
   static const String breakHistory = '/break/history';
+  static const String breakReport = '/break/breakreport';
 }
