@@ -236,7 +236,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           animation: _controller,
           intervalStart: 0.35,
           gradientStart: AppTheme.gridGradient1Start,
-          gradientEnd: AppTheme.gridGradient1End,
+          gradientEnd: AppTheme.gridGradient3End,
           iconColor: AppTheme.gridIconColor,
         ),
       ],

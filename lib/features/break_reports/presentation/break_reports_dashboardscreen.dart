@@ -1,3 +1,4 @@
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,13 +58,13 @@ class _BreakReportsDashboardScreenState
     _items.clear();
     _currentPage = 1;
     ref.read(breakReportProvider.notifier).loadBreakReports(
-          page: _currentPage,
-          limit: _limit,
-          date: _formattedDate,
-          storeId: _selectedStoreId,
-          designationId: _selectedDesignationId,
-          employeeId: _selectedEmployeeId,
-        );
+      page: _currentPage,
+      limit: _limit,
+      date: _formattedDate,
+      storeId: _selectedStoreId,
+      designationId: _selectedDesignationId,
+      employeeId: _selectedEmployeeId,
+    );
   }
 
   void _onFilterChanged() {
@@ -85,7 +86,7 @@ class _BreakReportsDashboardScreenState
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 120 &&
+        _scrollController.position.maxScrollExtent - 120 &&
         !_isLoadingMore) {
       final state = ref.read(breakReportProvider);
       state.whenOrNull(
@@ -104,13 +105,13 @@ class _BreakReportsDashboardScreenState
     setState(() => _isLoadingMore = true);
     _currentPage++;
     await ref.read(breakReportProvider.notifier).loadBreakReports(
-          page: _currentPage,
-          limit: _limit,
-          date: _formattedDate,
-          storeId: _selectedStoreId,
-          designationId: _selectedDesignationId,
-          employeeId: _selectedEmployeeId,
-        );
+      page: _currentPage,
+      limit: _limit,
+      date: _formattedDate,
+      storeId: _selectedStoreId,
+      designationId: _selectedDesignationId,
+      employeeId: _selectedEmployeeId,
+    );
     if (mounted) setState(() => _isLoadingMore = false);
   }
 
@@ -159,13 +160,7 @@ class _BreakReportsDashboardScreenState
   }
 
   Color _rowColor(BreakReportItem item, bool isDark) {
-    if (!item.hasDurationColorRule) {
-      return isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
-    }
-    if (item.isOverLimit) {
-      return AppTheme.statusError.withValues(alpha: isDark ? 0.22 : 0.12);
-    }
-    return AppTheme.statusSuccess.withValues(alpha: isDark ? 0.22 : 0.12);
+    return Colors.transparent;
   }
 
   Color _minutesColor(BreakReportItem item) {
@@ -324,9 +319,9 @@ class _BreakReportsDashboardScreenState
                   Text(
                     'Filters',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ],
               ),
@@ -337,7 +332,7 @@ class _BreakReportsDashboardScreenState
                   label: const Text('Clear All'),
                   style: TextButton.styleFrom(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -354,14 +349,14 @@ class _BreakReportsDashboardScreenState
                   onTap: _showStorePicker,
                   onClear: _selectedStoreId != null
                       ? () {
-                          setState(() {
-                            _selectedStoreId = null;
-                            _selectedStoreName = null;
-                            _selectedEmployeeId = null;
-                            _selectedEmployeeName = null;
-                          });
-                          _onFilterChanged();
-                        }
+                    setState(() {
+                      _selectedStoreId = null;
+                      _selectedStoreName = null;
+                      _selectedEmployeeId = null;
+                      _selectedEmployeeName = null;
+                    });
+                    _onFilterChanged();
+                  }
                       : null,
                 ),
               ),
@@ -373,14 +368,14 @@ class _BreakReportsDashboardScreenState
                   onTap: _showDesignationPicker,
                   onClear: _selectedDesignationId != null
                       ? () {
-                          setState(() {
-                            _selectedDesignationId = null;
-                            _selectedDesignationName = null;
-                            _selectedEmployeeId = null;
-                            _selectedEmployeeName = null;
-                          });
-                          _onFilterChanged();
-                        }
+                    setState(() {
+                      _selectedDesignationId = null;
+                      _selectedDesignationName = null;
+                      _selectedEmployeeId = null;
+                      _selectedEmployeeName = null;
+                    });
+                    _onFilterChanged();
+                  }
                       : null,
                 ),
               ),
@@ -477,41 +472,19 @@ class _BreakReportsDashboardScreenState
                         horizontal: 16, vertical: 60),
                     child: imageUrl.isNotEmpty
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: InteractiveViewer(
-                              minScale: 0.8,
-                              maxScale: 4.0,
-                              child: CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                fit: BoxFit.contain,
-                                placeholder: (_, __) => const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                errorWidget: (_, __, ___) => Container(
-                                  width: 200,
-                                  height: 200,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.PrimaryColor.withValues(
-                                        alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      letter,
-                                      style: const TextStyle(
-                                        fontSize: 72,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                      borderRadius: BorderRadius.circular(16),
+                      child: InteractiveViewer(
+                        minScale: 0.8,
+                        maxScale: 4.0,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.contain,
+                          placeholder: (_, __) => const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
                             ),
-                          )
-                        : Container(
+                          ),
+                          errorWidget: (_, __, ___) => Container(
                             width: 200,
                             height: 200,
                             decoration: BoxDecoration(
@@ -530,6 +503,28 @@ class _BreakReportsDashboardScreenState
                               ),
                             ),
                           ),
+                        ),
+                      ),
+                    )
+                        : Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: AppTheme.PrimaryColor.withValues(
+                            alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          letter,
+                          style: const TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -564,45 +559,45 @@ class _BreakReportsDashboardScreenState
 
     final avatarWidget = hasImage
         ? CircleAvatar(
-            radius: 25,
-            backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
-            child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Text(
-                  letter,
-                  style: const TextStyle(
-                    color: AppTheme.PrimaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Text(
-                  letter,
-                  style: const TextStyle(
-                    color: AppTheme.PrimaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
+      radius: 25,
+      backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+      child: ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Text(
+            letter,
+            style: const TextStyle(
+              color: AppTheme.PrimaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
             ),
-          )
+          ),
+          errorWidget: (_, __, ___) => Text(
+            letter,
+            style: const TextStyle(
+              color: AppTheme.PrimaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+    )
         : CircleAvatar(
-            radius: 25,
-            backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
-            child: Text(
-              letter,
-              style: const TextStyle(
-                color: AppTheme.PrimaryColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          );
+      radius: 25,
+      backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+      child: Text(
+        letter,
+        style: const TextStyle(
+          color: AppTheme.PrimaryColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
 
     return GestureDetector(
       onTap: () => _showImagePopup(item),
@@ -619,9 +614,10 @@ class _BreakReportsDashboardScreenState
         border: Border.all(
           color: item.hasDurationColorRule
               ? (item.isOverLimit
-                  ? AppTheme.statusError.withValues(alpha: 0.35)
-                  : AppTheme.statusSuccess.withValues(alpha: 0.35))
-              : AppTheme.PrimaryColor.withValues(alpha: 0.1),
+              ? AppTheme.statusError
+              : AppTheme.statusSuccess)
+              : (isDark ? Colors.white12 : AppTheme.PrimaryColor.withValues(alpha: 0.12)),
+          width: item.hasDurationColorRule ? 1.0 : 0.5,
         ),
       ),
       child: Row(
@@ -713,7 +709,7 @@ class _BreakReportsDashboardScreenState
                 if (data != null) {
                   for (final item in data.records) {
                     if (!_items.any(
-                        (e) => e.employeeBreakId == item.employeeBreakId)) {
+                            (e) => e.employeeBreakId == item.employeeBreakId)) {
                       _items.add(item);
                     }
                   }
@@ -812,23 +808,23 @@ class _FilterChip extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.6),
-                          fontSize: 11,
-                        ),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.6),
+                      fontSize: 11,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     selectedValue ?? 'All',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimaryContainer
-                              : Theme.of(context).colorScheme.onSurface,
-                        ),
+                      fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -904,7 +900,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
       } else {
         _filteredItems = widget.items
             .where((item) =>
-                widget.getItemName(item).toLowerCase().contains(query))
+            widget.getItemName(item).toLowerCase().contains(query))
             .toList();
       }
     });
@@ -926,7 +922,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
             height: 4,
             decoration: BoxDecoration(
               color:
-                  Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+              Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -938,8 +934,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                   child: Text(
                     'Select ${widget.title}',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -963,7 +959,7 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                   borderSide: BorderSide.none,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -985,54 +981,55 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
           Expanded(
             child: _filteredItems.isEmpty
                 ? Center(
-                    child: Text(
-                      'No results found',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
-                    ),
-                  )
+              child: Text(
+                'No results found',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.6),
+                ),
+              ),
+            )
                 : ListView.builder(
-                    itemCount: _filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _filteredItems[index];
-                      final itemId = widget.getItemId(item);
-                      final itemName = widget.getItemName(item);
-                      final isSelected = itemId == widget.selectedId;
+              itemCount: _filteredItems.length,
+              itemBuilder: (context, index) {
+                final item = _filteredItems[index];
+                final itemId = widget.getItemId(item);
+                final itemName = widget.getItemName(item);
+                final isSelected = itemId == widget.selectedId;
 
-                      return ListTile(
-                        leading: Radio<int>(
-                          value: itemId,
-                          groupValue: widget.selectedId,
-                          onChanged: (_) {
-                            Navigator.pop(context, {
-                              'id': itemId,
-                              'name': itemName,
-                            });
-                          },
-                        ),
-                        title: Text(
-                          itemName,
-                          style: TextStyle(
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(context, {
-                            'id': itemId,
-                            'name': itemName,
-                          });
-                        },
-                      );
+                return ListTile(
+                  leading: Radio<int>(
+                    value: itemId,
+                    groupValue: widget.selectedId,
+                    onChanged: (_) {
+                      Navigator.pop(context, {
+                        'id': itemId,
+                        'name': itemName,
+                      });
                     },
                   ),
+                  title: Text(
+                    itemName,
+                    style: TextStyle(
+                      fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context, {
+                      'id': itemId,
+                      'name': itemName,
+                    });
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 }
+
