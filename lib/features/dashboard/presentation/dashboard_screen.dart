@@ -207,17 +207,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
-        if (permissions.contains(Permissions.viewAnnouncements))
-          DashboardGridItem(
-          icon: Icons.campaign_rounded,
-          label: "Announcements",
-          onTap: () => context.pushNamed('announcement'),
-          animation: _controller,
-          intervalStart: 0.2,
-          gradientStart: AppTheme.dTeal,
-          gradientEnd: AppTheme.dGreen,
-          iconColor: AppTheme.gridIconColor,
-        ),
         if (permissions.contains(Permissions.viewEmployees))
         DashboardGridItem(
           icon: Icons.people,
@@ -229,6 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.dGrid1,
           iconColor: AppTheme.gridIconColor,
         ),
+        if (permissions.contains(Permissions.viewBreakReport))
         DashboardGridItem(
           icon: Icons.bar_chart_rounded,
           label: "Break Reports",

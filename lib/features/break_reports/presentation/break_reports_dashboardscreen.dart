@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 
 import '../../../core/api_constants/api_constants.dart';
 import '../../../core/app_theme/app_theme.dart';
+import '../../../core/storage/session_storage.dart';
 import '../../announcements/data/models/employee_model.dart';
+import '../../dashboard/data/providers/dashboard_provider.dart';
 import '../../announcements/data/models/store_model.dart';
 import '../../announcements/data/providers/announcement_provider.dart';
 import '../../approvals/data/models/designation_model.dart';
@@ -38,12 +40,26 @@ class _BreakReportsDashboardScreenState
   String? _selectedStoreName;
   String? _selectedDesignationName;
   String? _selectedEmployeeName;
+  String _sessionRole = '';
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _sessionRole = (await SessionStorage.getRole()) ?? '';
+      if (mounted) setState(() {});
+      _loadData();
+    });
+  }
+
+  bool _showStoreDesignationFilters(String? dashboardRole) {
+    final role = ((dashboardRole != null && dashboardRole.isNotEmpty)
+            ? dashboardRole
+            : _sessionRole)
+        .toLowerCase()
+        .trim();
+    return role == 'master admin' || role == 'hr';
   }
 
   @override
@@ -672,6 +688,9 @@ class _BreakReportsDashboardScreenState
     final breakReportState = ref.watch(breakReportProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final dashboardRole = ref.watch(dashboardProvider).valueOrNull?.role;
+    final showStoreDesignationFilters =
+        _showStoreDesignationFilters(dashboardRole);
 
     return Scaffold(
       appBar: AppBar(
@@ -681,7 +700,7 @@ class _BreakReportsDashboardScreenState
       body: Column(
         children: [
           _buildDateFilter(),
-          _buildFilters(),
+          if (showStoreDesignationFilters) _buildFilters(),
           Expanded(
             child: breakReportState.when(
               loading: () {

@@ -16,6 +16,7 @@ class Permissions {
   static const viewPermissionScanner = 'view.permissionscanner';
   static const viewEarlyLate = 'view.earlylate';
   static const viewAllTeamApproval = 'view.allteamapproval';
+  static const viewBreakReport = 'view.breakreport';
 
 
 

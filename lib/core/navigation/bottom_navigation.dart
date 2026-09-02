@@ -1,9 +1,12 @@
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
-import '../../features/notifications/presentation/notification_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/announcements/presentation/announcement_screen.dart';
 import '../../features/announcements/presentation/employee_announcement_screen.dart';
+import '../permissions/permission.dart';
+import '../permissions/permission_provider.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -22,7 +25,7 @@ class _MainNavigationState extends State<MainNavigation>
   final _screens = const [
     DashboardScreen(),
     // NotificationScreen(),
-    EmployeeAnnouncementScreen(),
+    _AnnouncementNavScreen(),
     ProfileScreen()
   ];
 
@@ -142,6 +145,19 @@ class _MainNavigationState extends State<MainNavigation>
         ),
       ),
     );
+  }
+}
+
+class _AnnouncementNavScreen extends ConsumerWidget {
+  const _AnnouncementNavScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(permissionProvider);
+    if (permissions.contains(Permissions.viewAnnouncements)) {
+      return const AnnouncementScreen();
+    }
+    return const EmployeeAnnouncementScreen();
   }
 }
 
