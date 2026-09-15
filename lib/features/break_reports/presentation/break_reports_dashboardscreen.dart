@@ -1,4 +1,3 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,8 +54,8 @@ class _BreakReportsDashboardScreenState
 
   bool _showStoreDesignationFilters(String? dashboardRole) {
     final role = ((dashboardRole != null && dashboardRole.isNotEmpty)
-            ? dashboardRole
-            : _sessionRole)
+        ? dashboardRole
+        : _sessionRole)
         .toLowerCase()
         .trim();
     return role == 'master admin' || role == 'hr';
@@ -163,7 +162,8 @@ class _BreakReportsDashboardScreenState
 
   String _getFullImageUrl(String profileImage) {
     if (profileImage.isEmpty) return '';
-    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+    if (profileImage.startsWith('http://') ||
+        profileImage.startsWith('https://')) {
       return profileImage;
     }
     final base = ApiConstants.mediaBaseUrl.endsWith('/')
@@ -173,10 +173,6 @@ class _BreakReportsDashboardScreenState
         ? profileImage.substring(1)
         : profileImage;
     return '$base$path';
-  }
-
-  Color _rowColor(BreakReportItem item, bool isDark) {
-    return Colors.transparent;
   }
 
   Color _minutesColor(BreakReportItem item) {
@@ -248,7 +244,8 @@ class _BreakReportsDashboardScreenState
 
   void _showEmployeePicker() async {
     final key = '${_selectedStoreId ?? ''}|${_selectedDesignationId ?? ''}';
-    final employeesAsync = ref.read(employeesByStoreAndDesignationProvider(key));
+    final employeesAsync =
+    ref.read(employeesByStoreAndDesignationProvider(key));
     await employeesAsync.when(
       data: (employees) async {
         final result = await showModalBottomSheet<Map<String, dynamic>>(
@@ -276,25 +273,45 @@ class _BreakReportsDashboardScreenState
     );
   }
 
-  Widget _buildDateFilter() {
-    final isToday = DateFormat('yyyy-MM-dd').format(DateTime.now()) ==
-        _formattedDate;
+
+
+  Widget _buildDateFilter(bool isDark) {
+    final isToday =
+        DateFormat('yyyy-MM-dd').format(DateTime.now()) == _formattedDate;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: _pickDate,
-          icon: const Icon(Icons.calendar_today_rounded, size: 18),
-          label: Text(
-            isToday
-                ? 'Today'
-                : DateFormat('dd MMM yyyy').format(_selectedDate),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: _pickDate,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.PrimaryColor.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_rounded,
+                      size: 15, color: AppTheme.PrimaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    isToday
+                        ? 'Today'
+                        : DateFormat('dd MMM yyyy').format(_selectedDate),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      color: AppTheme.PrimaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          style: TextButton.styleFrom(
-            foregroundColor: AppTheme.PrimaryColor,
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -304,162 +321,56 @@ class _BreakReportsDashboardScreenState
         _selectedDesignationId != null ||
         _selectedEmployeeId != null;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.filter_list_rounded,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Filters',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-              if (hasActiveFilters)
-                TextButton.icon(
-                  onPressed: _clearFilters,
-                  icon: const Icon(Icons.clear_rounded, size: 16),
-                  label: const Text('Clear All'),
-                  style: TextButton.styleFrom(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _FilterChip(
-                  label: 'Store',
-                  selectedValue: _selectedStoreName,
-                  onTap: _showStorePicker,
-                  onClear: _selectedStoreId != null
-                      ? () {
-                    setState(() {
-                      _selectedStoreId = null;
-                      _selectedStoreName = null;
-                      _selectedEmployeeId = null;
-                      _selectedEmployeeName = null;
-                    });
-                    _onFilterChanged();
-                  }
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _FilterChip(
-                  label: 'Designation',
-                  selectedValue: _selectedDesignationName,
-                  onTap: _showDesignationPicker,
-                  onClear: _selectedDesignationId != null
-                      ? () {
-                    setState(() {
-                      _selectedDesignationId = null;
-                      _selectedDesignationName = null;
-                      _selectedEmployeeId = null;
-                      _selectedEmployeeName = null;
-                    });
-                    _onFilterChanged();
-                  }
-                      : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // _FilterChip(
-          //   label: 'Employee',
-          //   selectedValue: _selectedEmployeeName,
-          //   onTap: _showEmployeePicker,
-          //   onClear: _selectedEmployeeId != null
-          //       ? () {
-          //           setState(() {
-          //             _selectedEmployeeId = null;
-          //             _selectedEmployeeName = null;
-          //           });
-          //           _onFilterChanged();
-          //         }
-          //       : null,
-          // ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableHeader(bool isDark) {
-    final headerColor = isDark ? Colors.white70 : AppTheme.textMutedLight;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.PrimaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: [
           Expanded(
-            flex: 3,
-            child: Text(
-              'Employee',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: headerColor,
-              ),
+            child: _FilterChip(
+              label: 'Store',
+              selectedValue: _selectedStoreName,
+              onTap: _showStorePicker,
+              onClear: _selectedStoreId != null
+                  ? () {
+                setState(() {
+                  _selectedStoreId = null;
+                  _selectedStoreName = null;
+                  _selectedEmployeeId = null;
+                  _selectedEmployeeName = null;
+                });
+                _onFilterChanged();
+              }
+                  : null,
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
-            flex: 2,
-            child: Text(
-              'Break Type',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: headerColor,
-              ),
+            child: _FilterChip(
+              label: 'Designation',
+              selectedValue: _selectedDesignationName,
+              onTap: _showDesignationPicker,
+              onClear: _selectedDesignationId != null
+                  ? () {
+                setState(() {
+                  _selectedDesignationId = null;
+                  _selectedDesignationName = null;
+                  _selectedEmployeeId = null;
+                  _selectedEmployeeName = null;
+                });
+                _onFilterChanged();
+              }
+                  : null,
             ),
           ),
-          Expanded(
-            child: Text(
-              'Min',
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: headerColor,
-              ),
+          if (hasActiveFilters) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: _clearFilters,
+              icon: const Icon(Icons.clear_rounded, size: 18),
+              tooltip: 'Clear filters',
+              visualDensity: VisualDensity.compact,
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -467,9 +378,8 @@ class _BreakReportsDashboardScreenState
 
   void _showImagePopup(BreakReportItem item) {
     final imageUrl = _getFullImageUrl(item.profileImage);
-    final letter = item.employeeName.isNotEmpty
-        ? item.employeeName[0].toUpperCase()
-        : '?';
+    final letter =
+    item.employeeName.isNotEmpty ? item.employeeName[0].toUpperCase() : '?';
 
     showDialog(
       context: context,
@@ -484,8 +394,8 @@ class _BreakReportsDashboardScreenState
                 behavior: HitTestBehavior.opaque,
                 child: Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 60),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 60),
                     child: imageUrl.isNotEmpty
                         ? ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -504,8 +414,8 @@ class _BreakReportsDashboardScreenState
                             width: 200,
                             height: 200,
                             decoration: BoxDecoration(
-                              color: AppTheme.PrimaryColor.withValues(
-                                  alpha: 0.2),
+                              color:
+                              AppTheme.PrimaryColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -526,8 +436,7 @@ class _BreakReportsDashboardScreenState
                       width: 200,
                       height: 200,
                       decoration: BoxDecoration(
-                        color: AppTheme.PrimaryColor.withValues(
-                            alpha: 0.2),
+                        color: AppTheme.PrimaryColor.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -569,41 +478,49 @@ class _BreakReportsDashboardScreenState
   Widget _buildAvatar(BreakReportItem item) {
     final imageUrl = _getFullImageUrl(item.profileImage);
     final hasImage = imageUrl.isNotEmpty;
-    final letter = item.employeeName.isNotEmpty
-        ? item.employeeName[0].toUpperCase()
-        : '?';
+    final letter =
+    item.employeeName.isNotEmpty ? item.employeeName[0].toUpperCase() : '?';
 
     final avatarWidget = hasImage
-        ? CircleAvatar(
-      radius: 25,
-      backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: 50,
-          height: 50,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => Text(
-            letter,
-            style: const TextStyle(
-              color: AppTheme.PrimaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+        ? Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AppTheme.PrimaryColor.withValues(alpha: 0.15),
+          width: 1.5,
+        ),
+      ),
+      child: CircleAvatar(
+        radius: 24,
+        backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 48,
+            height: 48,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Text(
+              letter,
+              style: const TextStyle(
+                color: AppTheme.PrimaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
-          ),
-          errorWidget: (_, __, ___) => Text(
-            letter,
-            style: const TextStyle(
-              color: AppTheme.PrimaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+            errorWidget: (_, __, ___) => Text(
+              letter,
+              style: const TextStyle(
+                color: AppTheme.PrimaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
         ),
       ),
     )
         : CircleAvatar(
-      radius: 25,
+      radius: 24,
       backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
       child: Text(
         letter,
@@ -622,58 +539,52 @@ class _BreakReportsDashboardScreenState
   }
 
   Widget _buildRow(BreakReportItem item, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: _rowColor(item, isDark),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: item.hasDurationColorRule
-              ? (item.isOverLimit
-              ? AppTheme.statusError
-              : AppTheme.statusSuccess)
-              : (isDark ? Colors.white12 : AppTheme.PrimaryColor.withValues(alpha: 0.12)),
-          width: item.hasDurationColorRule ? 1.0 : 0.5,
-        ),
-      ),
+    final accent = item.hasDurationColorRule
+        ? (item.isOverLimit ? AppTheme.statusError : AppTheme.statusSuccess)
+        : (isDark ? Colors.white24 : AppTheme.textMutedLight);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
+          _buildAvatar(item),
+          const SizedBox(width: 12),
           Expanded(
-            flex: 3,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAvatar(item),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    item.employeeName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  item.employeeName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.displayBreakName,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : AppTheme.textMutedLight,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item.breakType,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white70 : AppTheme.textBodyLight,
-              ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-          Expanded(
             child: Text(
-              '${item.totalMinutes}',
-              textAlign: TextAlign.end,
+              item.displayDuration,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
                 color: _minutesColor(item),
               ),
             ),
@@ -690,17 +601,19 @@ class _BreakReportsDashboardScreenState
     final isDark = theme.brightness == Brightness.dark;
     final dashboardRole = ref.watch(dashboardProvider).valueOrNull?.role;
     final showStoreDesignationFilters =
-        _showStoreDesignationFilters(dashboardRole);
+    _showStoreDesignationFilters(dashboardRole);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Break Reports'),
         centerTitle: true,
+        elevation: 0,
       ),
       body: Column(
         children: [
-          _buildDateFilter(),
+          _buildDateFilter(isDark),
           if (showStoreDesignationFilters) _buildFilters(),
+          const SizedBox(height: 4),
           Expanded(
             child: breakReportState.when(
               loading: () {
@@ -727,11 +640,12 @@ class _BreakReportsDashboardScreenState
               data: (data) {
                 if (data != null) {
                   for (final item in data.records) {
-                    if (!_items.any(
-                            (e) => e.employeeBreakId == item.employeeBreakId)) {
+                    if (!_items
+                        .any((e) => e.employeeBreakId == item.employeeBreakId)) {
                       _items.add(item);
                     }
                   }
+                  assignBreakIndices(_items);
                 }
 
                 if (_items.isEmpty) {
@@ -740,9 +654,16 @@ class _BreakReportsDashboardScreenState
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.4,
-                        child: const Center(
-                          child: Text('No break records found'),
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: Center(
+                          child: Text(
+                            'No break records found',
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white54
+                                  : AppTheme.textMutedLight,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -766,18 +687,21 @@ class _BreakReportsDashboardScreenState
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        itemCount: _items.length + 1 + (loading ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemCount: _items.length + (loading ? 1 : 0),
+        separatorBuilder: (_, index) => index == _items.length - 1
+            ? const SizedBox.shrink()
+            : Divider(
+          height: 1,
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
         itemBuilder: (context, index) {
-          if (index == 0) return _buildTableHeader(isDark);
-          final listIndex = index - 1;
-          if (listIndex == _items.length) {
+          if (index == _items.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          return _buildRow(_items[listIndex], isDark);
+          return _buildRow(_items[index], isDark);
         },
       ),
     );
@@ -803,69 +727,51 @@ class _FilterChip extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+              ? AppTheme.PrimaryColor.withValues(alpha: 0.06)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary
+                ? AppTheme.PrimaryColor.withValues(alpha: 0.5)
                 : Theme.of(context).dividerColor,
-            width: isSelected ? 1.5 : 1,
+            width: 1,
           ),
         ),
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.6),
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    selectedValue ?? 'All',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.onPrimaryContainer
-                          : Theme.of(context).colorScheme.onSurface,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                selectedValue ?? label,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? AppTheme.PrimaryColor
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             if (isSelected && onClear != null)
               GestureDetector(
                 onTap: onClear,
-                child: Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
+                child: Icon(Icons.cancel_rounded,
+                    size: 18, color: AppTheme.PrimaryColor),
               )
             else
               Icon(
-                Icons.arrow_drop_down_rounded,
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
                 color: Theme.of(context)
                     .colorScheme
                     .onSurface
-                    .withValues(alpha: 0.6),
+                    .withValues(alpha: 0.4),
               ),
           ],
         ),
@@ -918,8 +824,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
         _filteredItems = widget.items;
       } else {
         _filteredItems = widget.items
-            .where((item) =>
-            widget.getItemName(item).toLowerCase().contains(query))
+            .where(
+                (item) => widget.getItemName(item).toLowerCase().contains(query))
             .toList();
       }
     });
@@ -1051,4 +957,3 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
     );
   }
 }
-

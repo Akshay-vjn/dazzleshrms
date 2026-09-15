@@ -37,13 +37,21 @@ class BreakReportPaginatedData {
   });
 
   factory BreakReportPaginatedData.fromJson(Map<String, dynamic> json) {
+    final rawList = json['data'];
+    final List<BreakReportItem> recordsList = [];
+    if (rawList is List) {
+      for (final e in rawList) {
+        if (e is Map) {
+          recordsList.add(BreakReportItem.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+
     return BreakReportPaginatedData(
-      totalItems: json['totalItems'] as int? ?? 0,
-      totalPages: json['totalPages'] as int? ?? 0,
-      currentPage: json['currentPage'] as int? ?? 1,
-      records: (json['data'] as List<dynamic>? ?? [])
-          .map((e) => BreakReportItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      totalItems: int.tryParse(json['totalItems']?.toString() ?? '') ?? 0,
+      totalPages: int.tryParse(json['totalPages']?.toString() ?? '') ?? 0,
+      currentPage: int.tryParse(json['currentPage']?.toString() ?? '') ?? 1,
+      records: recordsList,
     );
   }
 }
@@ -59,7 +67,10 @@ class BreakReportItem {
   final String breakOutTime;
   final String breakInTime;
   final int totalMinutes;
+  final String durationText;
   final String breakStatus;
+
+  int breakIndex;
 
   BreakReportItem({
     required this.employeeBreakId,
@@ -72,29 +83,96 @@ class BreakReportItem {
     required this.breakOutTime,
     required this.breakInTime,
     required this.totalMinutes,
+    this.durationText = '',
     required this.breakStatus,
+    this.breakIndex = 0,
   });
 
   factory BreakReportItem.fromJson(Map<String, dynamic> json) {
+    final rawBreakType = json['breakType']?.toString() ?? '';
+    final explicitIndex = int.tryParse(json['breakIndex']?.toString() ?? '');
+    int index = explicitIndex ?? 0;
+    if (index == 0 && rawBreakType.isNotEmpty) {
+      final match = RegExp(r'\d+').firstMatch(rawBreakType);
+      if (match != null) {
+        index = int.tryParse(match.group(0)!) ?? 0;
+      }
+    }
+
+    final rawMinutes = json['totalMinutes'];
+    final parsedMinutes = _parseMinutes(rawMinutes);
+    final text = rawMinutes != null && rawMinutes is String && rawMinutes.trim().isNotEmpty
+        ? rawMinutes.trim()
+        : (parsedMinutes > 0 ? '$parsedMinutes min' : '0 min');
+
     return BreakReportItem(
-      employeeBreakId: json['employeeBreakId'] as int? ?? 0,
-      employeeId: json['employeeId'] as int? ?? 0,
-      employeeName: json['employeeName'] as String? ?? '',
-      employeeCode: json['employeeCode'] as String? ?? '',
-      profileImage: json['profileImage'] as String? ?? '',
-      date: json['date'] as String? ?? '',
-      breakType: json['breakType'] as String? ?? '',
-      breakOutTime: json['breakOutTime'] as String? ?? '',
-      breakInTime: json['breakInTime'] as String? ?? '',
-      totalMinutes: json['totalMinutes'] as int? ?? 0,
-      breakStatus: json['breakStatus'] as String? ?? '',
+      employeeBreakId: int.tryParse(json['employeeBreakId']?.toString() ?? '') ?? 0,
+      employeeId: int.tryParse(json['employeeId']?.toString() ?? '') ?? 0,
+      employeeName: json['employeeName']?.toString() ?? '',
+      employeeCode: json['employeeCode']?.toString() ?? '',
+      profileImage: json['profileImage']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      breakType: rawBreakType,
+      breakOutTime: json['breakOutTime']?.toString() ?? '',
+      breakInTime: json['breakInTime']?.toString() ?? '',
+      totalMinutes: parsedMinutes,
+      durationText: text,
+      breakStatus: json['breakStatus']?.toString() ?? '',
+      breakIndex: index,
     );
   }
 
+  static int _parseMinutes(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toInt();
+    final str = value.toString().trim();
+    if (str.isEmpty) return 0;
+
+    final pureNumber = int.tryParse(str);
+    if (pureNumber != null) return pureNumber;
+
+    int hours = 0;
+    int minutes = 0;
+
+    final hrMatch =
+        RegExp(r'(\d+)\s*(?:hr|hour)s?', caseSensitive: false).firstMatch(str);
+    if (hrMatch != null) {
+      hours = int.tryParse(hrMatch.group(1)!) ?? 0;
+    }
+
+    final minMatch =
+        RegExp(r'(\d+)\s*(?:min|minute)s?', caseSensitive: false).firstMatch(str);
+    if (minMatch != null) {
+      minutes = int.tryParse(minMatch.group(1)!) ?? 0;
+    }
+
+    if (hrMatch == null && minMatch == null) {
+      final anyNum = RegExp(r'\d+').firstMatch(str);
+      if (anyNum != null) {
+        return int.tryParse(anyNum.group(0)!) ?? 0;
+      }
+    }
+
+    return (hours * 60) + minutes;
+  }
+
+  String get displayDuration =>
+      durationText.isNotEmpty ? durationText : '$totalMinutes min';
+
+  String get displayBreakName {
+    if (breakIndex > 0) return 'Break $breakIndex';
+    if (breakType.isNotEmpty) return breakType;
+    return 'Break';
+  }
+
+
   bool get isExceeded {
+    if (breakIndex >= 4) return true;
+    if (breakIndex == 1 || breakIndex == 3) return totalMinutes > 15;
+    if (breakIndex == 2) return totalMinutes > 30;
     final type = breakType.toUpperCase();
-    if (type == 'LUNCH') return totalMinutes > 30;
-    if (type == 'TEA' || type == 'EVNG' || type == 'EVENING') {
+    if (type.contains('LUNCH')) return totalMinutes > 30;
+    if (type.contains('TEA') || type.contains('EVNG') || type.contains('EVENING')) {
       return totalMinutes > 15;
     }
     return false;
@@ -103,7 +181,37 @@ class BreakReportItem {
   bool get isOverLimit => isExceeded;
 
   bool get hasDurationColorRule {
+    if (breakIndex > 0) return true;
     final type = breakType.toUpperCase();
-    return type == 'TEA' || type == 'EVNG' || type == 'EVENING' || type == 'LUNCH';
+    return type.contains('BREAK') ||
+        type.contains('LUNCH') ||
+        type.contains('TEA') ||
+        type.contains('EVNG') ||
+        type.contains('EVENING');
+  }
+}
+void assignBreakIndices(List<BreakReportItem> items) {
+  final groups = <String, List<BreakReportItem>>{};
+  for (final item in items) {
+    final key = '${item.employeeId}|${item.date}';
+    groups.putIfAbsent(key, () => []).add(item);
+  }
+
+  for (final group in groups.values) {
+    int maxAssignedIndex = 0;
+    for (final item in group) {
+      if (item.breakIndex > maxAssignedIndex) {
+        maxAssignedIndex = item.breakIndex;
+      }
+    }
+
+
+    final unassigned = group.where((e) => e.breakIndex <= 0).toList();
+    if (unassigned.isEmpty) continue;
+
+    unassigned.sort((a, b) => a.breakOutTime.compareTo(b.breakOutTime));
+    for (var i = 0; i < unassigned.length; i++) {
+      unassigned[i].breakIndex = maxAssignedIndex + i + 1;
+    }
   }
 }

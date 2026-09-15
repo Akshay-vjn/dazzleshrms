@@ -21,8 +21,8 @@ class BreakReportRepo {
       final queryParameters = <String, dynamic>{
         'page': page,
         'limit': limit,
-        'date': date,
-        if (storeId != null) 'storeId': storeId,
+        if (date.isNotEmpty) 'date': date,
+        if (storeId != null) 'storeFilter': storeId,
         if (designationId != null) 'designationId': designationId,
         if (employeeId != null) 'employeeId': employeeId,
       };

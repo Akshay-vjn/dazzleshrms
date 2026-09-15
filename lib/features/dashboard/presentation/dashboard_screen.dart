@@ -214,8 +214,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           onTap: () => context.pushNamed('employees'),
           animation: _controller,
           intervalStart: 0.3,
-          gradientStart: AppTheme.dGrid1,
-          gradientEnd: AppTheme.dGrid1,
+          gradientStart: AppTheme.dTeal,
+          gradientEnd: AppTheme.dGreen,
           iconColor: AppTheme.gridIconColor,
         ),
         if (permissions.contains(Permissions.viewBreakReport))
