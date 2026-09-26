@@ -6,6 +6,7 @@ import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/app_theme/theme_provider.dart';
 import 'package:dazzleshrms/core/storage/session_storage.dart';
 import 'package:dazzleshrms/core/permissions/permission_provider.dart';
+import 'package:dazzleshrms/features/profile/data/models/profile_response.dart';
 import 'package:dazzleshrms/features/profile/data/providers/profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   late List<Animation<double>> _cardFadeAnimations;
 
   bool _isUploadingImage = false;
+  bool _isSubmittingChangeRequest = false;
   String _lastAvatarImageUrl = '';
 
   Future<void> _evictAvatarUrl(String url) async {
@@ -40,8 +42,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       await CachedNetworkImageProvider(url).evict();
       PaintingBinding.instance.imageCache.evict(NetworkImage(url));
       PaintingBinding.instance.imageCache.clearLiveImages();
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   @override
@@ -68,27 +69,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+          ),
+        );
 
     _cardControllers = List.generate(
-        5,
-        (i) => AnimationController(
-            duration: const Duration(milliseconds: 500), vsync: this));
+      5,
+      (i) => AnimationController(
+        duration: const Duration(milliseconds: 500),
+        vsync: this,
+      ),
+    );
     _cardSlideAnimations = _cardControllers
-        .map((c) => Tween<Offset>(begin: const Offset(0.08, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map(
+          (c) => Tween<Offset>(
+            begin: const Offset(0.08, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)),
+        )
         .toList();
     _cardFadeAnimations = _cardControllers
-        .map((c) => Tween<double>(begin: 0.0, end: 1.0)
-            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map(
+          (c) => Tween<double>(
+            begin: 0.0,
+            end: 1.0,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)),
+        )
         .toList();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -113,15 +123,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   String _getFullImageUrl(String profileImage) {
-    if (profileImage.isEmpty) return '';
-    final url = '${ApiConstants.mediaBaseUrl}$profileImage';
-    return url;
+    return ApiConstants.resolveMediaUrl(profileImage);
   }
 
-  Widget _buildAvatar(String name, String profileImage) {
+  Widget _buildAvatar(ProfileData data) {
+    final name = data.name;
+    final profileImage = data.profileImage;
     final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final imageUrl = _getFullImageUrl(profileImage);
     final hasImage = imageUrl.isNotEmpty;
+    final needsChangeRequest =
+        data.hasProfileImage && !data.profileImageChangeAllowed;
 
     return GestureDetector(
       onTap: () => _showAvatarPopup(context, name, profileImage),
@@ -137,10 +149,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   : const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.dTeal,
-                        AppTheme.dGreen,
-                      ],
+                      colors: [AppTheme.dTeal, AppTheme.dGreen],
                     ),
               boxShadow: [
                 BoxShadow(
@@ -209,12 +218,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     ),
                   ),
           ),
-          // Edit icon overlay
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: () => _showImagePickerSheet(),
+              onTap: _onAvatarEditTap,
               child: Container(
                 width: 28,
                 height: 28,
@@ -230,8 +238,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.camera_alt_rounded,
+                child: Icon(
+                  needsChangeRequest
+                      ? Icons.lock_reset_rounded
+                      : Icons.camera_alt_rounded,
                   size: 14,
                   color: Colors.white,
                 ),
@@ -263,13 +273,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
+  void _onAvatarEditTap() {
+    final data = ref.read(profileProvider).valueOrNull;
+    if (data == null) return;
+    if (!data.hasProfileImage || data.profileImageChangeAllowed) {
+      _showImagePickerSheet();
+    } else {
+      _showChangeRequestSheet(
+        message:
+            'Profile image change is not allowed. Please request permission from HR/Admin.',
+      );
+    }
+  }
+
   void _showImagePickerSheet() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final currentProfileImage =
-        ref.read(profileProvider).valueOrNull?.profileImage ?? '';
-    final currentImageUrl = _getFullImageUrl(currentProfileImage);
-    final canRemove = currentProfileImage.isNotEmpty;
+    final data = ref.read(profileProvider).valueOrNull;
+    final sheetTitle = (data?.hasProfileImage ?? false)
+        ? 'Change Profile Photo'
+        : 'Add Profile Photo';
 
     showModalBottomSheet(
       context: context,
@@ -293,7 +316,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
               ),
               Text(
-                'Change Profile Photo',
+                sheetTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -345,32 +368,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   _pickAndUploadImage(ImageSource.gallery);
                 },
               ),
-              if (canRemove) ...[
-                const SizedBox(height: 6),
-                ListTile(
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppTheme.statusError.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: AppTheme.statusError,
-                    ),
-                  ),
-                  title: const Text('Remove Photo'),
-                  subtitle: Text(
-                    'Remove your current profile photo',
-                    style: TextStyle(color: theme.hintColor, fontSize: 12),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await _removeProfilePhoto(currentImageUrl);
-                  },
-                ),
-              ],
             ],
           ),
         ),
@@ -378,42 +375,159 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Future<void> _removeProfilePhoto(String currentImageUrl) async {
+  void _showChangeRequestSheet({String? message}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        var submitting = false;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: AppTheme.PrimaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lock_reset_rounded,
+                        color: AppTheme.PrimaryColor,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Request Photo Change',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      message ??
+                          'Profile image change is not allowed. Please request permission from HR/Admin.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: theme.hintColor,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: submitting
+                            ? null
+                            : () async {
+                                setSheetState(() => submitting = true);
+                                final success =
+                                    await _submitProfileImageChangeRequest();
+                                if (!sheetContext.mounted) return;
+                                if (success) {
+                                  Navigator.pop(sheetContext);
+                                } else {
+                                  setSheetState(() => submitting = false);
+                                }
+                              },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.PrimaryColor,
+                          disabledBackgroundColor:
+                              AppTheme.PrimaryColor.withOpacity(0.6),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: submitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Submit Request',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: submitting
+                          ? null
+                          : () => Navigator.pop(sheetContext),
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> _submitProfileImageChangeRequest() async {
+    if (_isSubmittingChangeRequest) return false;
     try {
-      setState(() => _isUploadingImage = true);
-
-      await _evictAvatarUrl(currentImageUrl);
-
-      await ref.read(profileProvider.notifier).removeProfileImage();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profile image removed successfully'),
-            backgroundColor: AppTheme.dGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+      setState(() => _isSubmittingChangeRequest = true);
+      final message = await ref
+          .read(profileProvider.notifier)
+          .requestProfileImageChange();
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppTheme.dGreen,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-      }
+        ),
+      );
+      return true;
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove image: $e'),
-            backgroundColor: AppTheme.statusError,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: AppTheme.statusError,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-      }
+        ),
+      );
+      return false;
     } finally {
       if (mounted) {
-        setState(() => _isUploadingImage = false);
+        setState(() => _isSubmittingChangeRequest = false);
       }
     }
   }
@@ -448,10 +562,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      final message = e.toString();
+      final needsPermission =
+          message.toLowerCase().contains('not allowed') ||
+          message.toLowerCase().contains('request permission');
+      if (needsPermission) {
+        _showChangeRequestSheet(message: message);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update image: $e'),
+            content: Text(message),
             backgroundColor: AppTheme.statusError,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -467,7 +588,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
   }
 
-  void _showAvatarPopup(BuildContext context, String name, String profileImage) {
+  void _showAvatarPopup(
+    BuildContext context,
+    String name,
+    String profileImage,
+  ) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
@@ -481,10 +606,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           );
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
         transitionDuration: const Duration(milliseconds: 250),
         reverseTransitionDuration: const Duration(milliseconds: 200),
@@ -506,10 +628,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         child: Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: Icon(
-              icon,
-              color: AppTheme.PrimaryColor,
-            ),
+            leading: Icon(icon, color: AppTheme.PrimaryColor),
             title: Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -578,10 +697,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     color: theme.textTheme.bodySmall?.color?.withOpacity(0.3),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    "No profile data",
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  Text("No profile data", style: theme.textTheme.titleMedium),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () =>
@@ -653,7 +769,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           height: 80,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.white.withValues(alpha: 0.1),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.1,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -665,7 +783,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   bottom: 10,
                                   child: TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0, end: 1),
-                                    duration: const Duration(milliseconds: 2500),
+                                    duration: const Duration(
+                                      milliseconds: 2500,
+                                    ),
                                     builder: (context, double value, child) {
                                       return Transform.translate(
                                         offset: Offset(
@@ -677,7 +797,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                           height: 50,
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
-                                            color: Colors.white.withValues(alpha: 0.08),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.08,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -702,7 +824,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                             ],
                                             colors: [
                                               Colors.transparent,
-                                              Colors.white.withValues(alpha: 0.1),
+                                              Colors.white.withValues(
+                                                alpha: 0.1,
+                                              ),
                                               Colors.transparent,
                                             ],
                                           ),
@@ -722,7 +846,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             margin: const EdgeInsets.fromLTRB(16, 100, 16, 0),
                             padding: const EdgeInsets.fromLTRB(16, 56, 16, 20),
                             decoration: BoxDecoration(
-                              color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                              color: isDark
+                                  ? AppTheme.surfaceDark
+                                  : AppTheme.surfaceLight,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: theme.dividerColor.withOpacity(0.1),
@@ -741,15 +867,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                   opacity: _fadeAnimation,
                                   child: Text(
                                     data.name.isNotEmpty ? data.name : "—",
-                                    style:
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : Colors.black,
-                                    ),
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
+                                if (data.hasProfileImage &&
+                                    !data.profileImageChangeAllowed)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                  ),
                                 ScaleTransition(
                                   scale: _scaleAnimation,
                                   child: Container(
@@ -759,18 +892,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppTheme.PrimaryColor.withOpacity(
-                                          0.1),
+                                        0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
-                                      data.role.isNotEmpty
-                                          ? data.role
-                                          : "N/A",
-                                      style:
-                                      theme.textTheme.bodyMedium?.copyWith(
-                                        color: AppTheme.PrimaryColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      data.role.isNotEmpty ? data.role : "N/A",
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: AppTheme.PrimaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -785,7 +917,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           child: Center(
                             child: ScaleTransition(
                               scale: _scaleAnimation,
-                              child: _buildAvatar(data.name, data.profileImage),
+                              child: _buildAvatar(data),
                             ),
                           ),
                         ),
@@ -848,8 +980,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       _buildInfoCard(
                         icon: Icons.calendar_today_outlined,
                         label: "Joining Date",
-                        value:
-                        data.joiningDate.isNotEmpty ? data.joiningDate : "—",
+                        value: data.joiningDate.isNotEmpty
+                            ? data.joiningDate
+                            : "—",
                         theme: theme,
                         index: 4,
                       ),
@@ -861,7 +994,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
                 //  LOGOUT
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Material(
                     color: AppTheme.statusError.withValues(alpha: 0.36),
                     borderRadius: BorderRadius.circular(16),
@@ -877,7 +1013,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                                color: isDark
+                                    ? AppTheme.surfaceDark
+                                    : AppTheme.surfaceLight,
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: Column(
@@ -891,8 +1029,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          AppTheme.statusError.withValues(alpha: 0.15),
-                                          AppTheme.statusError.withValues(alpha: 0.05),
+                                          AppTheme.statusError.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          AppTheme.statusError.withValues(
+                                            alpha: 0.05,
+                                          ),
                                         ],
                                       ),
                                       shape: BoxShape.circle,
@@ -923,19 +1065,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                     children: [
                                       Expanded(
                                         child: OutlinedButton(
-                                          onPressed: () => Navigator.pop(context, false),
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
                                           style: OutlinedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 14),
-                                            side: BorderSide(color: theme.dividerColor),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            side: BorderSide(
+                                              color: theme.dividerColor,
+                                            ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                           ),
                                           child: Text(
                                             "Cancel",
                                             style: TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              color: theme.textTheme.bodyMedium?.color,
+                                              color: theme
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color,
                                             ),
                                           ),
                                         ),
@@ -943,12 +1094,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: FilledButton(
-                                          onPressed: () => Navigator.pop(context, true),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
                                           style: FilledButton.styleFrom(
-                                            backgroundColor: AppTheme.statusError,
-                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            backgroundColor:
+                                                AppTheme.statusError,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                           ),
                                           child: const Text(
@@ -1020,14 +1176,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(
-                color: AppTheme.PrimaryColor,
-              ),
+              CircularProgressIndicator(color: AppTheme.PrimaryColor),
               const SizedBox(height: 16),
-              Text(
-                "Loading profile...",
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text("Loading profile...", style: theme.textTheme.bodyMedium),
             ],
           ),
         ),
@@ -1135,7 +1286,8 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
   }
 
   void _onVerticalDragEnd(DragEndDetails details) {
-    if (_dragOffset.abs() > 100 || details.velocity.pixelsPerSecond.dy.abs() > 500) {
+    if (_dragOffset.abs() > 100 ||
+        details.velocity.pixelsPerSecond.dy.abs() > 500) {
       _dismiss();
     } else {
       setState(() {
@@ -1165,7 +1317,9 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
       animation: _animationController,
       builder: (context, child) {
         return Scaffold(
-          backgroundColor: Colors.black.withValues(alpha: _backgroundOpacity.value * bgOpacity),
+          backgroundColor: Colors.black.withValues(
+            alpha: _backgroundOpacity.value * bgOpacity,
+          ),
           body: Stack(
             children: [
               GestureDetector(
@@ -1227,10 +1381,16 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
                                       child: CachedNetworkImage(
                                         imageUrl: widget.imageUrl,
                                         fit: BoxFit.contain,
-                                        width: MediaQuery.of(context).size.width,
+                                        width: MediaQuery.of(
+                                          context,
+                                        ).size.width,
                                         placeholder: (context, url) => SizedBox(
-                                          width: MediaQuery.of(context).size.width,
-                                          height: MediaQuery.of(context).size.width,
+                                          width: MediaQuery.of(
+                                            context,
+                                          ).size.width,
+                                          height: MediaQuery.of(
+                                            context,
+                                          ).size.width,
                                           child: Container(
                                             color: Colors.grey[900],
                                             child: const Center(

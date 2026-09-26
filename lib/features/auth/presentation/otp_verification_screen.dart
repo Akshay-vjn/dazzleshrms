@@ -7,6 +7,7 @@ import 'package:pinput/pinput.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/storage/session_storage.dart';
 import 'package:dazzleshrms/core/permissions/permission_provider.dart';
+import '../../approvals/data/providers/approvals_provider.dart';
 import '../data/providers/verify_otp_provider.dart';
 import '../data/providers/auth_provider.dart';
 
@@ -110,6 +111,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
             ref.read(permissionProvider.notifier)
                 .setPermissions(res.data.permissions);
           }
+
+          // These providers can outlive the login route. Drop data fetched
+          // with the previous session so the next screen uses the new token.
+          ref.invalidate(storeProvider);
+          ref.invalidate(designationProvider);
 
           if (!mounted) return;
           if (role == 'store') {

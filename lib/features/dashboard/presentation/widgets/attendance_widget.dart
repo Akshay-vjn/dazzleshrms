@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/repo/attendanceqr_repo.dart';
 import '../../data/models/attendance_qr_response.dart';
 import '../../data/models/attendance_qr_status_response.dart';
@@ -118,7 +119,15 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        _showError(context, e.toString());
+        String message = e.toString();
+        if (message.startsWith('Exception: ')) {
+          message = message.substring('Exception: '.length);
+        }
+        if (!isCheckIn && message.toLowerCase().contains('break')) {
+          _showBreakErrorPopup(context, message);
+        } else {
+          _showError(context, message);
+        }
       }
     }
   }
@@ -129,6 +138,103 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
         content: Text(message),
         backgroundColor: AppTheme.statusError,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showBreakErrorPopup(BuildContext context, String message) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppTheme.statusWarning.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.free_breakfast_rounded,
+                  color: AppTheme.statusWarning,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "Break in Progress",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : Colors.black87.withValues(alpha: 0.75),
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.PrimaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "OK",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.pushNamed('break_dashboard');
+                },
+                child: const Text(
+                  "Go to Break",
+                  style: TextStyle(
+                    color: AppTheme.PrimaryColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

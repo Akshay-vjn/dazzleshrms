@@ -59,7 +59,7 @@ class AnnouncementItem {
   factory AnnouncementItem.fromJson(Map<String, dynamic> json) {
     String? attachmentPath = json['attachmentUrl'] ?? json['attachment'];
     if (attachmentPath != null && attachmentPath.isNotEmpty && !attachmentPath.startsWith('http')) {
-      attachmentPath = '${ApiConstants.mediaBaseUrl}$attachmentPath';
+      attachmentPath = ApiConstants.resolveMediaUrl(attachmentPath);
     }
 
     return AnnouncementItem(

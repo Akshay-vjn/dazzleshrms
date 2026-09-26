@@ -4,6 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // BRAND
   static const Color PrimaryColor = Color(0xFFE3ADA6);
+  /// Darker brand shade for text/icons on light surfaces.
+  static const Color primaryOnLight = Color(0xFF9A655C);
+
+  static Color accent(bool isDark) => isDark ? PrimaryColor : primaryOnLight;
   // static const Color SecondaryColor = Color(0xFF8B5CF6);
 
   // BACKGROUNDS

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,24 +16,34 @@ import '../../approvals/data/models/designation_model.dart';
 import '../../approvals/data/providers/approvals_provider.dart';
 import '../data/models/break_report_response.dart';
 import '../data/providers/break_report_provider.dart';
+import 'break_reports_dashboardScreen.dart';
+import 'widgets/searchable_filter_sheet.dart';
 
-class BreakReportsDashboardScreen extends ConsumerStatefulWidget {
-  const BreakReportsDashboardScreen({super.key});
+class BreakReportsScreen extends ConsumerStatefulWidget {
+  const BreakReportsScreen({super.key});
 
   @override
-  ConsumerState<BreakReportsDashboardScreen> createState() =>
+  ConsumerState<BreakReportsScreen> createState() =>
       _BreakReportsDashboardScreenState();
 }
 
 class _BreakReportsDashboardScreenState
-    extends ConsumerState<BreakReportsDashboardScreen> {
+    extends ConsumerState<BreakReportsScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<BreakReportItem> _items = [];
 
   DateTime _selectedDate = DateTime.now();
   int _currentPage = 1;
-  final int _limit = 10;
   bool _isLoadingMore = false;
+
+  int get _limit {
+    try {
+      final size = MediaQuery.of(context).size;
+      return (size.shortestSide >= 600 || size.height >= 900) ? 25 : 15;
+    } catch (_) {
+      return 20;
+    }
+  }
 
   int? _selectedStoreId;
   int? _selectedDesignationId;
@@ -47,9 +59,32 @@ class _BreakReportsDashboardScreenState
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _sessionRole = (await SessionStorage.getRole()) ?? '';
-      if (mounted) setState(() {});
+      final employeeId = await SessionStorage.getEmployeeId();
+      final savedStoreId = employeeId == null
+          ? null
+          : await SessionStorage.getBreakReportsStoreFilter(employeeId);
+      final savedStoreName = employeeId == null
+          ? null
+          : await SessionStorage.getBreakReportsStoreFilterName(employeeId);
+      if (!mounted) return;
+      setState(() {
+        _selectedStoreId = savedStoreId;
+        _selectedStoreName = savedStoreName;
+      });
+      ref.read(storeProvider);
+      ref.read(designationProvider);
       _loadData();
     });
+  }
+
+  Future<void> _saveStoreFilter({int? storeId, String? storeName}) async {
+    final employeeId = await SessionStorage.getEmployeeId();
+    if (employeeId == null) return;
+    await SessionStorage.saveBreakReportsStoreFilter(
+      employeeId: employeeId,
+      storeId: storeId,
+      storeName: storeName,
+    );
   }
 
   bool _showStoreDesignationFilters(String? dashboardRole) {
@@ -79,7 +114,32 @@ class _BreakReportsDashboardScreenState
       storeId: _selectedStoreId,
       designationId: _selectedDesignationId,
       employeeId: _selectedEmployeeId,
+      append: false,
     );
+    if (mounted) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+    }
+  }
+
+  void _checkIfNeedMoreData() {
+    if (!mounted || !_scrollController.hasClients || _isLoadingMore) return;
+    if (_scrollController.position.maxScrollExtent <= 100) {
+      final state = ref.read(breakReportProvider);
+      state.whenOrNull(
+        data: (data) {
+          if (data == null) return;
+          final hasMorePages = data.totalPages > 0
+              ? _currentPage < data.totalPages
+              : (data.totalItems > 0
+                  ? _items.length < data.totalItems
+                  : data.records.length >= _limit);
+          if (hasMorePages) {
+            _loadNextPage();
+          }
+        },
+      );
+    }
   }
 
   void _onFilterChanged() {
@@ -96,38 +156,54 @@ class _BreakReportsDashboardScreenState
       _selectedDesignationName = null;
       _selectedEmployeeName = null;
     });
+    unawaited(_saveStoreFilter());
     _onFilterChanged();
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 120 &&
-        !_isLoadingMore) {
-      final state = ref.read(breakReportProvider);
-      state.whenOrNull(
-        data: (data) {
-          if (data == null) return;
-          if (_currentPage < data.totalPages) {
-            _loadNextPage();
-          }
-        },
-      );
-    }
+    if (!_scrollController.hasClients || _isLoadingMore) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    if (currentScroll < maxScroll - 150) return;
+
+    final state = ref.read(breakReportProvider);
+    state.whenOrNull(
+      data: (data) {
+        if (data == null) return;
+        final hasMorePages = data.totalPages > 0
+            ? _currentPage < data.totalPages
+            : (data.totalItems > 0
+                ? _items.length < data.totalItems
+                : data.records.length >= _limit);
+        if (hasMorePages) {
+          _loadNextPage();
+        }
+      },
+    );
   }
 
   Future<void> _loadNextPage() async {
     if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
-    _currentPage++;
+    final nextPage = _currentPage + 1;
     await ref.read(breakReportProvider.notifier).loadBreakReports(
-      page: _currentPage,
+      page: nextPage,
       limit: _limit,
       date: _formattedDate,
       storeId: _selectedStoreId,
       designationId: _selectedDesignationId,
       employeeId: _selectedEmployeeId,
+      append: true,
     );
-    if (mounted) setState(() => _isLoadingMore = false);
+    if (mounted) {
+      setState(() {
+        _currentPage = nextPage;
+        _isLoadingMore = false;
+      });
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+    }
   }
 
   Future<void> _pickDate() async {
@@ -161,18 +237,7 @@ class _BreakReportsDashboardScreenState
   }
 
   String _getFullImageUrl(String profileImage) {
-    if (profileImage.isEmpty) return '';
-    if (profileImage.startsWith('http://') ||
-        profileImage.startsWith('https://')) {
-      return profileImage;
-    }
-    final base = ApiConstants.mediaBaseUrl.endsWith('/')
-        ? ApiConstants.mediaBaseUrl
-        : '${ApiConstants.mediaBaseUrl}/';
-    final path = profileImage.startsWith('/')
-        ? profileImage.substring(1)
-        : profileImage;
-    return '$base$path';
+    return ApiConstants.resolveMediaUrl(profileImage);
   }
 
   Color _minutesColor(BreakReportItem item) {
@@ -181,65 +246,67 @@ class _BreakReportsDashboardScreenState
   }
 
   void _showStorePicker() async {
-    final storesAsync = ref.read(storeProvider);
-    await storesAsync.when(
-      data: (stores) async {
-        final result = await showModalBottomSheet<Map<String, dynamic>>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => _SearchableListSheet<Store>(
-            title: 'Store',
-            items: stores,
-            selectedId: _selectedStoreId,
-            getItemId: (item) => item.storeId,
-            getItemName: (item) => item.storeName,
-          ),
-        );
-        if (result != null && mounted) {
-          setState(() {
-            _selectedStoreId = result['id'];
-            _selectedStoreName = result['name'];
-            _selectedEmployeeId = null;
-            _selectedEmployeeName = null;
-          });
-          _onFilterChanged();
-        }
-      },
-      loading: () {},
-      error: (_, __) {},
+    // Fetch first and pass this exact response into the sheet so it cannot
+    // render a previously cached store list.
+    debugPrint('[StoreFilterSheet] Opened; requesting GET /stores');
+    late final List<Store> stores;
+    try {
+      stores = await ref.refresh(storeProvider.future);
+      debugPrint('[StoreFilterSheet] Fresh store options: $stores');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load stores: $error')),
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SearchableFilterSheet<Store>(
+        title: 'Store',
+        items: stores,
+        selectedId: _selectedStoreId,
+        getItemId: (item) => item.storeId,
+        getItemName: (item) => item.storeName,
+      ),
     );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedStoreId = result['id'];
+        _selectedStoreName = result['name'];
+        _selectedEmployeeId = null;
+        _selectedEmployeeName = null;
+      });
+      await _saveStoreFilter(
+        storeId: result['id'],
+        storeName: result['name'],
+      );
+      _onFilterChanged();
+    }
   }
 
   void _showDesignationPicker() async {
-    final designationsAsync = ref.read(designationProvider);
-    await designationsAsync.when(
-      data: (designations) async {
-        final result = await showModalBottomSheet<Map<String, dynamic>>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => _SearchableListSheet<Designation>(
-            title: 'Designation',
-            items: designations,
-            selectedId: _selectedDesignationId,
-            getItemId: (item) => item.designationId,
-            getItemName: (item) => item.designation,
-          ),
-        );
-        if (result != null && mounted) {
-          setState(() {
-            _selectedDesignationId = result['id'];
-            _selectedDesignationName = result['name'];
-            _selectedEmployeeId = null;
-            _selectedEmployeeName = null;
-          });
-          _onFilterChanged();
-        }
-      },
-      loading: () {},
-      error: (_, __) {},
+    final result = await showSearchableFilterSheet<Designation>(
+      context: context,
+      provider: designationProvider,
+      title: 'Designation',
+      selectedId: _selectedDesignationId,
+      getItemId: (item) => item.designationId,
+      getItemName: (item) => item.designation,
     );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedDesignationId = result['id'];
+        _selectedDesignationName = result['name'];
+        _selectedEmployeeId = null;
+        _selectedEmployeeName = null;
+      });
+      _onFilterChanged();
+    }
   }
 
   void _showEmployeePicker() async {
@@ -278,9 +345,11 @@ class _BreakReportsDashboardScreenState
   Widget _buildDateFilter(bool isDark) {
     final isToday =
         DateFormat('yyyy-MM-dd').format(DateTime.now()) == _formattedDate;
+    final accent = AppTheme.accent(isDark);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
             onTap: _pickDate,
@@ -288,14 +357,16 @@ class _BreakReportsDashboardScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.PrimaryColor.withValues(alpha: 0.07),
+                color: accent.withValues(alpha: isDark ? 0.12 : 0.10),
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accent.withValues(alpha: isDark ? 0.3 : 0.35),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.calendar_today_rounded,
-                      size: 15, color: AppTheme.PrimaryColor),
+                  Icon(Icons.calendar_today_rounded, size: 15, color: accent),
                   const SizedBox(width: 8),
                   Text(
                     isToday
@@ -304,7 +375,47 @@ class _BreakReportsDashboardScreenState
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13.5,
-                      color: AppTheme.PrimaryColor,
+                      color: accent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BreakReportsDashboardscreen(),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.12 : 0.10),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accent.withValues(alpha: isDark ? 0.3 : 0.35),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.dashboard_rounded,
+                    size: 16,
+                    color: accent,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Dashboard',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: accent,
                     ),
                   ),
                 ],
@@ -338,6 +449,7 @@ class _BreakReportsDashboardScreenState
                   _selectedEmployeeId = null;
                   _selectedEmployeeName = null;
                 });
+                unawaited(_saveStoreFilter());
                 _onFilterChanged();
               }
                   : null,
@@ -475,24 +587,25 @@ class _BreakReportsDashboardScreenState
     );
   }
 
-  Widget _buildAvatar(BreakReportItem item) {
+  Widget _buildAvatar(BreakReportItem item, bool isDark) {
     final imageUrl = _getFullImageUrl(item.profileImage);
     final hasImage = imageUrl.isNotEmpty;
     final letter =
     item.employeeName.isNotEmpty ? item.employeeName[0].toUpperCase() : '?';
+    final accent = AppTheme.accent(isDark);
 
     final avatarWidget = hasImage
         ? Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppTheme.PrimaryColor.withValues(alpha: 0.15),
+          color: accent.withValues(alpha: 0.25),
           width: 1.5,
         ),
       ),
       child: CircleAvatar(
         radius: 24,
-        backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+        backgroundColor: accent.withValues(alpha: 0.12),
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: imageUrl,
@@ -501,16 +614,16 @@ class _BreakReportsDashboardScreenState
             fit: BoxFit.cover,
             placeholder: (_, __) => Text(
               letter,
-              style: const TextStyle(
-                color: AppTheme.PrimaryColor,
+              style: TextStyle(
+                color: accent,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
             errorWidget: (_, __, ___) => Text(
               letter,
-              style: const TextStyle(
-                color: AppTheme.PrimaryColor,
+              style: TextStyle(
+                color: accent,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -521,11 +634,11 @@ class _BreakReportsDashboardScreenState
     )
         : CircleAvatar(
       radius: 24,
-      backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+      backgroundColor: accent.withValues(alpha: 0.12),
       child: Text(
         letter,
-        style: const TextStyle(
-          color: AppTheme.PrimaryColor,
+        style: TextStyle(
+          color: accent,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -547,7 +660,7 @@ class _BreakReportsDashboardScreenState
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          _buildAvatar(item),
+          _buildAvatar(item, isDark),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -602,6 +715,10 @@ class _BreakReportsDashboardScreenState
     final dashboardRole = ref.watch(dashboardProvider).valueOrNull?.role;
     final showStoreDesignationFilters =
     _showStoreDesignationFilters(dashboardRole);
+    if (showStoreDesignationFilters) {
+      ref.watch(storeProvider);
+      ref.watch(designationProvider);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -724,6 +841,8 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = selectedValue != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppTheme.accent(isDark);
 
     return InkWell(
       onTap: onTap,
@@ -732,12 +851,12 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.PrimaryColor.withValues(alpha: 0.06)
+              ? accent.withValues(alpha: isDark ? 0.12 : 0.08)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? AppTheme.PrimaryColor.withValues(alpha: 0.5)
+                ? accent.withValues(alpha: isDark ? 0.5 : 0.45)
                 : Theme.of(context).dividerColor,
             width: 1,
           ),
@@ -751,7 +870,7 @@ class _FilterChip extends StatelessWidget {
                   fontSize: 13.5,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected
-                      ? AppTheme.PrimaryColor
+                      ? accent
                       : Theme.of(context).colorScheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -761,8 +880,7 @@ class _FilterChip extends StatelessWidget {
             if (isSelected && onClear != null)
               GestureDetector(
                 onTap: onClear,
-                child: Icon(Icons.cancel_rounded,
-                    size: 18, color: AppTheme.PrimaryColor),
+                child: Icon(Icons.cancel_rounded, size: 18, color: accent),
               )
             else
               Icon(

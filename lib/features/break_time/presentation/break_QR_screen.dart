@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
 import '../../dashboard/data/models/attendance_qr_response.dart';
+import '../../dashboard/data/repo/attendanceqr_repo.dart';
 import '../data/models/break_status_response.dart';
 import '../data/repo/breakqr_repo.dart';
 
@@ -137,6 +138,7 @@ class _QrDialogState extends State<_QrDialog> {
   late int _secondsLeft;
   late final Uint8List _imageBytes;
   final BreakqrRepo _repo = BreakqrRepo();
+  final AttendanceqrRepo _attendanceRepo = AttendanceqrRepo();
 
   @override
   void initState() {
@@ -169,21 +171,37 @@ class _QrDialogState extends State<_QrDialog> {
       }
     });
 
+    final qrId = widget.qrResponse.data.qrSessionId;
     _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       try {
-        final BreakStatusResponse resp = await _repo.getBreakStatus();
+        bool isDone = false;
+
+        // 1. Check QR session status by qrSessionId (same as checkin/checkout)
+        if (qrId > 0) {
+          try {
+            final qrStatusResp = await _attendanceRepo.getQrStatus(qrId: qrId);
+            if (!qrStatusResp.error && qrStatusResp.data.status != 'PENDING') {
+              isDone = true;
+            }
+          } catch (_) {}
+        }
+
+        // 2. Also check break status (isOnBreak matches target state)
+        if (!isDone) {
+          final BreakStatusResponse resp = await _repo.getBreakStatus();
+          if (!resp.error && resp.data.isOnBreak == widget.isBreakOut) {
+            isDone = true;
+          }
+        }
 
         if (!mounted) return;
 
-        if (!resp.error) {
-          final expectedIsOnBreak = widget.isBreakOut;
-          if (resp.data.isOnBreak == expectedIsOnBreak) {
-            _statusTimer?.cancel();
-            _countdownTimer.cancel();
+        if (isDone) {
+          _statusTimer?.cancel();
+          _countdownTimer.cancel();
 
-            if (mounted) {
-              widget.onSuccess();
-            }
+          if (mounted) {
+            widget.onSuccess();
           }
         }
       } catch (_) {}

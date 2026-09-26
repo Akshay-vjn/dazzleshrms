@@ -13,15 +13,7 @@ class ProfileRepository {
       final response = await _dio.get(ApiConstants.profile);
       return ProfileModel.fromJson(response.data);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 502) {
-        throw 'Service is temporarily unavailable (502). Please try again later.';
-      }
-      if (e.response?.statusCode == 500) {
-        throw 'Internal Server Error. Please try again later.';
-      }
-      final message =
-          e.response?.data?['message'] ?? 'Failed to fetch profile';
-      throw (message);
+      throw _handleError(e, fallback: 'Failed to fetch profile');
     }
   }
 
@@ -37,9 +29,7 @@ class ProfileRepository {
       final response = await _dio.put(
         ApiConstants.profile,
         data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
+        options: Options(contentType: 'multipart/form-data'),
       );
 
       final data = response.data;
@@ -49,39 +39,37 @@ class ProfileRepository {
         throw data['message'] ?? 'Failed to update profile image';
       }
     } on DioException catch (e) {
-      if (e.response?.statusCode == 502) {
-        throw 'Service is temporarily unavailable (502). Please try again later.';
-      }
-      if (e.response?.statusCode == 500) {
-        throw 'Internal Server Error. Please try again later.';
-      }
-      final message =
-          e.response?.data?['message'] ?? 'Failed to update profile image';
-      throw (message);
+      throw _handleError(e, fallback: 'Failed to update profile image');
     }
   }
 
-  Future<void> removeProfileImage() async {
+  Future<String> requestProfileImageChange() async {
     try {
-      final response = await _dio.delete(ApiConstants.profile);
+      final response = await _dio.post(ApiConstants.profileChangeRequest);
 
       final data = response.data;
       if (data is Map && data['error'] == false) {
-        return;
+        return data['message']?.toString() ??
+            'Profile image change request submitted successfully';
       }
       throw (data is Map
-          ? (data['message'] ?? 'Failed to remove profile image')
-          : 'Failed to remove profile image');
+          ? (data['message'] ?? 'Failed to submit change request')
+          : 'Failed to submit change request');
     } on DioException catch (e) {
-      if (e.response?.statusCode == 502) {
-        throw 'Service is temporarily unavailable (502). Please try again later.';
-      }
-      if (e.response?.statusCode == 500) {
-        throw 'Internal Server Error. Please try again later.';
-      }
-      final message =
-          e.response?.data?['message'] ?? 'Failed to remove profile image';
-      throw (message);
+      throw _handleError(
+        e,
+        fallback: 'Failed to submit profile image change request',
+      );
     }
+  }
+
+  String _handleError(DioException e, {required String fallback}) {
+    if (e.response?.statusCode == 502) {
+      return 'Service is temporarily unavailable (502). Please try again later.';
+    }
+    if (e.response?.statusCode == 500) {
+      return 'Internal Server Error. Please try again later.';
+    }
+    return e.response?.data?['message']?.toString() ?? fallback;
   }
 }

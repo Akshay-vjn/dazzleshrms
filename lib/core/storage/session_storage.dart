@@ -9,6 +9,7 @@ class SessionStorage {
   static const _keyStoreName = 'storeName';
   static const _keyPermissions = 'permissions';
   static const _keyRole = 'role';
+  static const _keyBreakReportsStoreFilterPrefix = 'breakReportsStoreFilter';
 
   /// Save login/session
   static Future<void> saveSession({
@@ -115,6 +116,42 @@ class SessionStorage {
   static Future<int?> getStoreId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyStoreId);
+  }
+
+  /// Store the last break reports filter per employee so it survives logout.
+  static Future<void> saveBreakReportsStoreFilter({
+    required int employeeId,
+    int? storeId,
+    String? storeName,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final idKey = '${_keyBreakReportsStoreFilterPrefix}_$employeeId';
+    final nameKey = '${idKey}Name';
+
+    if (storeId == null) {
+      await prefs.remove(idKey);
+      await prefs.remove(nameKey);
+      return;
+    }
+
+    await prefs.setInt(idKey, storeId);
+    if (storeName != null) {
+      await prefs.setString(nameKey, storeName);
+    } else {
+      await prefs.remove(nameKey);
+    }
+  }
+
+  static Future<int?> getBreakReportsStoreFilter(int employeeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('${_keyBreakReportsStoreFilterPrefix}_$employeeId');
+  }
+
+  static Future<String?> getBreakReportsStoreFilterName(int employeeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(
+      '${_keyBreakReportsStoreFilterPrefix}_${employeeId}Name',
+    );
   }
 
   /// Clear all stored session details

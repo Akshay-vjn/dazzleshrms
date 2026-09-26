@@ -39,6 +39,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen>
     _controller.dispose();
     super.dispose();
   }
+
   Widget _buildHeader(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
@@ -86,6 +87,17 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen>
             intervalStart: 0.15,
             gradientStart: AppTheme.gridGradient1Start,
             gradientEnd: AppTheme.gridGradient1End,
+            iconColor: AppTheme.gridIconColor,
+          ),
+        if (permissions.contains(Permissions.viewImageApprovalIcon))
+          DashboardGridItem(
+            icon: Icons.add_a_photo_outlined,
+            label: "Image Approval",
+            onTap: () => context.pushNamed('image_approvals'),
+            animation: _controller,
+            intervalStart: 0.18,
+            gradientStart: AppTheme.dGrid1,
+            gradientEnd: AppTheme.dGrid1,
             iconColor: AppTheme.gridIconColor,
           ),
         if (permissions.contains(Permissions.viewAllTeamApproval))

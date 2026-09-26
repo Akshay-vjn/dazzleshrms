@@ -14,8 +14,9 @@ import 'package:dazzleshrms/features/employees/data/models/employee_model.dart';
 import 'package:dazzleshrms/features/upcoming_leaves/presentation/upcoming_leaves_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/leave_management_screen.dart';
 import 'package:dazzleshrms/features/leave_management/presentation/approvals_screen.dart';
+import 'package:dazzleshrms/features/profile/presentation/profile_image_approvals_screen.dart';
 import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
-import 'package:dazzleshrms/features/break_reports/presentation/break_reports_dashboardscreen.dart';
+import 'package:dazzleshrms/features/break_reports/presentation/break_reports_screen.dart';
 import 'package:dazzleshrms/core/widgets/no_internet_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,6 +84,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ApprovalScreen(),
       ),
       GoRoute(
+        path: '/image-approvals',
+        name: 'image_approvals',
+        builder: (context, state) => const ProfileImageApprovalsScreen(),
+      ),
+      GoRoute(
         path: '/upcoming',
         name: 'upcoming_leaves',
         builder: (context, state) => const UpcomingLeaveScreen(),
@@ -100,7 +106,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/break-reports',
         name: 'break_reports',
-        builder: (context, state) => const BreakReportsDashboardScreen(),
+        builder: (context, state) => const BreakReportsScreen(),
       ),
       GoRoute(
         path: '/employee-approvals',

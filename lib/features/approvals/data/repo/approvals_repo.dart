@@ -1,4 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/api_config/api_config.dart';
 import '../../../../core/api_constants/api_constants.dart';
 import '../../../announcements/data/models/store_model.dart';
@@ -72,6 +75,12 @@ class LeaveApprovalRepository {
   Future<List<Store>> fetchStores() async {
     try {
       final response = await _dio.get(ApiConstants.stores);
+      debugPrint('[StoreFilterAPI] HTTP ${response.statusCode} response:');
+      debugPrint(response.data.toString());
+      developer.log(
+        'Store filter API response (HTTP ${response.statusCode}): ${response.data}',
+        name: 'StoreFilterAPI',
+      );
       return StoreResponse.fromJson(response.data).data;
     } on DioException catch (e) {
       final message = e.response?.data?['message'] ?? 'Failed to fetch stores';

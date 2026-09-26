@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 import '../../dashboard/data/models/attendance_qr_response.dart';
+import '../../dashboard/data/repo/attendanceqr_repo.dart';
 import '../data/models/break_history_response.dart';
 import '../data/models/break_status_response.dart';
 import '../data/repo/break_history_repo.dart';
@@ -24,6 +25,7 @@ class BreakDashboardScreen extends StatefulWidget {
 class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   final BreakHistoryRepo _historyRepo = BreakHistoryRepo();
   final BreakqrRepo _breakRepo = BreakqrRepo();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _timeFormat = DateFormat('hh:mm a');
 
@@ -47,6 +49,19 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
     super.initState();
     _selectedDate = DateTime.now();
     _loadDashboard();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playSuccessSound() async {
+    try {
+      final soundPath = 'audio/notification.mp3';
+      await _audioPlayer.play(AssetSource(soundPath));
+    } catch (_) {}
   }
 
   Future<void> _loadDashboard() async {
@@ -164,11 +179,12 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
           builder: (context) => BreakQrDialog(
             isBreakOut: isBreakOut,
             qrResponse: qrResponse,
-            onCompleted: () async {
+            onCompleted: () {
               if (mounted) {
                 setState(() {
                   _isOnBreak = isBreakOut;
                 });
+                _playSuccessSound();
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -255,7 +271,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final surfaceColor = isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
     final textColor = isDark ? Colors.white : Colors.black.withValues(alpha: 0.85);
-    final buttonColor = _isOnBreak ? AppTheme.statusSuccess : AppTheme.statusWarning;
+    final buttonColor = _isOnBreak ? AppTheme.statusWarning : AppTheme.statusSuccess;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -356,7 +372,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
                     : Icons.output,
                 label: _loadingBreakStatus
                     ? "Loading..."
-                    : (_isOnBreak ? "Break In" : "Break Out"),
+                    : (_isOnBreak ? "Break Out" : "Break In"),
                 isLoading: _loadingBreakStatus,
               ),
             ),
@@ -529,7 +545,7 @@ class BreakQrDialog extends StatefulWidget {
 
 class _BreakQrDialogState extends State<BreakQrDialog> {
   final BreakqrRepo _repo = BreakqrRepo();
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AttendanceqrRepo _attendanceRepo = AttendanceqrRepo();
   Timer? _countdownTimer;
   Timer? _statusTimer;
   late int _secondsLeft;
@@ -554,7 +570,6 @@ class _BreakQrDialogState extends State<BreakQrDialog> {
   void dispose() {
     _countdownTimer?.cancel();
     _statusTimer?.cancel();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -578,26 +593,38 @@ class _BreakQrDialogState extends State<BreakQrDialog> {
   }
 
   void _startStatusPolling() {
+    final qrId = widget.qrResponse.data.qrSessionId;
     _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       try {
-        final response = await _repo.getBreakStatus();
-        if (!mounted || response.error) return;
+        bool isDone = false;
 
-        if (response.data.isOnBreak == widget.isBreakOut) {
-          timer.cancel();
+        // 1. Check QR session status by qrSessionId (same as checkin/checkout)
+        if (qrId > 0) {
+          try {
+            final qrStatusResp = await _attendanceRepo.getQrStatus(qrId: qrId);
+            if (!qrStatusResp.error && qrStatusResp.data.status != 'PENDING') {
+              isDone = true;
+            }
+          } catch (_) {}
+        }
+
+        // 2. Also check break status (isOnBreak matches target state)
+        if (!isDone) {
+          final response = await _repo.getBreakStatus();
+          if (!response.error && response.data.isOnBreak == widget.isBreakOut) {
+            isDone = true;
+          }
+        }
+
+        if (!mounted) return;
+
+        if (isDone) {
+          _statusTimer?.cancel();
           _countdownTimer?.cancel();
-          await _playSuccessSound();
-          if (!mounted) return;
           widget.onCompleted();
         }
       } catch (_) {}
     });
-  }
-
-  Future<void> _playSuccessSound() async {
-    try {
-      await _audioPlayer.play(AssetSource('audio/notification.mp3'));
-    } catch (_) {}
   }
 
   @override

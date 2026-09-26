@@ -1,13 +1,36 @@
 class ApiConstants {
-  // static const String mediaBaseUrl = "http://192.168.2.189:7907/api";
+  static const String mediaBaseUrl = "http://192.168.2.189:7907/api";
   // static const String mediaBaseUrl = "https://testhrms.dazzles.in/";
-  static const String mediaBaseUrl = "https://hrms.dazzles.in";
+  // static const String mediaBaseUrl = "https://hrms.dazzles.in";
+
+  static String resolveMediaUrl(String? path) {
+    final raw = (path ?? '').trim();
+    if (raw.isEmpty ||
+        raw.toLowerCase() == 'null' ||
+        raw.toLowerCase() == 'undefined') {
+      return '';
+    }
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+    final base = mediaBaseUrl.endsWith('/') ? mediaBaseUrl : '$mediaBaseUrl/';
+    final relative = raw.startsWith('/') ? raw.substring(1) : raw;
+    return '$base$relative';
+  }
 
   static const String sendOtp = "/auth/send-otp";
   static const String verifyOtp = "/auth/verify-otp";
   static const String refreshToken = "/auth/refreshtoken";
   static const String dashboard = "/dashboard";
   static const String profile = "/profile";
+  static const String profileChangeRequest = "/profile/changerequest";
+  static const String profileChangeRequests = "/profile/changerequests";
+
+  static String approveProfileChangeRequest(int requestId) =>
+      '$profileChangeRequests/$requestId/approve';
+
+  static String rejectProfileChangeRequest(int requestId) =>
+      '$profileChangeRequests/$requestId/reject';
   static const String attendance = "/attendance";
   static const String leave = "/leave";
   static const String leaveType = "/leave/leavetype";
@@ -61,4 +84,18 @@ class ApiConstants {
   static const String breakQrStatus = '/break/status';
   static const String breakHistory = '/break/history';
   static const String breakReport = '/break/breakreport';
+
+  static String employeeByStoreAndDesignation({
+    required int storeId,
+    required int designationId,
+  }) => '/employee/store/$storeId/designation/$designationId';
+
+  static String employeeDashboardSummary(int employeeId) =>
+      '/employeedashboard/$employeeId/summary';
+
+  static String employeeDashboardAttendance(int employeeId) =>
+      '/employeedashboard/$employeeId/attendance';
+
+  static String employeeDashboardBreaks(int employeeId) =>
+      '/employeedashboard/$employeeId/breaks';
 }

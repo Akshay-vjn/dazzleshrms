@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:dazzleshrms/core/storage/session_storage.dart';
 
 import '../../../core/permissions/permission.dart';
 import '../../notifications/data/provider/notification_provider.dart';
@@ -207,7 +208,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           gradientEnd: AppTheme.gridGradient1End,
           iconColor: AppTheme.gridIconColor,
         ),
-        if (permissions.contains(Permissions.viewEmployees))
+        if (permissions.contains(Permissions.viewEmployeeDashboard))
         DashboardGridItem(
           icon: Icons.people,
           label: "Employees",
@@ -276,6 +277,155 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         onPressed: _refresh,
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text("Try Again"),
+                      ),
+                      const SizedBox(height: 16),
+                      Material(
+                        color: AppTheme.statusError.withValues(alpha: 0.36),
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          onTap: () async {
+                            final isDark = theme.brightness == Brightness.dark;
+                            final shouldLogout = await showDialog<bool>(
+                              context: context,
+                              barrierColor: Colors.black.withValues(alpha: 0.5),
+                              builder: (context) => Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 72,
+                                        height: 72,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              AppTheme.statusError.withValues(alpha: 0.15),
+                                              AppTheme.statusError.withValues(alpha: 0.05),
+                                            ],
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.logout_rounded,
+                                          size: 36,
+                                          color: AppTheme.statusError,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Text(
+                                        "Logout",
+                                        style: theme.textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        "Are you sure you want to logout from your account?",
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: theme.hintColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 28),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: OutlinedButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              style: OutlinedButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                side: BorderSide(color: theme.dividerColor),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                "Cancel",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: theme.textTheme.bodyMedium?.color,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: FilledButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              style: FilledButton.styleFrom(
+                                                backgroundColor: AppTheme.statusError,
+                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                "Logout",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+
+                            if (shouldLogout == true) {
+                              await SessionStorage.clearSession();
+                              ref
+                                  .read(permissionProvider.notifier)
+                                  .clearPermissions();
+
+                              if (!context.mounted) return;
+                              context.goNamed('login');
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppTheme.statusError.withValues(alpha: 0.68),
+                                width: 1,
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.logout_rounded,
+                                  size: 20,
+                                  color: AppTheme.statusError,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Logout",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.statusError,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

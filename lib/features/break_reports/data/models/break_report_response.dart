@@ -110,7 +110,7 @@ class BreakReportItem {
       employeeId: int.tryParse(json['employeeId']?.toString() ?? '') ?? 0,
       employeeName: json['employeeName']?.toString() ?? '',
       employeeCode: json['employeeCode']?.toString() ?? '',
-      profileImage: json['profileImage']?.toString() ?? '',
+      profileImage: _readProfileImage(json),
       date: json['date']?.toString() ?? '',
       breakType: rawBreakType,
       breakOutTime: json['breakOutTime']?.toString() ?? '',
@@ -120,6 +120,16 @@ class BreakReportItem {
       breakStatus: json['breakStatus']?.toString() ?? '',
       breakIndex: index,
     );
+  }
+
+  static String _readProfileImage(Map<String, dynamic> json) {
+    final value = json['profileImage'] ??
+        json['profile_image'] ??
+        json['employeeImage'] ??
+        json['image'];
+    final raw = value?.toString().trim() ?? '';
+    if (raw.isEmpty || raw.toLowerCase() == 'null') return '';
+    return raw;
   }
 
   static int _parseMinutes(dynamic value) {

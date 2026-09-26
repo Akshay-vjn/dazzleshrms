@@ -3,7 +3,7 @@ class Permissions {
   static const viewApplyLeave = 'view.apply';
   static const viewApprovals = 'view.approvals';
   static const viewAnnouncements = 'view.announcement';
-  static const viewEmployees = 'view.employees';
+  static const viewEmployees = 'view.employees';//change needed
   static const viewUpcomingLeaves = 'view.upcoming';
   static const viewLeaveManagement = 'view.leavemanagement';
   static const viewPermission = 'view.permission';
@@ -17,6 +17,9 @@ class Permissions {
   static const viewEarlyLate = 'view.earlylate';
   static const viewAllTeamApproval = 'view.allteamapproval';
   static const viewBreakReport = 'view.breakreport';
+  static const viewEmployeeDashboard = 'view.employeedashboard';//change needed
+  static const viewImageApprovalIcon = 'view.imageapprovalicon';
+
 
 
 

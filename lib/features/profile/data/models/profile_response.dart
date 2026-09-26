@@ -1,4 +1,4 @@
- class ProfileModel {
+class ProfileModel {
   final int status;
   final bool error;
   final String message;
@@ -29,6 +29,7 @@ class ProfileData {
   final String profileImage;
   final String joiningDate;
   final String role;
+  final bool profileImageChangeAllowed;
   final StoreData store;
 
   ProfileData({
@@ -40,7 +41,13 @@ class ProfileData {
     required this.joiningDate,
     required this.role,
     required this.store,
+    this.profileImageChangeAllowed = false,
   });
+
+  bool get hasProfileImage {
+    final raw = profileImage.trim();
+    return raw.isNotEmpty && raw.toLowerCase() != 'null';
+  }
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
     return ProfileData(
@@ -51,7 +58,33 @@ class ProfileData {
       profileImage: json['profileImage'] as String? ?? '',
       joiningDate: json['joiningDate'] as String? ?? '',
       role: json['role'] as String? ?? '',
+      profileImageChangeAllowed: json['profileImageChangeAllowed'] == true,
       store: StoreData.fromJson(json['store'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+
+  ProfileData copyWith({
+    String? name,
+    String? code,
+    String? designation,
+    String? mobile,
+    String? profileImage,
+    String? joiningDate,
+    String? role,
+    bool? profileImageChangeAllowed,
+    StoreData? store,
+  }) {
+    return ProfileData(
+      name: name ?? this.name,
+      code: code ?? this.code,
+      designation: designation ?? this.designation,
+      mobile: mobile ?? this.mobile,
+      profileImage: profileImage ?? this.profileImage,
+      joiningDate: joiningDate ?? this.joiningDate,
+      role: role ?? this.role,
+      profileImageChangeAllowed:
+          profileImageChangeAllowed ?? this.profileImageChangeAllowed,
+      store: store ?? this.store,
     );
   }
 }
@@ -60,10 +93,7 @@ class StoreData {
   final String name;
   final String shortForm;
 
-  StoreData({
-    required this.name,
-    required this.shortForm,
-  });
+  StoreData({required this.name, required this.shortForm});
 
   factory StoreData.fromJson(Map<String, dynamic> json) {
     return StoreData(
@@ -72,5 +102,3 @@ class StoreData {
     );
   }
 }
-
-
