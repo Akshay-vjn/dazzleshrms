@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -51,7 +52,8 @@ class _PermissionDialogState extends State<PermissionDialog> {
       });
     } on DioException catch (e) {
       setState(() {
-        _error = e.response?.data?['message']?.toString() ??
+        _error =
+            e.response?.data?['message']?.toString() ??
             'Failed to load permission status';
         _loading = false;
       });
@@ -154,8 +156,9 @@ class _PermissionDialogState extends State<PermissionDialog> {
               Navigator.of(context).pop();
             }
 
-            final successText =
-                isPermissionIn ? 'Permission In successful' : 'Permission Out successful';
+            final successText = isPermissionIn
+                ? 'Permission In successful'
+                : 'Permission Out successful';
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -170,7 +173,8 @@ class _PermissionDialogState extends State<PermissionDialog> {
     } on DioException catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.response?.data?['message']?.toString() ??
+        _error =
+            e.response?.data?['message']?.toString() ??
             'Failed to generate permission QR';
       });
     } catch (_) {
@@ -204,8 +208,9 @@ class _PermissionDialogState extends State<PermissionDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isInside = _isInside;
-    final statusColor =
-        isInside ? AppTheme.statusSuccess : AppTheme.statusError;
+    final statusColor = isInside
+        ? AppTheme.statusSuccess
+        : AppTheme.statusError;
     final buttonLabel = isInside ? 'Permission Out' : 'Permission In';
 
     return Dialog(
@@ -221,8 +226,9 @@ class _PermissionDialogState extends State<PermissionDialog> {
               children: [
                 Text(
                   'Permissions',
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded),
@@ -290,8 +296,9 @@ class _PermissionDialogState extends State<PermissionDialog> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed:
-                      _generatingQr ? null : () => _generatePermissionQr(),
+                  onPressed: _generatingQr
+                      ? null
+                      : () => _generatePermissionQr(),
                   style: FilledButton.styleFrom(
                     backgroundColor: isInside
                         ? AppTheme.statusError
@@ -299,7 +306,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   icon: _generatingQr
@@ -308,14 +315,13 @@ class _PermissionDialogState extends State<PermissionDialog> {
                           width: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Icon(
-                          isInside
-                              ? Icons.logout_rounded
-                              : Icons.login_rounded,
+                          isInside ? Icons.logout_rounded : Icons.login_rounded,
                           size: 20,
                         ),
                   label: Text(
@@ -335,10 +341,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
                   icon: const Icon(Icons.edit_calendar_rounded, size: 18),
                   label: const Text(
                     "Apply",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -375,13 +378,35 @@ class _PermissionApplySheetState extends State<PermissionApplySheet> {
   }
 
   Future<void> _pickTime(TextEditingController controller) async {
+    final theme = Theme.of(context);
+    final sheetBackgroundColor = theme.scaffoldBackgroundColor;
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            dialogTheme: theme.dialogTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+            ),
+            timePickerTheme: theme.timePickerTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
     if (picked == null) return;
     final now = DateTime.now();
-    final selected = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+    final selected = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      picked.hour,
+      picked.minute,
+    );
     controller.text = DateFormat('H:mm').format(selected);
   }
 
@@ -402,7 +427,8 @@ class _PermissionApplySheetState extends State<PermissionApplySheet> {
 
       if (!mounted) return;
       final message =
-          response.data?["message"]?.toString() ?? "Mid permission applied successfully";
+          response.data?["message"]?.toString() ??
+          "Mid permission applied successfully";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -414,7 +440,8 @@ class _PermissionApplySheetState extends State<PermissionApplySheet> {
     } on DioException catch (e) {
       if (!mounted) return;
       final message =
-          e.response?.data?["message"]?.toString() ?? "Failed to apply permission";
+          e.response?.data?["message"]?.toString() ??
+          "Failed to apply permission";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -466,9 +493,8 @@ class _PermissionApplySheetState extends State<PermissionApplySheet> {
                       Expanded(
                         child: Text(
                           "Apply Permission",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                       IconButton(
@@ -514,9 +540,7 @@ class _PermissionApplySheetState extends State<PermissionApplySheet> {
                     controller: _reasonController,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: "Reason",
-                    ),
+                    decoration: const InputDecoration(labelText: "Reason"),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return "Reason is required";
@@ -587,16 +611,16 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
       try {
         final response = await _dio.get(ApiConstants.permissions);
         final data = response.data['data'] as Map<String, dynamic>?;
-        final status =
-            (data?['permissionStatus'] ?? '').toString().toUpperCase();
+        final status = (data?['permissionStatus'] ?? '')
+            .toString()
+            .toUpperCase();
 
         if (!mounted) return;
         if (status.isNotEmpty && status != initial) {
           timer.cancel();
           widget.onCompleted(widget.isPermissionIn);
         }
-      } catch (_) {
-      }
+      } catch (_) {}
     });
   }
 
@@ -623,12 +647,14 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
+                    color: AppVisuals.of(
+                      context,
+                    ).accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     widget.isPermissionIn ? Icons.login : Icons.logout,
-                    color: AppTheme.PrimaryColor,
+                    color: AppVisuals.of(context).accent,
                     size: 24,
                   ),
                 ),
@@ -648,8 +674,9 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
                       Text(
                         "Show this QR to the scanner",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color
-                              ?.withValues(alpha: 0.6),
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -663,10 +690,7 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.grey.shade200,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.grey.shade200, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -703,5 +727,3 @@ class _PermissionQrDialogState extends State<PermissionQrDialog> {
     );
   }
 }
-
-

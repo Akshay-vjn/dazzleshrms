@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/app_theme/app_theme.dart';
 
@@ -70,17 +72,14 @@ class _RejectionSheetState extends State<RejectionSheet> {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
 
-    return Container(
+    return AppSurface(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      sheet: true,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -100,12 +99,12 @@ class _RejectionSheetState extends State<RejectionSheet> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.PrimaryColor.withOpacity(0.12),
+                      color: AppVisuals.of(context).accent.withOpacity(0.12),
                     ),
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close),
-                      color: AppTheme.PrimaryColor,
+                      color: AppVisuals.of(context).accent,
                       splashRadius: 22,
                     ),
                   ),
@@ -131,8 +130,11 @@ class _RejectionSheetState extends State<RejectionSheet> {
                 maxLines: 4,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: "Enter the reason why this leave is being rejected...",
-                  hintStyle: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+                  hintText:
+                      "Enter the reason why this leave is being rejected...",
+                  hintStyle: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
                   fillColor: isDark ? AppTheme.surfaceDark : Colors.grey[100],
                   filled: true,
                   border: OutlineInputBorder(
@@ -164,13 +166,16 @@ class _RejectionSheetState extends State<RejectionSheet> {
                     borderRadius: BorderRadius.circular(12),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.statusError.withOpacity(0.1)
                             : isDark
-                                ? Colors.white.withOpacity(0.05)
-                                : Colors.grey[100],
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
@@ -193,7 +198,9 @@ class _RejectionSheetState extends State<RejectionSheet> {
                               border: Border.all(
                                 color: isSelected
                                     ? AppTheme.statusError
-                                    : theme.colorScheme.outline.withOpacity(0.4),
+                                    : theme.colorScheme.outline.withOpacity(
+                                        0.4,
+                                      ),
                                 width: 2,
                               ),
                             ),
@@ -258,4 +265,3 @@ class _RejectionSheetState extends State<RejectionSheet> {
     );
   }
 }
-

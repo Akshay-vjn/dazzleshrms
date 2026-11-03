@@ -16,6 +16,7 @@ import 'package:dazzleshrms/features/leave_management/presentation/leave_managem
 import 'package:dazzleshrms/features/leave_management/presentation/approvals_screen.dart';
 import 'package:dazzleshrms/features/profile/presentation/profile_image_approvals_screen.dart';
 import 'package:dazzleshrms/features/break_time/presentation/break_dashboard_screen.dart';
+import 'package:dazzleshrms/features/break_reports/presentation/break_reports_dashboardScreen.dart';
 import 'package:dazzleshrms/features/break_reports/presentation/break_reports_screen.dart';
 import 'package:dazzleshrms/core/widgets/no_internet_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -107,6 +108,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/break-reports',
         name: 'break_reports',
         builder: (context, state) => const BreakReportsScreen(),
+      ),
+      GoRoute(
+        path: '/break-report-employees',
+        name: 'break_report_employees',
+        builder: (context, state) => const EmployeeDashboardscreen(),
       ),
       GoRoute(
         path: '/employee-approvals',

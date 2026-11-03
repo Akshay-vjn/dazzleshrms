@@ -11,11 +11,14 @@ final breakReportRepoProvider = Provider<BreakReportRepo>((ref) {
   return BreakReportRepo();
 });
 
-final breakDashboardEmployeesProvider = StateNotifierProvider<
-    BreakDashboardEmployeesNotifier,
-    AsyncValue<BreakDashboardEmployeeData?>>(
-  (ref) => BreakDashboardEmployeesNotifier(ref.read(breakReportRepoProvider)),
-);
+final breakDashboardEmployeesProvider =
+    StateNotifierProvider<
+      BreakDashboardEmployeesNotifier,
+      AsyncValue<BreakDashboardEmployeeData?>
+    >(
+      (ref) =>
+          BreakDashboardEmployeesNotifier(ref.read(breakReportRepoProvider)),
+    );
 
 class BreakDashboardEmployeesNotifier
     extends StateNotifier<AsyncValue<BreakDashboardEmployeeData?>> {
@@ -23,19 +26,18 @@ class BreakDashboardEmployeesNotifier
   int _requestVersion = 0;
 
   BreakDashboardEmployeesNotifier(this._repo)
-      : super(const AsyncValue.loading());
+    : super(const AsyncValue.loading());
 
   Future<void> fetchEmployees({
-    required int storeId,
-    required int designationId,
+    int? storeId,
+    int? designationId,
     int page = 1,
     int limit = 10,
     bool append = false,
-    String? fromDate,
-    String? toDate,
+    String? search,
   }) async {
-    // A filter change starts a new request generation. Responses from earlier
-    // stores/designations must not replace the currently selected result.
+    // A filter or search change starts a new request generation. Responses
+    // from earlier requests must not replace the currently selected result.
     final requestVersion = append ? _requestVersion : ++_requestVersion;
     if (!append) {
       state = const AsyncValue.loading();
@@ -46,8 +48,7 @@ class BreakDashboardEmployeesNotifier
         designationId: designationId,
         page: page,
         limit: limit,
-        fromDate: fromDate,
-        toDate: toDate,
+        search: search,
       );
       if (requestVersion != _requestVersion) return;
       int totalPages = data.totalPages;
@@ -97,14 +98,15 @@ class BreakDashboardEmployeesNotifier
 
 final employeeDashboardSummaryProvider = StateNotifierProvider.autoDispose
     .family<
-        EmployeeDashboardSummaryNotifier,
-        AsyncValue<EmployeeDashboardSummaryData?>,
-        int>((ref, employeeId) {
-  return EmployeeDashboardSummaryNotifier(
-    ref.read(breakReportRepoProvider),
-    employeeId,
-  );
-});
+      EmployeeDashboardSummaryNotifier,
+      AsyncValue<EmployeeDashboardSummaryData?>,
+      int
+    >((ref, employeeId) {
+      return EmployeeDashboardSummaryNotifier(
+        ref.read(breakReportRepoProvider),
+        employeeId,
+      );
+    });
 
 class EmployeeDashboardSummaryNotifier
     extends StateNotifier<AsyncValue<EmployeeDashboardSummaryData?>> {
@@ -112,12 +114,9 @@ class EmployeeDashboardSummaryNotifier
   final int employeeId;
 
   EmployeeDashboardSummaryNotifier(this._repo, this.employeeId)
-      : super(const AsyncValue.loading());
+    : super(const AsyncValue.loading());
 
-  Future<void> fetchSummary({
-    String? fromDate,
-    String? toDate,
-  }) async {
+  Future<void> fetchSummary({String? fromDate, String? toDate}) async {
     state = const AsyncValue.loading();
     try {
       final data = await _repo.getEmployeeDashboardSummary(
@@ -134,14 +133,15 @@ class EmployeeDashboardSummaryNotifier
 
 final employeeDashboardAttendanceProvider = StateNotifierProvider.autoDispose
     .family<
-        EmployeeDashboardAttendanceNotifier,
-        AsyncValue<EmployeeDashboardAttendancePage?>,
-        int>((ref, employeeId) {
-  return EmployeeDashboardAttendanceNotifier(
-    ref.read(breakReportRepoProvider),
-    employeeId,
-  );
-});
+      EmployeeDashboardAttendanceNotifier,
+      AsyncValue<EmployeeDashboardAttendancePage?>,
+      int
+    >((ref, employeeId) {
+      return EmployeeDashboardAttendanceNotifier(
+        ref.read(breakReportRepoProvider),
+        employeeId,
+      );
+    });
 
 class EmployeeDashboardAttendanceNotifier
     extends StateNotifier<AsyncValue<EmployeeDashboardAttendancePage?>> {
@@ -149,7 +149,7 @@ class EmployeeDashboardAttendanceNotifier
   final int employeeId;
 
   EmployeeDashboardAttendanceNotifier(this._repo, this.employeeId)
-      : super(const AsyncValue.loading());
+    : super(const AsyncValue.loading());
 
   Future<void> fetchAttendance({
     int page = 1,
@@ -197,14 +197,15 @@ class EmployeeDashboardAttendanceNotifier
 
 final employeeDashboardBreaksProvider = StateNotifierProvider.autoDispose
     .family<
-        EmployeeDashboardBreaksNotifier,
-        AsyncValue<EmployeeDashboardBreaksPage?>,
-        int>((ref, employeeId) {
-  return EmployeeDashboardBreaksNotifier(
-    ref.read(breakReportRepoProvider),
-    employeeId,
-  );
-});
+      EmployeeDashboardBreaksNotifier,
+      AsyncValue<EmployeeDashboardBreaksPage?>,
+      int
+    >((ref, employeeId) {
+      return EmployeeDashboardBreaksNotifier(
+        ref.read(breakReportRepoProvider),
+        employeeId,
+      );
+    });
 
 class EmployeeDashboardBreaksNotifier
     extends StateNotifier<AsyncValue<EmployeeDashboardBreaksPage?>> {
@@ -212,7 +213,7 @@ class EmployeeDashboardBreaksNotifier
   final int employeeId;
 
   EmployeeDashboardBreaksNotifier(this._repo, this.employeeId)
-      : super(const AsyncValue.loading());
+    : super(const AsyncValue.loading());
 
   Future<void> fetchBreaks({
     int page = 1,
@@ -259,9 +260,10 @@ class EmployeeDashboardBreaksNotifier
 }
 
 final breakReportProvider =
-    StateNotifierProvider<BreakReportNotifier, AsyncValue<BreakReportPaginatedData?>>(
-  (ref) => BreakReportNotifier(ref.read(breakReportRepoProvider)),
-);
+    StateNotifierProvider<
+      BreakReportNotifier,
+      AsyncValue<BreakReportPaginatedData?>
+    >((ref) => BreakReportNotifier(ref.read(breakReportRepoProvider)));
 
 class BreakReportNotifier
     extends StateNotifier<AsyncValue<BreakReportPaginatedData?>> {
@@ -343,14 +345,13 @@ class BreakReportNotifier
     int? designationId,
     int? employeeId,
     bool append = false,
-  }) =>
-      loadBreakReports(
-        page: page,
-        limit: limit,
-        date: date,
-        storeId: storeId,
-        designationId: designationId,
-        employeeId: employeeId,
-        append: append,
-      );
+  }) => loadBreakReports(
+    page: page,
+    limit: limit,
+    date: date,
+    storeId: storeId,
+    designationId: designationId,
+    employeeId: employeeId,
+    append: append,
+  );
 }

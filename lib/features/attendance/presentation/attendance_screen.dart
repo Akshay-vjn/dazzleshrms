@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:dazzleshrms/features/attendance/presentation/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,16 +44,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ref
           .read(attendanceProvider.notifier)
           .loadAttendance(
-        page: _currentPage,
-        limit: _limit,
-        forceRefresh: true,
-      );
+            page: _currentPage,
+            limit: _limit,
+            forceRefresh: true,
+          );
     });
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 120 &&
+            _scrollController.position.maxScrollExtent - 120 &&
         !_isLoadingMore) {
       final state = ref.read(attendanceProvider);
 
@@ -100,14 +104,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case "Present":
-        return AppTheme.statusSuccess;
+        return AppVisuals.of(context).green;
       case "Absent":
-        return AppTheme.statusError;
+        return AppVisuals.of(context).red;
       case "Half day-in":
       case "Half day-out":
         return AppTheme.statusWarning;
       default:
-        return Colors.grey;
+        return AppVisuals.of(context).muted;
     }
   }
 
@@ -115,8 +119,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget build(BuildContext context) {
     final attendanceState = ref.watch(attendanceProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Attendance")),
+    return AppScaffold(
+      appBar: const AppPageBar(title: 'Attendance'),
       body: attendanceState.when(
         loading: () => ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -143,63 +147,52 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
           return RefreshIndicator(
             onRefresh: _onRefresh,
-            child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _items.length + (_isLoadingMore ? 1 : 0) + 1,
-                separatorBuilder: (_, __) => const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return _buildSummaryCard(context, attendanceData);
-                  }
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _items.length + (_isLoadingMore ? 1 : 0) + 1,
+              separatorBuilder: (_, __) => const SizedBox(height: 20),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _buildSummaryCard(context, attendanceData);
+                }
 
-                  final listIndex = index - 1;
-                  if (listIndex == _items.length) {
-                    return const AttendanceShimmerItem();
-                  }
+                final listIndex = index - 1;
+                if (listIndex == _items.length) {
+                  return const AttendanceShimmerItem();
+                }
 
-                  final item = _items[listIndex];
-                  final statusColor = _statusColor(item.status);
+                final item = _items[listIndex];
+                final statusColor = _statusColor(item.status);
 
-                  final theme = Theme.of(context);
-                  final isDark = theme.brightness == Brightness.dark;
+                final theme = Theme.of(context);
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: theme.dividerColor.withOpacity(0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                          spreadRadius: 0,
-                        ),
-                      ],
+                return GlassSurface(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: Icon(
-                        Icons.calendar_today_outlined,
+                    leading: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Icon(
+                        Icons.fingerprint,
                         color: statusColor,
                       ),
-                      title: Text(
-                        item.date,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    title: Text(
+                      item.date,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      trailing: Text(
+                    ),
+                    trailing: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      child: Text(
                         item.status,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: statusColor,
@@ -208,9 +201,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           );
         },
@@ -224,30 +217,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     super.dispose();
   }
 
-  Widget _buildSummaryCard(BuildContext context, AttendanceData attendanceData) {
+  Widget _buildSummaryCard(
+    BuildContext context,
+    AttendanceData attendanceData,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final summaryCounts = attendanceData.summary.counts;
     final sortedCounts = summaryCounts.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return GlassSurface(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
@@ -261,7 +241,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                       Text(
                         "Total ",
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(
+                            0.7,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -269,7 +251,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                         attendanceData.totalItems.toString(),
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.PrimaryColor,
+                          color: AppVisuals(isDark).accent,
                         ),
                       ),
                     ],
@@ -283,7 +265,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                     });
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -300,7 +285,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                           _isSummaryExpanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: AppTheme.PrimaryColor,
+                          color: AppVisuals(isDark).accent,
                         ),
                       ],
                     ),
@@ -318,7 +303,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   child: Text(
                     "No leave counts available",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.7,
+                      ),
                     ),
                   ),
                 )
@@ -340,7 +327,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                                 entry.value.toString(),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: AppTheme.PrimaryColor,
+                                  color: AppVisuals(isDark).accent,
                                 ),
                               ),
                             ],

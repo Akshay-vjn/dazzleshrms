@@ -1,6 +1,8 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/app_theme/app_theme.dart';
+import '../../../core/app_theme/app_visuals.dart';
 import '../data/provider/notification_provider.dart';
 import './widgets/notificationtile.dart';
 
@@ -19,7 +21,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(allNotificationsProvider.notifier).loadNotifications(isRefresh: true);
+      ref
+          .read(allNotificationsProvider.notifier)
+          .loadNotifications(isRefresh: true);
     });
   }
 
@@ -30,7 +34,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref.read(allNotificationsProvider.notifier).loadNotifications();
     }
@@ -40,11 +44,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(allNotificationsProvider);
     final notifier = ref.read(allNotificationsProvider.notifier);
+    final colors = AppVisuals.of(context);
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notifications"),
-      ),
+    return AppScaffold(
+      appBar: const AppPageBar(title: 'Notifications'),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -53,29 +57,21 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: AppTheme.statusError.withOpacity(0.7),
-                ),
+                Icon(Icons.error_outline_rounded, size: 48, color: colors.red),
                 const SizedBox(height: 16),
                 Text(
                   "Oops! Something went wrong",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   e.toString(),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.color
-                            ?.withValues(alpha: 0.7),
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colors.muted),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
@@ -93,11 +89,24 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: colors.accentSurface,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Icon(
+                      Icons.notifications_none_rounded,
+                      size: 40,
+                      color: colors.accent,
+                    ),
+                  ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     "No notifications found",
-                    style: TextStyle(color: Colors.grey),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colors.muted,
+                    ),
                   ),
                 ],
               ),
@@ -109,6 +118,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
               await notifier.loadNotifications(isRefresh: true);
             },
             child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
               itemCount: data.records.length + (notifier.hasNextPage ? 1 : 0),

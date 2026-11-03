@@ -25,10 +25,12 @@ class ProfileImageChangeRequestsNotifier
 
   final ProfileImageChangeRequestRepository _repository;
 
-  Future<void> load() async {
+  Future<void> load({int? storeId}) async {
     state = const AsyncValue.loading();
     try {
-      state = AsyncValue.data(await _repository.fetchPendingRequests());
+      state = AsyncValue.data(
+        await _repository.fetchPendingRequests(storeId: storeId),
+      );
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }

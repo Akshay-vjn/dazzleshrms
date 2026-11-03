@@ -1,4 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
@@ -14,6 +17,8 @@ class AttendanceWidget extends StatefulWidget {
   final AnimationController animationController;
   final double intervalStart;
   final String? attendanceStatus;
+  final String? checkinTime;
+  final String? checkoutTime;
   final ValueChanged<String>? onStatusChanged;
 
   const AttendanceWidget({
@@ -21,6 +26,8 @@ class AttendanceWidget extends StatefulWidget {
     required this.animationController,
     this.intervalStart = 0.0,
     this.attendanceStatus,
+    this.checkinTime,
+    this.checkoutTime,
     this.onStatusChanged,
   });
 
@@ -46,12 +53,11 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
     _attendanceStatus = _normalizeStatus(widget.attendanceStatus);
   }
 
-  Future<void> _playSuccessSound(bool isCheckIn) async {
+  Future<void> _playSuccessSound() async {
     try {
       final soundPath = 'audio/notification.mp3';
       await _audioPlayer.play(AssetSource(soundPath));
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   @override
@@ -68,9 +74,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       LocationPermission permission = await Geolocator.checkPermission();
@@ -88,7 +92,10 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       if (permission == LocationPermission.deniedForever) {
         if (context.mounted) {
           Navigator.pop(context);
-          _showError(context, 'Location permission is permanently denied. Please enable it in settings.');
+          _showError(
+            context,
+            'Location permission is permanently denied. Please enable it in settings.',
+          );
         }
         return;
       }
@@ -151,9 +158,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
       barrierDismissible: true,
       builder: (ctx) => Dialog(
         backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
           child: Column(
@@ -210,10 +215,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                   ),
                   child: const Text(
                     "OK",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
                 ),
               ),
@@ -240,10 +242,10 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   }
 
   void _showQrDialog(
-      BuildContext context,
-      bool isCheckIn,
-      AttendanceQrResponse qrResponse,
-      ) {
+    BuildContext context,
+    bool isCheckIn,
+    AttendanceQrResponse qrResponse,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -256,7 +258,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
             _attendanceStatus = newStatus;
           });
           widget.onStatusChanged?.call(newStatus);
-          _playSuccessSound(isCheckIn);
+          _playSuccessSound();
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -278,49 +280,29 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
-    final textColor = isDark ? Colors.white : Colors.black.withOpacity(0.85);
+    final textColor = AppVisuals(isDark).text;
 
+    final entranceAnimation = widget.animationController.drive(
+      CurveTween(
+        curve: Interval(
+          widget.intervalStart,
+          widget.intervalStart + 0.1,
+          curve: Curves.easeOut,
+        ),
+      ),
+    );
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 0.1),
         end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: widget.animationController,
-          curve: Interval(
-            widget.intervalStart,
-            widget.intervalStart + 0.1,
-            curve: Curves.easeOut,
-          ),
-        ),
-      ),
+      ).animate(entranceAnimation),
       child: FadeTransition(
-        opacity: CurvedAnimation(
-          parent: widget.animationController,
-          curve: Interval(
-            widget.intervalStart,
-            widget.intervalStart + 0.1,
-            curve: Curves.easeOut,
-          ),
-        ),
-        child: Container(
+        opacity: entranceAnimation,
+        child: GlassSurface(
+          radius: 28,
           margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: AppTheme.PrimaryColor.withOpacity(isDark ? 0.35 : 0.18),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.45 : 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -328,18 +310,18 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.PrimaryColor.withOpacity(0.12),
+                      color: AppVisuals(isDark).accentSurface,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.fingerprint,
-                      color: AppTheme.PrimaryColor,
-                      size: 28,
+                      color: AppVisuals(isDark).accent,
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,12 +334,12 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        // Text(
-                        //   _attendanceStatus,
-                        //   style: theme.textTheme.bodyMedium?.copyWith(
-                        //     color: textColor.withOpacity(0.6),
-                        //   ),
-                        // ),
+                        Text(
+                          DateFormat('EEEE, d MMMM').format(DateTime.now()),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppVisuals(isDark).muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -368,9 +350,7 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: (_isActive
-                          ? AppTheme.statusSuccess
-                          : Colors.grey)
+                      color: (_isActive ? AppTheme.statusSuccess : Colors.grey)
                           .withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -389,7 +369,9 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          _attendanceStatus,
+                          _attendanceStatus == 'OFFLINE'
+                              ? 'ABSENT'
+                              : _attendanceStatus,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -403,7 +385,16 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _timePanel('Check in', widget.checkinTime)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _timePanel('Check out', widget.checkoutTime)),
+                ],
+              ),
+              const SizedBox(height: 12),
               // Action Buttons
               if (_isActive)
                 SizedBox(
@@ -432,13 +423,41 @@ class _AttendanceWidgetState extends State<AttendanceWidget> {
     );
   }
 
+  Widget _timePanel(String label, String? time) {
+    final colors = AppVisuals.of(context);
+    final value = time?.trim();
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: colors.inset.withValues(alpha: .55),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: colors.muted, fontSize: 13)),
+          const SizedBox(height: 4),
+          Text(
+            value == null || value.isEmpty ? '--:--' : value,
+            style: TextStyle(
+              color: colors.text,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
   }
 }
-
 
 class _TonalButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -463,8 +482,8 @@ class _TonalButton extends StatelessWidget {
     final Color effectiveColor = disabled ? color.withOpacity(0.4) : color;
     final Color foregroundColor =
         Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : effectiveColor;
+        ? Colors.white
+        : effectiveColor;
 
     return Material(
       color: color.withOpacity(disabled ? 0.18 : 0.36),
@@ -487,13 +506,15 @@ class _TonalButton extends StatelessWidget {
             children: [
               isLoading
                   ? SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
-                ),
-              )
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          effectiveColor,
+                        ),
+                      ),
+                    )
                   : Icon(icon, size: 20, color: foregroundColor),
               const SizedBox(width: 8),
               Text(
@@ -538,7 +559,9 @@ class _QrDialogState extends State<_QrDialog> {
   void initState() {
     super.initState();
 
-    debugPrint('🧾 qrSessionId from response: ${widget.qrResponse.data.qrSessionId}');
+    debugPrint(
+      '🧾 qrSessionId from response: ${widget.qrResponse.data.qrSessionId}',
+    );
 
     final qrImageBase64 = widget.qrResponse.data.qrImage;
     final base64String = qrImageBase64.split(',').last;
@@ -571,8 +594,9 @@ class _QrDialogState extends State<_QrDialog> {
     debugPrint('📡 Starting QR status polling for qrId=$qrId');
     _statusTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       try {
-        final AttendanceQrStatusResponse resp =
-        await _repo.getQrStatus(qrId: qrId);
+        final AttendanceQrStatusResponse resp = await _repo.getQrStatus(
+          qrId: qrId,
+        );
 
         if (!mounted) return;
 
@@ -584,8 +608,7 @@ class _QrDialogState extends State<_QrDialog> {
             widget.onSuccess();
           }
         }
-      } catch (_) {
-      }
+      } catch (_) {}
     });
   }
 
@@ -615,7 +638,7 @@ class _QrDialogState extends State<_QrDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withOpacity(0.12),
+                    color: AppVisuals(isDark).accentSurface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -638,8 +661,9 @@ class _QrDialogState extends State<_QrDialog> {
                       Text(
                         "Show QR to scanner",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color
-                              ?.withOpacity(0.6),
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                            0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -654,10 +678,7 @@ class _QrDialogState extends State<_QrDialog> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.grey.shade200,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.grey.shade200, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -720,49 +741,6 @@ class _QrDialogState extends State<_QrDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            // Buttons
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       child: OutlinedButton(
-            //         onPressed: () => Navigator.pop(context),
-            //         style: OutlinedButton.styleFrom(
-            //           padding: const EdgeInsets.symmetric(vertical: 14),
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(12),
-            //           ),
-            //         ),
-            //         child: const Text(
-            //           "Cancel",
-            //           style: TextStyle(
-            //             fontSize: 15,
-            //             fontWeight: FontWeight.w600,
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //     const SizedBox(width: 12),
-            //     Expanded(
-            //       child: FilledButton(
-            //         onPressed: widget.onSuccess,
-            //         style: FilledButton.styleFrom(
-            //           backgroundColor: AppTheme.statusSuccess,
-            //           padding: const EdgeInsets.symmetric(vertical: 14),
-            //           shape: RoundedRectangleBorder(
-            //             borderRadius: BorderRadius.circular(12),
-            //           ),
-            //         ),
-            //         child: const Text(
-            //           "Done",
-            //           style: TextStyle(
-            //             fontSize: 15,
-            //             fontWeight: FontWeight.w600,
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
           ],
         ),
       ),

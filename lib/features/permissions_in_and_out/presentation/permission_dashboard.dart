@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
 import 'package:dio/dio.dart';
 import 'package:dazzleshrms/core/api_config/api_config.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
@@ -5,10 +6,14 @@ import 'package:flutter/material.dart';
 
 class PermissionDashboard extends StatefulWidget {
   final Widget actions;
+  final VoidCallback? onLoading;
+  final VoidCallback? onContentReady;
 
   const PermissionDashboard({
     super.key,
     required this.actions,
+    this.onLoading,
+    this.onContentReady,
   });
 
   @override
@@ -19,6 +24,7 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
   final Dio _dio = ApiConfig.dio;
   late Future<_PermissionDashboardData> _dashboardFuture;
   int _historyTabIndex = 0;
+  bool _contentReadyNotified = false;
 
   @override
   void initState() {
@@ -60,7 +66,9 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                       child: Text(
                         snapshot.error.toString(),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                   ),
@@ -71,6 +79,7 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
         }
 
         final data = snapshot.data ?? const _PermissionDashboardData.empty();
+        _notifyContentReady();
         return RefreshIndicator(
           onRefresh: _reloadDashboard,
           child: SingleChildScrollView(
@@ -88,8 +97,8 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                 Text(
                   "History",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -118,12 +127,17 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
                     child: const Center(
                       child: Text(
                         "No permission history",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   )
                 else
-                  ..._selectedHistory(data).map((item) => _HistoryTile(item: item)),
+                  ..._selectedHistory(
+                    data,
+                  ).map((item) => _HistoryTile(item: item)),
               ],
             ),
           ),
@@ -133,10 +147,21 @@ class _PermissionDashboardState extends State<PermissionDashboard> {
   }
 
   Future<void> _reloadDashboard() async {
+    widget.onLoading?.call();
+    _contentReadyNotified = false;
     setState(() {
       _dashboardFuture = _fetchDashboard();
     });
     await _dashboardFuture;
+  }
+
+  void _notifyContentReady() {
+    if (_contentReadyNotified) return;
+    _contentReadyNotified = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onContentReady?.call();
+    });
   }
 
   List<_HistoryItem> _selectedHistory(_PermissionDashboardData data) {
@@ -171,9 +196,9 @@ class _PermissionDashboardData {
   });
 
   const _PermissionDashboardData.empty()
-      : nextPermission = null,
-        lateEarlyHistory = const [],
-        inOutHistory = const [];
+    : nextPermission = null,
+      lateEarlyHistory = const [],
+      inOutHistory = const [];
 
   factory _PermissionDashboardData.fromJson(Map<String, dynamic> json) {
     final nextRaw = json["nextPermission"] as Map<String, dynamic>?;
@@ -181,7 +206,9 @@ class _PermissionDashboardData {
     final attendanceAdjustments =
         json["attendanceAdjustments"] as List<dynamic>? ?? const [];
     return _PermissionDashboardData(
-      nextPermission: nextRaw == null ? null : _NextPermission.fromJson(nextRaw),
+      nextPermission: nextRaw == null
+          ? null
+          : _NextPermission.fromJson(nextRaw),
       lateEarlyHistory: attendanceAdjustments
           .whereType<Map<String, dynamic>>()
           .map(_HistoryItem.fromAttendanceJson)
@@ -242,10 +269,11 @@ class _HistoryItem {
       date: (json["date"] ?? "--").toString(),
       typeLabel: null,
       status: (json["statusText"] ?? json["status"] ?? "--").toString(),
-      outTime: (json["appliedOutTimeFormatted"] ?? json["appliedOutTime"] ?? "--")
+      outTime:
+          (json["appliedOutTimeFormatted"] ?? json["appliedOutTime"] ?? "--")
+              .toString(),
+      inTime: (json["appliedInTimeFormatted"] ?? json["appliedInTime"] ?? "--")
           .toString(),
-      inTime:
-          (json["appliedInTimeFormatted"] ?? json["appliedInTime"] ?? "--").toString(),
       reason: (json["reason"] ?? "--").toString(),
     );
   }
@@ -257,7 +285,8 @@ class _HistoryItem {
       date: (json["date"] ?? "--").toString(),
       typeLabel: typeLabel,
       status: (json["status"] ?? "--").toString(),
-      outTime: (json["fromTimeFormatted"] ?? json["fromTime"] ?? "--").toString(),
+      outTime: (json["fromTimeFormatted"] ?? json["fromTime"] ?? "--")
+          .toString(),
       inTime: (json["toTimeFormatted"] ?? json["toTime"] ?? "--").toString(),
       reason: (json["reason"] ?? "--").toString(),
     );
@@ -275,35 +304,15 @@ class _NextPermissionCard extends StatelessWidget {
     final statusColor = status == "UPCOMING"
         ? AppTheme.statusInfo
         : status == "COMPLETED"
-            ? AppTheme.statusSuccess
-            : status == "PENDING"
-                ? AppTheme.statusWarning
-                : AppTheme.statusInfo;
+        ? AppTheme.statusSuccess
+        : status == "PENDING"
+        ? AppTheme.statusWarning
+        : AppTheme.statusInfo;
 
-    return Container(
+    return AppSurface(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).cardColor,
-            Theme.of(context).cardColor.withValues(alpha: 0.92),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.25),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,13 +322,16 @@ class _NextPermissionCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 "Next Permission",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
@@ -377,7 +389,9 @@ class _TimeBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.65),
+        color: Theme.of(
+          context,
+        ).scaffoldBackgroundColor.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -391,14 +405,14 @@ class _TimeBlock extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).hintColor,
-                      ),
+                    color: Theme.of(context).hintColor,
+                  ),
                 ),
                 Text(
                   value,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -431,20 +445,10 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(item.status);
-    return Container(
+    return AppSurface(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -457,16 +461,16 @@ class _HistoryTile extends StatelessWidget {
                     Text(
                       item.date,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if ((item.typeLabel ?? "").isNotEmpty)
                       Text(
                         item.typeLabel!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                   ],
                 ),
@@ -517,7 +521,9 @@ class _HistoryTabChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : Theme.of(context).cardColor,
+          color: selected
+              ? color.withValues(alpha: 0.12)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: selected ? color : Colors.grey.withValues(alpha: 0.3),

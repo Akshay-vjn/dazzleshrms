@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -18,10 +21,12 @@ class EmployeePendingLeavesScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EmployeePendingLeavesScreen> createState() => _EmployeePendingLeavesScreenState();
+  ConsumerState<EmployeePendingLeavesScreen> createState() =>
+      _EmployeePendingLeavesScreenState();
 }
 
-class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLeavesScreen> {
+class _EmployeePendingLeavesScreenState
+    extends ConsumerState<EmployeePendingLeavesScreen> {
   final int _limit = 10;
   int _currentPage = 1;
 
@@ -35,10 +40,9 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
 
   Future<void> _refresh() async {
     _currentPage = 1;
-    await ref.read(employeePendingLeavesProvider(widget.employeeId).notifier).loadPendingLeaves(
-          page: _currentPage,
-          limit: _limit,
-        );
+    await ref
+        .read(employeePendingLeavesProvider(widget.employeeId).notifier)
+        .loadPendingLeaves(page: _currentPage, limit: _limit);
   }
 
   void _handleSuccess(String message) {
@@ -80,17 +84,23 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
         onSubmitted: (decisions, reason) async {
           Navigator.pop(context);
 
-          final apiDecisions = decisions.entries.map((e) => {
-            "date": DateFormat('yyyy-MM-dd').format(e.key),
-            "action": e.value ? "APPROVE" : "REJECT"
-          }).toList();
+          final apiDecisions = decisions.entries
+              .map(
+                (e) => {
+                  "date": DateFormat('yyyy-MM-dd').format(e.key),
+                  "action": e.value ? "APPROVE" : "REJECT",
+                },
+              )
+              .toList();
 
           try {
-            await ref.read(employeeLeaveApprovalProvider.notifier).approveLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              decisions: apiDecisions,
-              rejectReason: reason,
-            );
+            await ref
+                .read(employeeLeaveApprovalProvider.notifier)
+                .approveLeave(
+                  leaveRoasterId: item.leaveRoasterId,
+                  decisions: apiDecisions,
+                  rejectReason: reason,
+                );
             _handleSuccess("Leave processed successfully");
           } catch (e) {
             _handleError(e);
@@ -111,10 +121,12 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
           Navigator.pop(context);
 
           try {
-            await ref.read(employeeLeaveApprovalProvider.notifier).rejectLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              rejectReason: reason,
-            );
+            await ref
+                .read(employeeLeaveApprovalProvider.notifier)
+                .rejectLeave(
+                  leaveRoasterId: item.leaveRoasterId,
+                  rejectReason: reason,
+                );
             _handleSuccess("Leave rejected successfully");
           } catch (e) {
             _handleError(e);
@@ -126,15 +138,13 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
 
   @override
   Widget build(BuildContext context) {
-    final pendingState = ref.watch(employeePendingLeavesProvider(widget.employeeId));
+    final pendingState = ref.watch(
+      employeePendingLeavesProvider(widget.employeeId),
+    );
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Approvals"),
-        centerTitle: true,
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Approvals'),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: pendingState.when(
@@ -166,20 +176,9 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
               itemBuilder: (context, index) {
                 final item = items[index];
 
-                return Container(
+                return AppSurface(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -189,28 +188,51 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
                           Expanded(
                             child: Text(
                               item.employeeName,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.statusWarning.withValues(alpha: 0.1),
+                              color: AppTheme.statusWarning.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               "Pending",
-                              style: TextStyle(color: AppTheme.statusWarning, fontSize: 12, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: AppTheme.statusWarning,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _infoRow(context, Icons.badge_outlined, "Code: ${item.empCode}"),
+                      _infoRow(
+                        context,
+                        Icons.badge_outlined,
+                        "Code: ${item.empCode}",
+                      ),
                       _infoRow(context, Icons.work_outline, item.designation),
                       _infoRow(context, Icons.storefront_outlined, item.store),
-                      _infoRow(context, Icons.calendar_today_outlined, "${item.fromDate} → ${item.toDate}"),
-                      _infoRow(context, Icons.category_outlined, "Type: ${item.leaveType}"),
+                      _infoRow(
+                        context,
+                        Icons.calendar_today_outlined,
+                        "${item.fromDate} → ${item.toDate}",
+                      ),
+                      _infoRow(
+                        context,
+                        Icons.category_outlined,
+                        "Type: ${item.leaveType}",
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -218,7 +240,9 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
                             child: OutlinedButton(
                               onPressed: () => _showRejectSheet(item),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppTheme.statusError),
+                                side: const BorderSide(
+                                  color: AppTheme.statusError,
+                                ),
                                 foregroundColor: AppTheme.statusError,
                               ),
                               child: const Text("Reject"),
@@ -255,10 +279,7 @@ class _EmployeePendingLeavesScreenState extends ConsumerState<EmployeePendingLea
           Icon(icon, size: 14, color: Theme.of(context).hintColor),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
       ),

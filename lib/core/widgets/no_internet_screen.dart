@@ -1,5 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:go_router/go_router.dart';
 import '../app_theme/app_theme.dart';
@@ -12,8 +13,7 @@ class NoInternetScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+    return AppScaffold(
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -23,29 +23,29 @@ class NoInternetScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.PrimaryColor.withOpacity(0.1),
+                color: AppVisuals.of(context).accent.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.wifi_off_rounded,
                 size: 80,
-                color: AppTheme.PrimaryColor,
+                color: AppVisuals.of(context).accent,
               ),
             ),
             const SizedBox(height: 40),
             Text(
               'No Internet Connection',
               textAlign: TextAlign.center,
-              style: theme.textTheme.headlineLarge?.copyWith(
-                fontSize: 28,
-              ),
+              style: theme.textTheme.headlineLarge?.copyWith(fontSize: 28),
             ),
             const SizedBox(height: 16),
             Text(
               'Please check your network settings and try again.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
+                color: isDark
+                    ? AppTheme.textMutedDark
+                    : AppTheme.textMutedLight,
               ),
             ),
             const SizedBox(height: 48),
@@ -66,7 +66,7 @@ class NoInternetScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           'Still no internet connection',
-                          style: GoogleFonts.outfit(),
+                          style: const TextStyle(fontFamily: 'Outfit'),
                         ),
                         backgroundColor: AppTheme.statusError,
                         behavior: SnackBarBehavior.floating,

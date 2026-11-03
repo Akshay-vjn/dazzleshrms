@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:dio/dio.dart';
@@ -34,16 +36,14 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
     if (_controllerDisposed) return;
     try {
       await _controller.stop();
-    } on MobileScannerException catch (_) {
-    }
+    } on MobileScannerException catch (_) {}
   }
 
   Future<void> _startScanner() async {
     if (!mounted || _controllerDisposed) return;
     try {
       await _controller.start();
-    } on MobileScannerException catch (_) {
-    }
+    } on MobileScannerException catch (_) {}
   }
 
   void _closeLoadingDialog() {
@@ -240,14 +240,9 @@ class _AttendanceQrScanState extends State<AttendanceQrScan> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        elevation: 0,
-        title: const Text(
-          'Attendance Scanner',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
+      appBar: AppPageBar(
+        title: 'Attendance Scanner',
+        backgroundColor: AppVisuals.of(context).background,
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -433,39 +428,42 @@ class _PinDialogState extends State<_PinDialog> {
     final pinTheme = PinTheme(
       width: 48,
       height: 56,
-      textStyle: const TextStyle(
+      textStyle: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: Colors.white,
+        color: AppVisuals.of(context).text,
       ),
       decoration: BoxDecoration(
-        color: Colors.white12,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        color: AppVisuals.of(context).inset,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppVisuals.of(context).border, width: 1.5),
       ),
     );
 
     return Dialog(
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: AppVisuals.of(context).surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Enter Session PIN',
               style: TextStyle(
-                color: Colors.white,
+                color: AppVisuals.of(context).text,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Type the PIN shown on the employee\'s screen',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 13),
+              style: TextStyle(
+                color: AppVisuals.of(context).muted,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 28),
             Pinput(
@@ -477,14 +475,17 @@ class _PinDialogState extends State<_PinDialog> {
               defaultPinTheme: pinTheme,
               focusedPinTheme: pinTheme.copyWith(
                 decoration: pinTheme.decoration!.copyWith(
-                  border: Border.all(color: AppTheme.PrimaryColor, width: 2),
+                  border: Border.all(
+                    color: AppVisuals.of(context).accent,
+                    width: 2,
+                  ),
                 ),
               ),
               submittedPinTheme: pinTheme.copyWith(
                 decoration: pinTheme.decoration!.copyWith(
-                  color: AppTheme.PrimaryColor.withValues(alpha: 0.15),
+                  color: AppVisuals.of(context).accent.withValues(alpha: 0.15),
                   border: Border.all(
-                    color: AppTheme.PrimaryColor.withValues(alpha: 0.5),
+                    color: AppVisuals.of(context).accent.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                 ),

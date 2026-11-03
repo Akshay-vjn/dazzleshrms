@@ -47,10 +47,4 @@ class QrData {
       sessionPin: (json['sessionPin'] as num?)?.toInt(),
     );
   }
-
-  int get remainingSeconds {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final remaining = (expiresAt - now) / 1000;
-    return remaining > 0 ? remaining.ceil() : 0;
-  }
 }

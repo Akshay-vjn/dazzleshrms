@@ -1,7 +1,7 @@
+import 'announcement_selection_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/app_theme/app_theme.dart';
 import '../../data/providers/announcement_provider.dart';
 
 class DesignationSheet extends ConsumerStatefulWidget {
@@ -30,15 +30,9 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final designationsAsync = ref.watch(designationsProvider);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return AnnouncementSelectionSurface(
       child: Column(
         children: [
           // HEADER
@@ -47,11 +41,10 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Select Designations",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    "Select Designations",
+                    style: theme.textTheme.titleMedium,
                   ),
                 ),
                 TextButton(
@@ -60,7 +53,9 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
                     widget.onSelect(
                       _tempSelectedIds,
                       allDesignations
-                          .where((d) => _tempSelectedIds.contains(d.designationId))
+                          .where(
+                            (d) => _tempSelectedIds.contains(d.designationId),
+                          )
                           .map((d) => d.designation)
                           .toList(),
                     );
@@ -71,7 +66,7 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
               ],
             ),
           ),
-          Divider(height: 1, color: theme.dividerColor.withOpacity(0.2)),
+          Divider(height: 1, thickness: .5, color: theme.dividerColor),
 
           // LIST
           Expanded(
@@ -79,9 +74,11 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (list) => ListView(
+                padding: const EdgeInsets.all(12),
                 children: [
                   CheckboxListTile(
                     title: const Text("All Designations"),
+                    selected: _tempSelectedIds.isEmpty,
                     value: _tempSelectedIds.isEmpty,
                     onChanged: (val) {
                       setState(() {
@@ -94,6 +91,7 @@ class _DesignationSheetState extends ConsumerState<DesignationSheet> {
                   ...list.map(
                     (d) => CheckboxListTile(
                       title: Text(d.designation),
+                      selected: _tempSelectedIds.contains(d.designationId),
                       value: _tempSelectedIds.contains(d.designationId),
                       onChanged: (val) {
                         setState(() {

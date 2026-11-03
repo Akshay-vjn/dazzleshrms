@@ -1,7 +1,12 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -16,7 +21,6 @@ import '../../approvals/data/models/designation_model.dart';
 import '../../approvals/data/providers/approvals_provider.dart';
 import '../data/models/break_report_response.dart';
 import '../data/providers/break_report_provider.dart';
-import 'break_reports_dashboardScreen.dart';
 import 'widgets/searchable_filter_sheet.dart';
 
 class BreakReportsScreen extends ConsumerStatefulWidget {
@@ -88,7 +92,8 @@ class _BreakReportsDashboardScreenState
   }
 
   bool _showStoreDesignationFilters(String? dashboardRole) {
-    final role = ((dashboardRole != null && dashboardRole.isNotEmpty)
+    final role =
+    ((dashboardRole != null && dashboardRole.isNotEmpty)
         ? dashboardRole
         : _sessionRole)
         .toLowerCase()
@@ -107,7 +112,9 @@ class _BreakReportsDashboardScreenState
   void _loadData() {
     _items.clear();
     _currentPage = 1;
-    ref.read(breakReportProvider.notifier).loadBreakReports(
+    ref
+        .read(breakReportProvider.notifier)
+        .loadBreakReports(
       page: _currentPage,
       limit: _limit,
       date: _formattedDate,
@@ -117,8 +124,9 @@ class _BreakReportsDashboardScreenState
       append: false,
     );
     if (mounted) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
@@ -132,8 +140,8 @@ class _BreakReportsDashboardScreenState
           final hasMorePages = data.totalPages > 0
               ? _currentPage < data.totalPages
               : (data.totalItems > 0
-                  ? _items.length < data.totalItems
-                  : data.records.length >= _limit);
+              ? _items.length < data.totalItems
+              : data.records.length >= _limit);
           if (hasMorePages) {
             _loadNextPage();
           }
@@ -174,8 +182,8 @@ class _BreakReportsDashboardScreenState
         final hasMorePages = data.totalPages > 0
             ? _currentPage < data.totalPages
             : (data.totalItems > 0
-                ? _items.length < data.totalItems
-                : data.records.length >= _limit);
+            ? _items.length < data.totalItems
+            : data.records.length >= _limit);
         if (hasMorePages) {
           _loadNextPage();
         }
@@ -187,7 +195,9 @@ class _BreakReportsDashboardScreenState
     if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _currentPage + 1;
-    await ref.read(breakReportProvider.notifier).loadBreakReports(
+    await ref
+        .read(breakReportProvider.notifier)
+        .loadBreakReports(
       page: nextPage,
       limit: _limit,
       date: _formattedDate,
@@ -201,36 +211,42 @@ class _BreakReportsDashboardScreenState
         _currentPage = nextPage;
         _isLoadingMore = false;
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final colors = AppVisuals.of(context);
+    final theme = Theme.of(context);
+    final picked = await showModalBottomSheet<DateTime>(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2024),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        final theme = Theme.of(context);
-        final actionColor = theme.brightness == Brightness.light
-            ? AppTheme.textPrimaryLight
-            : AppTheme.PrimaryColor;
-        return Theme(
-          data: theme.copyWith(
-            colorScheme: theme.colorScheme.copyWith(
-              primary: AppTheme.PrimaryColor,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: actionColor),
-            ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => Theme(
+        data: theme.copyWith(
+          colorScheme: theme.colorScheme.copyWith(
+            primary: AppTheme.PrimaryColor,
           ),
-          child: child!,
-        );
-      },
+          datePickerTheme: theme.datePickerTheme.copyWith(
+            backgroundColor: colors.surface,
+            surfaceTintColor: Colors.transparent,
+          ),
+        ),
+        child: _CompactDatePickerSheet(
+          initialDate: _selectedDate,
+          firstDate: DateTime(2024),
+          lastDate: DateTime.now(),
+        ),
+      ),
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null && !DateUtils.isSameDay(picked, _selectedDate)) {
       setState(() => _selectedDate = picked);
       _onFilterChanged();
     }
@@ -255,9 +271,9 @@ class _BreakReportsDashboardScreenState
       debugPrint('[StoreFilterSheet] Fresh store options: $stores');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load stores: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load stores: $error')));
       return;
     }
     if (!mounted) return;
@@ -281,10 +297,7 @@ class _BreakReportsDashboardScreenState
         _selectedEmployeeId = null;
         _selectedEmployeeName = null;
       });
-      await _saveStoreFilter(
-        storeId: result['id'],
-        storeName: result['name'],
-      );
+      await _saveStoreFilter(storeId: result['id'], storeName: result['name']);
       _onFilterChanged();
     }
   }
@@ -311,8 +324,9 @@ class _BreakReportsDashboardScreenState
 
   void _showEmployeePicker() async {
     final key = '${_selectedStoreId ?? ''}|${_selectedDesignationId ?? ''}';
-    final employeesAsync =
-    ref.read(employeesByStoreAndDesignationProvider(key));
+    final employeesAsync = ref.read(
+      employeesByStoreAndDesignationProvider(key),
+    );
     await employeesAsync.when(
       data: (employees) async {
         final result = await showModalBottomSheet<Map<String, dynamic>>(
@@ -340,97 +354,11 @@ class _BreakReportsDashboardScreenState
     );
   }
 
-
-
-  Widget _buildDateFilter(bool isDark) {
-    final isToday =
-        DateFormat('yyyy-MM-dd').format(DateTime.now()) == _formattedDate;
-    final accent = AppTheme.accent(isDark);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          InkWell(
-            onTap: _pickDate,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: isDark ? 0.12 : 0.10),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: accent.withValues(alpha: isDark ? 0.3 : 0.35),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.calendar_today_rounded, size: 15, color: accent),
-                  const SizedBox(width: 8),
-                  Text(
-                    isToday
-                        ? 'Today'
-                        : DateFormat('dd MMM yyyy').format(_selectedDate),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13.5,
-                      color: accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BreakReportsDashboardscreen(),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: isDark ? 0.12 : 0.10),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: accent.withValues(alpha: isDark ? 0.3 : 0.35),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.dashboard_rounded,
-                    size: 16,
-                    color: accent,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Dashboard',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: accent,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFilters() {
-    final hasActiveFilters = _selectedStoreId != null ||
-        _selectedDesignationId != null ||
-        _selectedEmployeeId != null;
+    final hasActiveFilters =
+        _selectedStoreId != null ||
+            _selectedDesignationId != null ||
+            _selectedEmployeeId != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -490,8 +418,9 @@ class _BreakReportsDashboardScreenState
 
   void _showImagePopup(BreakReportItem item) {
     final imageUrl = _getFullImageUrl(item.profileImage);
-    final letter =
-    item.employeeName.isNotEmpty ? item.employeeName[0].toUpperCase() : '?';
+    final letter = item.employeeName.isNotEmpty
+        ? item.employeeName[0].toUpperCase()
+        : '?';
 
     showDialog(
       context: context,
@@ -506,8 +435,10 @@ class _BreakReportsDashboardScreenState
                 behavior: HitTestBehavior.opaque,
                 child: Center(
                   child: Padding(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 60),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 60,
+                    ),
                     child: imageUrl.isNotEmpty
                         ? ClipRRect(
                       borderRadius: BorderRadius.circular(16),
@@ -526,8 +457,9 @@ class _BreakReportsDashboardScreenState
                             width: 200,
                             height: 200,
                             decoration: BoxDecoration(
-                              color:
-                              AppTheme.PrimaryColor.withValues(alpha: 0.2),
+                              color: AppTheme.PrimaryColor.withValues(
+                                alpha: 0.2,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -548,7 +480,9 @@ class _BreakReportsDashboardScreenState
                       width: 200,
                       height: 200,
                       decoration: BoxDecoration(
-                        color: AppTheme.PrimaryColor.withValues(alpha: 0.2),
+                        color: AppVisuals.of(
+                          context,
+                        ).accent.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -590,8 +524,9 @@ class _BreakReportsDashboardScreenState
   Widget _buildAvatar(BreakReportItem item, bool isDark) {
     final imageUrl = _getFullImageUrl(item.profileImage);
     final hasImage = imageUrl.isNotEmpty;
-    final letter =
-    item.employeeName.isNotEmpty ? item.employeeName[0].toUpperCase() : '?';
+    final letter = item.employeeName.isNotEmpty
+        ? item.employeeName[0].toUpperCase()
+        : '?';
     final accent = AppTheme.accent(isDark);
 
     final avatarWidget = hasImage
@@ -713,22 +648,27 @@ class _BreakReportsDashboardScreenState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final dashboardRole = ref.watch(dashboardProvider).valueOrNull?.role;
-    final showStoreDesignationFilters =
-    _showStoreDesignationFilters(dashboardRole);
+    final showStoreDesignationFilters = _showStoreDesignationFilters(
+      dashboardRole,
+    );
     if (showStoreDesignationFilters) {
       ref.watch(storeProvider);
       ref.watch(designationProvider);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Break Reports'),
-        centerTitle: true,
-        elevation: 0,
+    return AppScaffold(
+      appBar: AppPageBar(
+        title: 'Break Reports',
+        actions: [
+          AppPageActionButton(
+            icon: Icons.calendar_month_outlined,
+            tooltip: 'Select report date',
+            onPressed: _pickDate,
+          ),
+        ],
       ),
       body: Column(
         children: [
-          _buildDateFilter(isDark),
           if (showStoreDesignationFilters) _buildFilters(),
           const SizedBox(height: 4),
           Expanded(
@@ -757,8 +697,9 @@ class _BreakReportsDashboardScreenState
               data: (data) {
                 if (data != null) {
                   for (final item in data.records) {
-                    if (!_items
-                        .any((e) => e.employeeBreakId == item.employeeBreakId)) {
+                    if (!_items.any(
+                          (e) => e.employeeBreakId == item.employeeBreakId,
+                    )) {
                       _items.add(item);
                     }
                   }
@@ -825,6 +766,202 @@ class _BreakReportsDashboardScreenState
   }
 }
 
+// ---------------------------------------------------------------------------
+// Date picker sheet
+// ---------------------------------------------------------------------------
+
+class _CompactDatePickerSheet extends StatefulWidget {
+  const _CompactDatePickerSheet({
+    required this.initialDate,
+    required this.firstDate,
+    required this.lastDate,
+  });
+
+  final DateTime initialDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  @override
+  State<_CompactDatePickerSheet> createState() =>
+      _CompactDatePickerSheetState();
+}
+
+class _CompactDatePickerSheetState extends State<_CompactDatePickerSheet> {
+  static final DateFormat _fmt = DateFormat('dd/MM/yyyy');
+
+  late final TextEditingController _controller;
+  late DateTime _selected;
+  int _calendarKey = 0; // forces the calendar to jump to a typed date
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = DateUtils.dateOnly(widget.initialDate);
+    _controller = TextEditingController(text: _fmt.format(_selected));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Parses and validates the typed text. Returns the date or sets [_error].
+  DateTime? _validate(String text) {
+    try {
+      final date = DateUtils.dateOnly(_fmt.parseStrict(text.trim()));
+      final first = DateUtils.dateOnly(widget.firstDate);
+      final last = DateUtils.dateOnly(widget.lastDate);
+      if (date.isBefore(first) || date.isAfter(last)) {
+        _error = 'Pick a date between ${_fmt.format(first)} and ${_fmt.format(last)}';
+        return null;
+      }
+      return date;
+    } on FormatException {
+      _error = 'Enter a valid date (DD/MM/YYYY)';
+      return null;
+    }
+  }
+
+  void _onTextChanged(String value) {
+    // Wait until the full date is typed before validating.
+    if (value.length < 10) {
+      if (_error != null) setState(() => _error = null);
+      return;
+    }
+    setState(() {
+      final date = _validate(value);
+      if (date != null) {
+        _error = null;
+        _selected = date;
+        _calendarKey++;
+      }
+    });
+  }
+
+  void _onCalendarPicked(DateTime date) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _selected = DateUtils.dateOnly(date);
+      _controller.text = _fmt.format(_selected);
+      _error = null;
+    });
+  }
+
+  void _apply() {
+    final text = _controller.text;
+    if (text.length < 10) {
+      setState(() => _error = 'Enter a valid date (DD/MM/YYYY)');
+      return;
+    }
+    DateTime? date;
+    setState(() => date = _validate(text));
+    if (date != null) Navigator.pop(context, date);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppVisuals.of(context);
+    final theme = Theme.of(context);
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Select date',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Type the date
+              TextField(
+                controller: _controller,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: const [_DateTextInputFormatter()],
+                onChanged: _onTextChanged,
+                onSubmitted: (_) => _apply(),
+                decoration: InputDecoration(
+                  labelText: 'Date',
+                  hintText: 'DD/MM/YYYY',
+                  errorText: _error,
+                  errorMaxLines: 2,
+                  prefixIcon: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 20,
+                    color: colors.accent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Or pick from the calendar
+              CalendarDatePicker(
+                key: ValueKey(_calendarKey),
+                initialDate: _selected,
+                firstDate: widget.firstDate,
+                lastDate: widget.lastDate,
+                onDateChanged: _onCalendarPicked,
+              ),
+              const SizedBox(height: 8),
+
+              SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: _apply,
+                  child: const Text('Apply'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DateTextInputFormatter extends TextInputFormatter {
+  const _DateTextInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limited = digits.length > 8 ? digits.substring(0, 8) : digits;
+    final buffer = StringBuffer();
+
+    for (var index = 0; index < limited.length; index++) {
+      if (index == 2 || index == 4) buffer.write('/');
+      buffer.write(limited[index]);
+    }
+
+    final text = buffer.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Filter chip
+// ---------------------------------------------------------------------------
+
 class _FilterChip extends StatelessWidget {
   final String label;
   final String? selectedValue;
@@ -841,62 +978,66 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = selectedValue != null;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AppTheme.accent(isDark);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    final colors = AppVisuals.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
         decoration: BoxDecoration(
-          color: isSelected
-              ? accent.withValues(alpha: isDark ? 0.12 : 0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: colors.inset,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? accent.withValues(alpha: isDark ? 0.5 : 0.45)
-                : Theme.of(context).dividerColor,
-            width: 1,
+            color: colors.dark
+                ? colors.border.withValues(alpha: .65)
+                : colors.muted.withValues(alpha: .25),
+            width: colors.dark ? 1 : .5,
           ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedValue ?? label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? accent
-                      : Theme.of(context).colorScheme.onSurface,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    selectedValue ?? label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.text,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
+                const SizedBox(width: 10),
+                if (isSelected && onClear != null)
+                  GestureDetector(
+                    onTap: onClear,
+                    child: Icon(
+                      Icons.cancel_rounded,
+                      size: 20,
+                      color: colors.accent,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: colors.accent,
+                  ),
+              ],
             ),
-            const SizedBox(width: 4),
-            if (isSelected && onClear != null)
-              GestureDetector(
-                onTap: onClear,
-                child: Icon(Icons.cancel_rounded, size: 18, color: accent),
-              )
-            else
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.4),
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Searchable list sheet
+// ---------------------------------------------------------------------------
 
 class _SearchableListSheet<T> extends StatefulWidget {
   final String title;
@@ -943,7 +1084,8 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
       } else {
         _filteredItems = widget.items
             .where(
-                (item) => widget.getItemName(item).toLowerCase().contains(query))
+              (item) => widget.getItemName(item).toLowerCase().contains(query),
+        )
             .toList();
       }
     });
@@ -951,12 +1093,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      sheet: true,
       child: Column(
         children: [
           Container(
@@ -964,8 +1103,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color:
-              Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1001,8 +1141,10 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -1027,10 +1169,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
               child: Text(
                 'No results found',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             )
@@ -1056,8 +1197,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                   title: Text(
                     itemName,
                     style: TextStyle(
-                      fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                   onTap: () {

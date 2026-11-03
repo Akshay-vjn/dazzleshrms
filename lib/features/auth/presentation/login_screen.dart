@@ -1,8 +1,10 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
 
 import '../data/models/send_otp_model.dart';
 import '../data/providers/auth_provider.dart';
@@ -36,139 +38,127 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final otpState = ref.watch(sendOtpProvider);
 
-    ref.listen<AsyncValue<SendOtpModel?>>(
-      sendOtpProvider,
-          (previous, next) {
-        next.when(
-          data: (res) {
-            if (res != null && res.error == false) {
-              context.pushNamed(
-                'otp',
-                extra: mobileCtrl.text.trim(),
-              );
-            }
-          },
-          loading: () {},
-          error: (err, _) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(err.toString())),
-            );
-          },
-        );
-      },
-    );
+    ref.listen<AsyncValue<SendOtpModel?>>(sendOtpProvider, (previous, next) {
+      next.when(
+        data: (res) {
+          if (res != null && res.error == false) {
+            context.pushNamed('otp', extra: mobileCtrl.text.trim());
+          }
+        },
+        loading: () {},
+        error: (err, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+      );
+    });
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 100),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "DAZZLES",
-                      style: TextStyle(
-                        fontFamily: 'Dazzles',
-                        fontSize: 48,
-                        letterSpacing: 6,
-                        color: AppTheme.PrimaryColor,
+    final colors = AppVisuals.of(context);
+    return AppScaffold(
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 48).clamp(
+                  0,
+                  double.infinity,
+                ),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 24),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'DAZZLES',
+                          style: TextStyle(
+                            fontFamily: 'Dazzles',
+                            fontSize: 48,
+                            letterSpacing: 6,
+                            color: colors.accent,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "MYSORE | BANGALORE",
-                      style: TextStyle(
-                        fontFamily: 'Dazzles',
-                        fontSize: 12,
-                        letterSpacing: 4,
-                        color: AppTheme.PrimaryColor.withOpacity(0.7),
+                      const SizedBox(height: 8),
+                      const SizedBox(height: 40),
+                      GlassSurface(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Login to Dazzles HRMS',
+                              style: TextStyle(color: colors.muted),
+                            ),
+                            const SizedBox(height: 28),
+                            TextField(
+                              controller: mobileCtrl,
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) {
+                                if (!otpState.isLoading) _onGetOtp();
+                              },
+                              maxLength: 10,
+                              decoration: const InputDecoration(
+                                labelText: 'Mobile Number',
+                                prefixIcon: Icon(Icons.phone_android_rounded),
+                                prefixText: '+91 ',
+                                counterText: '',
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: otpState.isLoading
+                                    ? null
+                                    : _onGetOtp,
+                                child: otpState.isLoading
+                                    ? SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colors.muted,
+                                        ),
+                                      )
+                                    : const Text('Get OTP'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Welcome back",
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "Login to Dazzles HRMS",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 32),
-
-                  TextField(
-                    controller: mobileCtrl,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    decoration: InputDecoration(
-                      labelText: "Mobile Number",
-                      prefixIcon: const Icon(Icons.phone_android_rounded),
-                      prefixText: "+91 ",
-                      counterText: "",
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark
-                          ? AppTheme.surfaceDarkVariant
-                          : AppTheme.surfaceLight,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: FilledButton(
-                      onPressed: otpState.isLoading ? null : _onGetOtp,
-                      style: FilledButton.styleFrom(
-                        foregroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : null,
-                      ),
-                      child: otpState.isLoading
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              "Get OTP",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    mobileCtrl.dispose();
+    super.dispose();
   }
 }

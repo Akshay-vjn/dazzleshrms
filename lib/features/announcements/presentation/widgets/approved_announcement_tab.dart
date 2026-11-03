@@ -1,9 +1,10 @@
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/approved_announcement_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 
 class ApprovedAnnouncementsTab extends ConsumerStatefulWidget {
   const ApprovedAnnouncementsTab({super.key});
@@ -39,6 +40,7 @@ class _ApprovedAnnouncementsTabState
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppVisuals.of(context);
     final state = ref.watch(approvedAnnouncementsProvider);
 
     return state.when(
@@ -56,11 +58,7 @@ class _ApprovedAnnouncementsTabState
           itemBuilder: (context, index) {
             final item = data.records[index];
 
-            return Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+            return GlassSurface(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -96,29 +94,37 @@ class _ApprovedAnnouncementsTabState
                         onTap: () async {
                           final url = Uri.parse(item.attachment!);
                           if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.red.withOpacity(0.3)),
+                              color: colors.red.withValues(alpha: 0.3),
+                            ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.picture_as_pdf,
-                                  size: 16, color: Colors.red),
+                              Icon(
+                                Icons.picture_as_pdf,
+                                size: 16,
+                                color: colors.red,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 "View Attachment PDF",
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color: colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -137,8 +143,8 @@ class _ApprovedAnnouncementsTabState
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
                         color: item.status.toLowerCase() == "approved"
-                            ? Colors.green
-                            : Colors.red,
+                            ? colors.green
+                            : colors.red,
                         size: 20,
                       ),
                     ),

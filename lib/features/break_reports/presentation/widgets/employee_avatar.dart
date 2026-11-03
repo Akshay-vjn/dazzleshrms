@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -110,11 +111,11 @@ class EmployeeAvatar extends StatelessWidget {
                                   ),
                                 ),
                                 errorWidget: (_, __, ___) =>
-                                    _popupFallback(letter),
+                                    _popupFallback(context, letter),
                               ),
                             ),
                           )
-                        : _popupFallback(letter),
+                        : _popupFallback(context, letter),
                   ),
                 ),
               ),
@@ -140,12 +141,12 @@ class EmployeeAvatar extends StatelessWidget {
     );
   }
 
-  Widget _popupFallback(String letter) {
+  Widget _popupFallback(BuildContext context, String letter) {
     return Container(
       width: 200,
       height: 200,
       decoration: BoxDecoration(
-        color: AppTheme.PrimaryColor.withValues(alpha: 0.2),
+        color: AppVisuals.of(context).accent.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
       child: Center(

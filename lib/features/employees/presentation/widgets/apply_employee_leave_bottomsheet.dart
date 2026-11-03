@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/features/leave/presentation/widgets/leave_form_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -13,7 +15,6 @@ import '../../../leave/data/models/leave_type_model.dart';
 import '../../../leave/presentation/widgets/leave_clash_warning_dialog.dart';
 import '../../data/provider/employee_leave_provider.dart';
 
-
 class ApplyEmployeeLeaveFormSheet extends ConsumerStatefulWidget {
   final int employeeId;
   const ApplyEmployeeLeaveFormSheet({super.key, required this.employeeId});
@@ -25,7 +26,8 @@ class ApplyEmployeeLeaveFormSheet extends ConsumerStatefulWidget {
 
 class _ApplyEmployeeLeaveFormSheetState
     extends ConsumerState<ApplyEmployeeLeaveFormSheet> {
-  final GlobalKey<ScaffoldMessengerState> _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   final TextEditingController reasonCtrl = TextEditingController();
 
   int? selectedLeaveTypeId;
@@ -42,25 +44,22 @@ class _ApplyEmployeeLeaveFormSheetState
     });
   }
 
-  void _showSheetSnackBar(
-      String message, {
-        bool isError = true,
-      }) {
+  void _showSheetSnackBar(String message, {bool isError = true}) {
     _messengerKey.currentState
       ?..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor:
-          isError ? AppTheme.statusError : AppTheme.statusSuccess,
+          backgroundColor: isError
+              ? AppTheme.statusError
+              : AppTheme.statusSuccess,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
         ),
       );
   }
 
-  String _formatDate(DateTime date) =>
-      date.toIso8601String().split('T').first;
+  String _formatDate(DateTime date) => date.toIso8601String().split('T').first;
 
   String _formatDisplayDate(DateTime date) =>
       DateFormat('dd-MM-yyyy').format(date);
@@ -119,7 +118,7 @@ class _ApplyEmployeeLeaveFormSheetState
                     data: (blockedDates) {
                       final Map<DateTime, BlockedDateModel> blockedMap = {
                         for (final b in blockedDates)
-                          DateTime(b.date.year, b.date.month, b.date.day): b
+                          DateTime(b.date.year, b.date.month, b.date.day): b,
                       };
                       final clashMap = <DateTime, LeaveClashCalendarDay>{
                         for (final day in clashAsync.valueOrNull ?? const [])
@@ -135,9 +134,7 @@ class _ApplyEmployeeLeaveFormSheetState
                           children: [
                             Text(
                               "Select Date",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 12),
@@ -160,11 +157,13 @@ class _ApplyEmployeeLeaveFormSheetState
 
                                 calendarStyle: CalendarStyle(
                                   todayDecoration: BoxDecoration(
-                                    color: AppTheme.PrimaryColor.withValues(alpha: 0.2),
+                                    color: AppVisuals.of(
+                                      context,
+                                    ).accent.withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
-                                  selectedDecoration: const BoxDecoration(
-                                    color: AppTheme.PrimaryColor,
+                                  selectedDecoration: BoxDecoration(
+                                    color: AppVisuals.of(context).accent,
                                     shape: BoxShape.circle,
                                   ),
                                   outsideDaysVisible: false,
@@ -172,7 +171,11 @@ class _ApplyEmployeeLeaveFormSheetState
 
                                 calendarBuilders: CalendarBuilders(
                                   defaultBuilder: (context, day, _) {
-                                    final d = DateTime(day.year, day.month, day.day);
+                                    final d = DateTime(
+                                      day.year,
+                                      day.month,
+                                      day.day,
+                                    );
 
                                     if (blockedMap.containsKey(d)) {
                                       return Container(
@@ -199,8 +202,9 @@ class _ApplyEmployeeLeaveFormSheetState
                                     }
                                     final clash = clashMap[d];
                                     if (clash != null) {
-                                      final color =
-                                          _leaveClashColor(clash.percentage);
+                                      final color = _leaveClashColor(
+                                        clash.percentage,
+                                      );
                                       if (color != null) {
                                         return Container(
                                           margin: const EdgeInsets.all(4),
@@ -225,7 +229,8 @@ class _ApplyEmployeeLeaveFormSheetState
                                       }
                                     }
 
-                                    final isDark = Theme.of(context).brightness ==
+                                    final isDark =
+                                        Theme.of(context).brightness ==
                                         Brightness.dark;
                                     final defaultBorderColor = isDark
                                         ? Colors.white.withOpacity(0.2)
@@ -245,10 +250,9 @@ class _ApplyEmployeeLeaveFormSheetState
                                       child: Text(
                                         '${day.day}',
                                         style: TextStyle(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.color,
+                                          color: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.color,
                                           fontWeight: FontWeight.w500,
                                           fontSize: 13,
                                         ),
@@ -256,7 +260,11 @@ class _ApplyEmployeeLeaveFormSheetState
                                     );
                                   },
                                   todayBuilder: (context, day, _) {
-                                    final d = DateTime(day.year, day.month, day.day);
+                                    final d = DateTime(
+                                      day.year,
+                                      day.month,
+                                      day.day,
+                                    );
 
                                     if (blockedMap.containsKey(d)) {
                                       return Container(
@@ -286,7 +294,8 @@ class _ApplyEmployeeLeaveFormSheetState
                                     final clashColor = clash != null
                                         ? _leaveClashColor(clash.percentage)
                                         : null;
-                                    final color = clashColor ?? AppTheme.PrimaryColor;
+                                    final color =
+                                        clashColor ?? AppTheme.PrimaryColor;
 
                                     return Container(
                                       margin: const EdgeInsets.all(4),
@@ -310,7 +319,8 @@ class _ApplyEmployeeLeaveFormSheetState
                                     );
                                   },
                                   disabledBuilder: (context, day, _) {
-                                    final isDark = Theme.of(context).brightness ==
+                                    final isDark =
+                                        Theme.of(context).brightness ==
                                         Brightness.dark;
                                     final disabledBorderColor = isDark
                                         ? Colors.white.withOpacity(0.08)
@@ -330,7 +340,9 @@ class _ApplyEmployeeLeaveFormSheetState
                                       child: Text(
                                         '${day.day}',
                                         style: TextStyle(
-                                          color: Theme.of(context).disabledColor,
+                                          color: Theme.of(
+                                            context,
+                                          ).disabledColor,
                                           fontWeight: FontWeight.w400,
                                           fontSize: 13,
                                         ),
@@ -340,7 +352,12 @@ class _ApplyEmployeeLeaveFormSheetState
                                 ),
 
                                 onPageChanged: (focusedDay) {
-                                  ref.read(leaveClashCalendarFocusedDayProvider.notifier).state =
+                                  ref
+                                          .read(
+                                            leaveClashCalendarFocusedDayProvider
+                                                .notifier,
+                                          )
+                                          .state =
                                       focusedDay;
                                 },
 
@@ -361,16 +378,20 @@ class _ApplyEmployeeLeaveFormSheetState
                                         title: const Text("Blocked Date"),
                                         content: Column(
                                           mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Text("Date: ${_formatDate(blocked.date)}"),
+                                            Text(
+                                              "Date: ${_formatDate(blocked.date)}",
+                                            ),
                                             const SizedBox(height: 8),
                                             Text("Reason: ${blocked.reason}"),
                                           ],
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
                                             child: const Text("OK"),
                                           ),
                                         ],
@@ -381,13 +402,16 @@ class _ApplyEmployeeLeaveFormSheetState
 
                                   final clash = clashMap[d];
                                   if (clash != null && clash.percentage >= 30) {
-                                    final shouldContinue = await showDialog<bool>(
-                                      context: context,
-                                      builder: (_) => LeaveClashWarningDialog(
-                                        clash: clash,
-                                      ),
-                                    );
-                                    if (shouldContinue != true || !context.mounted) {
+                                    final shouldContinue =
+                                        await showDialog<bool>(
+                                          context: context,
+                                          builder: (_) =>
+                                              LeaveClashWarningDialog(
+                                                clash: clash,
+                                              ),
+                                        );
+                                    if (shouldContinue != true ||
+                                        !context.mounted) {
                                       return;
                                     }
                                   }
@@ -395,14 +419,22 @@ class _ApplyEmployeeLeaveFormSheetState
                                   setState(() {
                                     if (isFrom) {
                                       fromDate = selectedDay;
-                                      if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                          selectedLeaveTypeName?.toLowerCase() == 'hdo') {
+                                      if (selectedLeaveTypeName
+                                                  ?.toLowerCase() ==
+                                              'hdi' ||
+                                          selectedLeaveTypeName
+                                                  ?.toLowerCase() ==
+                                              'hdo') {
                                         toDate = selectedDay;
                                       }
                                     } else {
                                       toDate = selectedDay;
-                                      if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                          selectedLeaveTypeName?.toLowerCase() == 'hdo') {
+                                      if (selectedLeaveTypeName
+                                                  ?.toLowerCase() ==
+                                              'hdi' ||
+                                          selectedLeaveTypeName
+                                                  ?.toLowerCase() ==
+                                              'hdo') {
                                         fromDate = selectedDay;
                                       }
                                     }
@@ -426,7 +458,6 @@ class _ApplyEmployeeLeaveFormSheetState
     );
   }
 
-
   void _submitLeave() {
     if (selectedLeaveTypeId == null ||
         fromDate == null ||
@@ -435,35 +466,38 @@ class _ApplyEmployeeLeaveFormSheetState
       _showSheetSnackBar("Please fill all fields");
       return;
     }
-    ref.read(applyEmployeeLeaveProvider(widget.employeeId).notifier).applyLeave(
-      leaveTypeId: selectedLeaveTypeId!,
-      fromDate: _formatDate(fromDate!),
-      toDate: _formatDate(toDate!),
-      note: reasonCtrl.text.trim(),
-    );
+    ref
+        .read(applyEmployeeLeaveProvider(widget.employeeId).notifier)
+        .applyLeave(
+          leaveTypeId: selectedLeaveTypeId!,
+          fromDate: _formatDate(fromDate!),
+          toDate: _formatDate(toDate!),
+          note: reasonCtrl.text.trim(),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final leaveTypeState = ref.watch(leaveTypeProvider);
-    final applyLeaveState = ref.watch(applyEmployeeLeaveProvider(widget.employeeId));
+    final applyLeaveState = ref.watch(
+      applyEmployeeLeaveProvider(widget.employeeId),
+    );
 
     ref.listen<AsyncValue<void>>(
       applyEmployeeLeaveProvider(widget.employeeId),
-          (previous, next) {
+      (previous, next) {
         next.whenOrNull(
           error: (error, _) {
             _showSheetSnackBar(error.toString());
           },
           data: (_) {
             if (previous is AsyncLoading) {
-               _showSheetSnackBar(
-                "Leave applied successfully",
-                isError: false,
-              );
+              _showSheetSnackBar("Leave applied successfully", isError: false);
 
-              ref.read(employeeLeavesProvider(widget.employeeId).notifier).loadLeaves();
+              ref
+                  .read(employeeLeavesProvider(widget.employeeId).notifier)
+                  .loadLeaves();
               ref.invalidate(usedLeavesFamilyProvider(widget.employeeId));
               ref.invalidate(leaveClashCalendarProvider);
 
@@ -482,176 +516,175 @@ class _ApplyEmployeeLeaveFormSheetState
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
+      child: LeaveFormSurface(
         height: MediaQuery.of(context).size.height * 0.6,
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
-        ),
         child: ScaffoldMessenger(
           key: _messengerKey,
           child: Scaffold(
             backgroundColor: Colors.transparent,
             resizeToAvoidBottomInset: false,
             body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Container(
-                  width: 48,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(4),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Container(
+                    width: 48,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppVisuals.of(context).muted.withValues(alpha: .4),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
-              ),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          "New Leave Request",
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            "New Leave Request",
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        Text("Leave Type", style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+
+                        leaveTypeState.when(
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          error: (e, _) => Text(
+                            e.toString(),
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                          data: (types) {
+                            return DropdownButtonFormField<int>(
+                              value: selectedLeaveTypeId,
+                              hint: const Text("Select leave type"),
+                              isExpanded: true,
+                              dropdownColor: AppVisuals.of(context).surface,
+                              iconEnabledColor: AppVisuals.of(context).accent,
+                              style: theme.textTheme.bodyLarge,
+                              items: types
+                                  .map(
+                                    (LeaveType e) => DropdownMenuItem<int>(
+                                      value: e.leaveId,
+                                      child: Text(e.leaveType),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) {
+                                final selectedType = types.firstWhere(
+                                  (e) => e.leaveId == v,
+                                );
+                                setState(() {
+                                  selectedLeaveTypeId = v;
+                                  selectedLeaveTypeName =
+                                      selectedType.leaveType;
+
+                                  if (selectedLeaveTypeName?.toLowerCase() ==
+                                          'hdi' ||
+                                      selectedLeaveTypeName?.toLowerCase() ==
+                                          'hdo') {
+                                    if (fromDate != null) {
+                                      toDate = fromDate;
+                                    } else if (toDate != null) {
+                                      fromDate = toDate;
+                                    }
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Text(
+                          "Leave Duration",
                           style: theme.textTheme.titleMedium,
                         ),
-                      ),
-                      const SizedBox(height: 20),
+                        const SizedBox(height: 8),
 
-                      Text("Leave Type", style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _pickDate(isFrom: true),
+                                child: Text(
+                                  fromDate == null
+                                      ? "From Date"
+                                      : _formatDisplayDate(fromDate!),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _pickDate(isFrom: false),
+                                child: Text(
+                                  toDate == null
+                                      ? "To Date"
+                                      : _formatDisplayDate(toDate!),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
 
-                      leaveTypeState.when(
-                        loading: () => const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(8),
-                            child:
-                            CircularProgressIndicator(strokeWidth: 2),
+                        const SizedBox(height: 20),
+
+                        Text("Reason", style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+
+                        TextField(
+                          controller: reasonCtrl,
+                          maxLines: 2,
+                          decoration: const InputDecoration(
+                            hintText: "Enter reason",
                           ),
                         ),
-                        error: (e, _) => Text(
-                          e.toString(),
-                          style:
-                          const TextStyle(color: Colors.red),
-                        ),
-                        data: (types) {
-                          return DropdownButtonFormField<int>(
-                            value: selectedLeaveTypeId,
-                            hint: const Text("Select leave type"),
-                            items: types
-                                .map(
-                                  (LeaveType e) =>
-                                  DropdownMenuItem<int>(
-                                    value: e.leaveId,
-                                    child: Text(e.leaveType),
-                                  ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: applyLeaveState.isLoading
+                          ? null
+                          : _submitLeave,
+                      child: applyLeaveState.isLoading
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppVisuals.of(context).muted,
+                              ),
                             )
-                                .toList(),
-                            onChanged: (v) {
-                              final selectedType = types.firstWhere((e) => e.leaveId == v);
-                              setState(() {
-                                selectedLeaveTypeId = v;
-                                selectedLeaveTypeName = selectedType.leaveType;
-                                
-                                if (selectedLeaveTypeName?.toLowerCase() == 'hdi' ||
-                                    selectedLeaveTypeName?.toLowerCase() == 'hdo') {
-                                  if (fromDate != null) {
-                                    toDate = fromDate;
-                                  } else if (toDate != null) {
-                                    fromDate = toDate;
-                                  }
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      Text(
-                        "Leave Duration",
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () =>
-                                  _pickDate(isFrom: true),
-                              child: Text(
-                                fromDate == null
-                                    ? "From Date"
-                                    : _formatDisplayDate(fromDate!),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () =>
-                                  _pickDate(isFrom: false),
-                              child: Text(
-                                toDate == null
-                                    ? "To Date"
-                                    : _formatDisplayDate(toDate!),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      Text("Reason", style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
-
-                      TextField(
-                        controller: reasonCtrl,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          hintText: "Enter reason",
-                        ),
-                      ),
-                    ],
+                          : const Text("Submit Leave"),
+                    ),
                   ),
                 ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: applyLeaveState.isLoading
-                        ? null
-                        : _submitLeave,
-                    child: applyLeaveState.isLoading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.black,
-                      ),
-                    )
-                        : const Text("Submit Leave"),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   @override

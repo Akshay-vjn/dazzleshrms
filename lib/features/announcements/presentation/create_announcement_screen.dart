@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
 import 'package:dazzleshrms/features/announcements/data/models/create_announcement_model.dart';
 import 'package:dazzleshrms/features/announcements/data/providers/announcement_provider.dart';
 import 'package:dazzleshrms/features/announcements/presentation/widgets/designation_sheet.dart';
@@ -31,17 +35,27 @@ class _CreateAnnouncementScreenState
   String? attachmentName;
 
   InputDecoration _selectorDecoration(BuildContext context, String label) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppVisuals.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: colors.muted.withValues(alpha: .25),
+        width: .5,
+      ),
+    );
 
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor:
-      isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 18,
+      fillColor: colors.inset,
+      enabledBorder: border,
+      border: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: colors.accent),
       ),
+      labelStyle: TextStyle(color: colors.muted),
+      hintStyle: TextStyle(color: colors.muted),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
     );
   }
 
@@ -50,8 +64,9 @@ class _CreateAnnouncementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-        isError ? AppTheme.statusError : AppTheme.statusSuccess,
+        backgroundColor: isError
+            ? AppTheme.statusError
+            : AppTheme.statusSuccess,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
       ),
@@ -59,20 +74,21 @@ class _CreateAnnouncementScreenState
   }
 
   void _submitAnnouncement() {
-    if (titleCtrl.text.trim().isEmpty ||
-        announcementCtrl.text.trim().isEmpty) {
+    if (titleCtrl.text.trim().isEmpty || announcementCtrl.text.trim().isEmpty) {
       _showSnackBar("Please fill title and announcement");
       return;
     }
 
-    ref.read(createAnnouncementProvider.notifier).createAnnouncement(
-      title: titleCtrl.text.trim(),
-      announcement: announcementCtrl.text.trim(),
-      storeIds: selectedStoreIds,
-      employeeIds: selectedEmployeeIds,
-      designationIds: selectedDesignationIds,
-      attachmentPath: attachmentPath,
-    );
+    ref
+        .read(createAnnouncementProvider.notifier)
+        .createAnnouncement(
+          title: titleCtrl.text.trim(),
+          announcement: announcementCtrl.text.trim(),
+          storeIds: selectedStoreIds,
+          employeeIds: selectedEmployeeIds,
+          designationIds: selectedDesignationIds,
+          attachmentPath: attachmentPath,
+        );
   }
 
   Future<void> _pickPDF() async {
@@ -97,6 +113,7 @@ class _CreateAnnouncementScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StoreSheet(
         selectedStoreIds: selectedStoreIds,
         onSelect: (ids, names) {
@@ -115,6 +132,7 @@ class _CreateAnnouncementScreenState
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => DesignationSheet(
         selectedDesignationIds: selectedDesignationIds,
         onSelect: (ids, names) {
@@ -128,13 +146,15 @@ class _CreateAnnouncementScreenState
   }
 
   void _showEmployeeSheet() {
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => EmployeeSheet(
         storeIds: selectedStoreIds.isEmpty ? null : selectedStoreIds,
-        designationIds: selectedDesignationIds.isEmpty ? null : selectedDesignationIds,
+        designationIds: selectedDesignationIds.isEmpty
+            ? null
+            : selectedDesignationIds,
         selectedEmployeeIds: selectedEmployeeIds,
         onSelect: (ids, names) {
           setState(() {
@@ -149,11 +169,12 @@ class _CreateAnnouncementScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = AppVisuals.of(context);
     final createState = ref.watch(createAnnouncementProvider);
 
     ref.listen<AsyncValue<CreateAnnouncementResponse?>>(
       createAnnouncementProvider,
-          (_, next) {
+      (_, next) {
         next.whenOrNull(
           error: (e, _) => _showSnackBar(e.toString()),
           data: (data) {
@@ -180,153 +201,175 @@ class _CreateAnnouncementScreenState
       },
     );
 
-
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("New Announcement")),
+    return AppScaffold(
+      appBar: const AppPageBar(title: 'New Announcement'),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: _selectorDecoration(context, "Title").copyWith(
-                      hintText: "Enter title",
+              child: GlassSurface(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: titleCtrl,
+                      decoration: _selectorDecoration(
+                        context,
+                        "Title",
+                      ).copyWith(hintText: "Enter title"),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: announcementCtrl,
-                    maxLines: 4,
-                    decoration: _selectorDecoration(context, "Announcement").copyWith(
-                      hintText: "Enter details",
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: announcementCtrl,
+                      maxLines: 4,
+                      decoration: _selectorDecoration(
+                        context,
+                        "Announcement",
+                      ).copyWith(hintText: "Enter details"),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  InkWell(
-                    onTap: _showStoreSheet,
-                    child: InputDecorator(
-                      decoration: _selectorDecoration(context, "Store"),
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              selectedStoreNames.isEmpty ? "All Stores" : selectedStoreNames.join(', '),
-                              style: theme.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    InkWell(
+                      onTap: _showStoreSheet,
+                      child: InputDecorator(
+                        decoration: _selectorDecoration(context, "Store"),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                selectedStoreNames.isEmpty
+                                    ? "All Stores"
+                                    : selectedStoreNames.join(', '),
+                                style: theme.textTheme.bodyMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.arrow_drop_down, size: 22),
-                        ],
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 22,
+                              color: colors.accent,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  InkWell(
-                    onTap: _showDesignationSheet,
-                    child: InputDecorator(
-                      decoration: _selectorDecoration(context, "Designation"),
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              selectedDesignationNames.isEmpty ? "All Designations" : selectedDesignationNames.join(', '),
-                              style: theme.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    InkWell(
+                      onTap: _showDesignationSheet,
+                      child: InputDecorator(
+                        decoration: _selectorDecoration(context, "Designation"),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                selectedDesignationNames.isEmpty
+                                    ? "All Designations"
+                                    : selectedDesignationNames.join(', '),
+                                style: theme.textTheme.bodyMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.arrow_drop_down, size: 22),
-                        ],
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 22,
+                              color: colors.accent,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  InkWell(
-                    onTap: _showEmployeeSheet,
-                    child: InputDecorator(
-                      decoration:
-                      _selectorDecoration(context, "Employee"),
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              selectedEmployeeNames.isEmpty
-                                  ? "All Employees"
-                                  : selectedEmployeeNames.join(', '),
-                              style: theme.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    InkWell(
+                      onTap: _showEmployeeSheet,
+                      child: InputDecorator(
+                        decoration: _selectorDecoration(context, "Employee"),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                selectedEmployeeNames.isEmpty
+                                    ? "All Employees"
+                                    : selectedEmployeeNames.join(', '),
+                                style: theme.textTheme.bodyMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.arrow_drop_down, size: 22),
-                        ],
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 22,
+                              color: colors.accent,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  InkWell(
-                    onTap: _pickPDF,
-                    child: InputDecorator(
-                      decoration: _selectorDecoration(context, "Attachment (PDF)"),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              attachmentName ?? "Select PDF File",
-                              style: theme.textTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
+                    InkWell(
+                      onTap: _pickPDF,
+                      child: InputDecorator(
+                        decoration: _selectorDecoration(
+                          context,
+                          "Attachment (PDF)",
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                attachmentName ?? "Select PDF File",
+                                style: theme.textTheme.bodyMedium,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          Icon(
-                            attachmentPath != null ? Icons.picture_as_pdf : Icons.attach_file,
-                            size: 22,
-                            color: attachmentPath != null ? Colors.red : null,
-                          ),
-                        ],
+                            Icon(
+                              attachmentPath != null
+                                  ? Icons.picture_as_pdf
+                                  : Icons.attach_file,
+                              size: 22,
+                              color: attachmentPath != null
+                                  ? colors.red
+                                  : colors.accent,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  if (selectedStoreIds.isNotEmpty ||
-                      selectedEmployeeIds.isNotEmpty ||
-                      selectedDesignationIds.isNotEmpty ||
-                      attachmentPath != null)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          selectedStoreIds = [];
-                          selectedStoreNames = [];
-                          selectedEmployeeIds = [];
-                          selectedEmployeeNames = [];
-                          selectedDesignationIds = [];
-                          selectedDesignationNames = [];
-                          attachmentPath = null;
-                          attachmentName = null;
-                        });
-                      },
-                      child: const Text("Clear Selection"),
-                    ),
-                ],
+                    if (selectedStoreIds.isNotEmpty ||
+                        selectedEmployeeIds.isNotEmpty ||
+                        selectedDesignationIds.isNotEmpty ||
+                        attachmentPath != null)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedStoreIds = [];
+                            selectedStoreNames = [];
+                            selectedEmployeeIds = [];
+                            selectedEmployeeNames = [];
+                            selectedDesignationIds = [];
+                            selectedDesignationNames = [];
+                            attachmentPath = null;
+                            attachmentName = null;
+                          });
+                        },
+                        child: const Text("Clear Selection"),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -337,15 +380,13 @@ class _CreateAnnouncementScreenState
               width: double.infinity,
               height: 48,
               child: FilledButton(
-                onPressed:
-                createState.isLoading ? null : _submitAnnouncement,
+                onPressed: createState.isLoading ? null : _submitAnnouncement,
                 child: createState.isLoading
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child:
-                  CircularProgressIndicator(strokeWidth: 2),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text("Post Announcement"),
               ),
             ),

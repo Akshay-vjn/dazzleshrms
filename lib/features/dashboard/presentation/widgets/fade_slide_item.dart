@@ -14,27 +14,22 @@ class FadeSlideItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        final intervalEnd = (intervalStart + 0.2).clamp(0.0, 1.0);
-        final curve = CurvedAnimation(
-          parent: animation,
-          curve: Interval(intervalStart, intervalEnd, curve: Curves.easeOut),
-        );
+    final intervalEnd = (intervalStart + 0.2).clamp(0.0, 1.0);
+    final curve = animation.drive(
+      CurveTween(
+        curve: Interval(intervalStart, intervalEnd, curve: Curves.easeOut),
+      ),
+    );
 
-        return FadeTransition(
-          opacity: curve,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.1),
-              end: Offset.zero,
-            ).animate(curve),
-            child: child,
-          ),
-        );
-      },
-      child: child,
+    return FadeTransition(
+      opacity: curve,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.1),
+          end: Offset.zero,
+        ).animate(curve),
+        child: child,
+      ),
     );
   }
 }

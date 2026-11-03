@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/features/approvals/presentation/widgets/approval_sheet.dart';
 import 'package:dazzleshrms/features/approvals/presentation/widgets/rejection_sheet.dart';
@@ -11,10 +14,12 @@ class TeamEmployeeApprovalsScreen extends ConsumerStatefulWidget {
   const TeamEmployeeApprovalsScreen({super.key});
 
   @override
-  ConsumerState<TeamEmployeeApprovalsScreen> createState() => _TeamEmployeeApprovalsScreenState();
+  ConsumerState<TeamEmployeeApprovalsScreen> createState() =>
+      _TeamEmployeeApprovalsScreenState();
 }
 
-class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprovalsScreen> {
+class _TeamEmployeeApprovalsScreenState
+    extends ConsumerState<TeamEmployeeApprovalsScreen> {
   final int _limit = 10;
   int _currentPage = 1;
 
@@ -28,10 +33,9 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
 
   Future<void> _refresh() async {
     _currentPage = 1;
-    await ref.read(teamEmployeePendingLeavesProvider.notifier).loadPendingLeaves(
-          page: _currentPage,
-          limit: _limit,
-        );
+    await ref
+        .read(teamEmployeePendingLeavesProvider.notifier)
+        .loadPendingLeaves(page: _currentPage, limit: _limit);
   }
 
   void _handleSuccess(String message) {
@@ -73,14 +77,18 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
           Navigator.pop(context);
 
           final apiDecisions = decisions.entries
-              .map((e) => {
-                    "date": DateFormat('yyyy-MM-dd').format(e.key),
-                    "action": e.value ? "APPROVE" : "REJECT",
-                  })
+              .map(
+                (e) => {
+                  "date": DateFormat('yyyy-MM-dd').format(e.key),
+                  "action": e.value ? "APPROVE" : "REJECT",
+                },
+              )
               .toList();
 
           try {
-            await ref.read(employeeLeaveApprovalProvider.notifier).approveLeave(
+            await ref
+                .read(employeeLeaveApprovalProvider.notifier)
+                .approveLeave(
                   leaveRoasterId: item.leaveRoasterId,
                   decisions: apiDecisions,
                   rejectReason: reason,
@@ -105,7 +113,9 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
           Navigator.pop(context);
 
           try {
-            await ref.read(employeeLeaveApprovalProvider.notifier).rejectLeave(
+            await ref
+                .read(employeeLeaveApprovalProvider.notifier)
+                .rejectLeave(
                   leaveRoasterId: item.leaveRoasterId,
                   rejectReason: reason,
                 );
@@ -122,13 +132,9 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
   Widget build(BuildContext context) {
     final pendingState = ref.watch(teamEmployeePendingLeavesProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Employee Approvals"),
-        centerTitle: true,
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Employee Approvals'),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: pendingState.when(
@@ -160,20 +166,9 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
               itemBuilder: (context, index) {
                 final item = items[index];
 
-                return Container(
+                return AppSurface(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -183,28 +178,51 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
                           Expanded(
                             child: Text(
                               item.employeeName,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.statusWarning.withValues(alpha: 0.1),
+                              color: AppTheme.statusWarning.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               "Pending",
-                              style: TextStyle(color: AppTheme.statusWarning, fontSize: 12, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: AppTheme.statusWarning,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _infoRow(context, Icons.badge_outlined, "Code: ${item.empCode}"),
+                      _infoRow(
+                        context,
+                        Icons.badge_outlined,
+                        "Code: ${item.empCode}",
+                      ),
                       _infoRow(context, Icons.work_outline, item.designation),
                       _infoRow(context, Icons.storefront_outlined, item.store),
-                      _infoRow(context, Icons.calendar_today_outlined, "${item.fromDate} → ${item.toDate}"),
-                      _infoRow(context, Icons.category_outlined, "Type: ${item.leaveType}"),
+                      _infoRow(
+                        context,
+                        Icons.calendar_today_outlined,
+                        "${item.fromDate} → ${item.toDate}",
+                      ),
+                      _infoRow(
+                        context,
+                        Icons.category_outlined,
+                        "Type: ${item.leaveType}",
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -212,7 +230,9 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
                             child: OutlinedButton(
                               onPressed: () => _showRejectSheet(item),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppTheme.statusError),
+                                side: const BorderSide(
+                                  color: AppTheme.statusError,
+                                ),
                                 foregroundColor: AppTheme.statusError,
                               ),
                               child: const Text("Reject"),
@@ -249,10 +269,7 @@ class _TeamEmployeeApprovalsScreenState extends ConsumerState<TeamEmployeeApprov
           Icon(icon, size: 14, color: Theme.of(context).hintColor),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
       ),

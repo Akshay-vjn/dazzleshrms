@@ -5,11 +5,18 @@ import 'package:dazzleshrms/core/api_constants/api_constants.dart';
 import '../models/profile_image_change_request.dart';
 
 class ProfileImageChangeRequestRepository {
-  final Dio _dio = ApiConfig.dio;
+  ProfileImageChangeRequestRepository({Dio? dio}) : _dio = dio ?? ApiConfig.dio;
 
-  Future<List<ProfileImageChangeRequest>> fetchPendingRequests() async {
+  final Dio _dio;
+
+  Future<List<ProfileImageChangeRequest>> fetchPendingRequests({
+    int? storeId,
+  }) async {
     try {
-      final response = await _dio.get(ApiConstants.profileChangeRequests);
+      final response = await _dio.get(
+        ApiConstants.profileChangeRequests,
+        queryParameters: {'storeId': ?storeId},
+      );
       final body = response.data as Map<String, dynamic>;
       if (body['error'] == true) {
         throw body['message']?.toString() ?? 'Failed to load image requests';

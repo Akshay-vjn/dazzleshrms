@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:dio/dio.dart';
 import 'package:dazzleshrms/core/api_config/api_config.dart';
 import 'package:dazzleshrms/core/api_constants/api_constants.dart';
@@ -23,6 +26,8 @@ class PermisssionScreen extends ConsumerStatefulWidget {
 class _PermisssionScreenState extends ConsumerState<PermisssionScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _dashboardContentReady = false;
+  bool _animationStarted = false;
 
   @override
   void initState() {
@@ -31,9 +36,6 @@ class _PermisssionScreenState extends ConsumerState<PermisssionScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _controller.forward();
-    });
   }
 
   @override
@@ -45,19 +47,22 @@ class _PermisssionScreenState extends ConsumerState<PermisssionScreen>
   @override
   Widget build(BuildContext context) {
     final permissions = ref.watch(permissionProvider);
+    _animateActionsIfReady(permissions);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Permissions"),
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Permissions'),
       body: PermissionDashboard(
+        onLoading: _onDashboardLoading,
+        onContentReady: _onDashboardContentReady,
         actions: DashboardGrid(
-          animation: _controller,
+          staggerStart: 0.12,
+          staggerStep: 0.06,
           items: [
             if (permissions.contains(Permissions.viewPermissionScanner))
               DashboardGridItem(
                 icon: Icons.qr_code_2_rounded,
                 label: "In / Out",
+                tone: ActionTone.teal,
                 onTap: () {
                   showDialog(
                     context: context,
@@ -67,14 +72,12 @@ class _PermisssionScreenState extends ConsumerState<PermisssionScreen>
                 },
                 animation: _controller,
                 intervalStart: 0.12,
-                gradientStart: AppTheme.dTeal,
-                gradientEnd: AppTheme.dGreen,
-                iconColor: AppTheme.gridIconColor,
               ),
             if (permissions.contains(Permissions.viewEarlyLate))
               DashboardGridItem(
                 icon: Icons.access_time_filled_rounded,
                 label: "Late / Early",
+                tone: ActionTone.orange,
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
@@ -85,25 +88,50 @@ class _PermisssionScreenState extends ConsumerState<PermisssionScreen>
                 },
                 animation: _controller,
                 intervalStart: 0.18,
-                gradientStart: AppTheme.gridGradient2Start,
-                gradientEnd: AppTheme.gridGradient2End,
-                iconColor: AppTheme.gridIconColor,
               ),
             if (permissions.contains(Permissions.viewPermissionApproveIcon))
               DashboardGridItem(
                 icon: Icons.approval_rounded,
                 label: "Approvals",
+                tone: ActionTone.purple,
                 onTap: () => context.pushNamed("permission_approvals"),
                 animation: _controller,
                 intervalStart: 0.24,
-                gradientStart: AppTheme.gridGradient3Start,
-                gradientEnd: AppTheme.gridGradient3End,
-                iconColor: AppTheme.gridIconColor,
               ),
           ],
         ),
       ),
     );
+  }
+
+  void _onDashboardLoading() {
+    _dashboardContentReady = false;
+    _animationStarted = false;
+    _controller.reset();
+  }
+
+  void _onDashboardContentReady() {
+    if (!mounted) return;
+
+    _dashboardContentReady = true;
+    _animationStarted = false;
+    _animateActionsIfReady(ref.read(permissionProvider));
+  }
+
+  void _animateActionsIfReady(Set<String> permissions) {
+    final hasVisibleActions =
+        permissions.contains(Permissions.viewPermissionScanner) ||
+        permissions.contains(Permissions.viewEarlyLate) ||
+        permissions.contains(Permissions.viewPermissionApproveIcon);
+
+    if (!_dashboardContentReady || _animationStarted || !hasVisibleActions) {
+      return;
+    }
+
+    _animationStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _controller.forward(from: 0);
+    });
   }
 }
 
@@ -111,7 +139,8 @@ class LateEarlyPermissionSheet extends StatefulWidget {
   const LateEarlyPermissionSheet({super.key});
 
   @override
-  State<LateEarlyPermissionSheet> createState() => _LateEarlyPermissionSheetState();
+  State<LateEarlyPermissionSheet> createState() =>
+      _LateEarlyPermissionSheetState();
 }
 
 class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
@@ -134,11 +163,27 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
   }
 
   Future<void> _pickDate() async {
+    final theme = Theme.of(context);
+    final sheetBackgroundColor = theme.scaffoldBackgroundColor;
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            dialogTheme: theme.dialogTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+            ),
+            datePickerTheme: theme.datePickerTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
@@ -146,9 +191,25 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
   }
 
   Future<void> _pickTime() async {
+    final theme = Theme.of(context);
+    final sheetBackgroundColor = theme.scaffoldBackgroundColor;
     final picked = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 9, minute: 0),
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            dialogTheme: theme.dialogTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+            ),
+            timePickerTheme: theme.timePickerTheme.copyWith(
+              backgroundColor: sheetBackgroundColor,
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
     if (picked == null) return;
 
@@ -182,7 +243,8 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
       );
 
       if (!mounted) return;
-      final message = response.data?["message"]?.toString() ??
+      final message =
+          response.data?["message"]?.toString() ??
           "Attendance adjustment applied successfully";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -194,7 +256,8 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
       Navigator.of(context).pop();
     } on DioException catch (e) {
       if (!mounted) return;
-      final message = e.response?.data?["message"]?.toString() ??
+      final message =
+          e.response?.data?["message"]?.toString() ??
           "Failed to apply attendance adjustment";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -248,8 +311,8 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
                       child: Text(
                         "Apply $title",
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -278,9 +341,7 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
                       _timeController.clear();
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: "Type",
-                  ),
+                  decoration: const InputDecoration(labelText: "Type"),
                 ),
                 const SizedBox(height: 12),
                 InkWell(
@@ -312,9 +373,7 @@ class _LateEarlyPermissionSheetState extends State<LateEarlyPermissionSheet> {
                   controller: _reasonController,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: "Reason",
-                  ),
+                  decoration: const InputDecoration(labelText: "Reason"),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return "Reason is required";

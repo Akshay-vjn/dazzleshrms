@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
@@ -14,10 +18,12 @@ class EmployeeUpcomingLeavesScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EmployeeUpcomingLeavesScreen> createState() => _EmployeeUpcomingLeavesScreenState();
+  ConsumerState<EmployeeUpcomingLeavesScreen> createState() =>
+      _EmployeeUpcomingLeavesScreenState();
 }
 
-class _EmployeeUpcomingLeavesScreenState extends ConsumerState<EmployeeUpcomingLeavesScreen> {
+class _EmployeeUpcomingLeavesScreenState
+    extends ConsumerState<EmployeeUpcomingLeavesScreen> {
   final int _limit = 10;
   int _currentPage = 1;
 
@@ -31,23 +37,20 @@ class _EmployeeUpcomingLeavesScreenState extends ConsumerState<EmployeeUpcomingL
 
   Future<void> _refresh() async {
     _currentPage = 1;
-    await ref.read(employeeUpcomingLeavesProvider(widget.employeeId).notifier).loadUpcomingLeaves(
-          page: _currentPage,
-          limit: _limit,
-        );
+    await ref
+        .read(employeeUpcomingLeavesProvider(widget.employeeId).notifier)
+        .loadUpcomingLeaves(page: _currentPage, limit: _limit);
   }
 
   @override
   Widget build(BuildContext context) {
-    final upcomingState = ref.watch(employeeUpcomingLeavesProvider(widget.employeeId));
+    final upcomingState = ref.watch(
+      employeeUpcomingLeavesProvider(widget.employeeId),
+    );
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Upcoming Leaves"),
-        centerTitle: true,
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Upcoming Leaves'),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: upcomingState.when(
@@ -79,29 +82,24 @@ class _EmployeeUpcomingLeavesScreenState extends ConsumerState<EmployeeUpcomingL
               itemBuilder: (context, index) {
                 final item = items[index];
 
-                return Container(
+                return AppSurface(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+                          color: AppVisuals.of(
+                            context,
+                          ).accent.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.event_available, color: AppTheme.PrimaryColor, size: 24),
+                        child: Icon(
+                          Icons.event_available,
+                          color: AppVisuals.of(context).accent,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -110,18 +108,25 @@ class _EmployeeUpcomingLeavesScreenState extends ConsumerState<EmployeeUpcomingL
                           children: [
                             Text(
                               item.date,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Type: ${item.type}",
-                              style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.hintColor,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.statusSuccess.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),

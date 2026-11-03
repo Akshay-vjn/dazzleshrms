@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -76,22 +78,24 @@ class _EmployeeDashboardAttendanceTabState
           append: append,
         );
     if (mounted) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
   void _checkIfNeedMoreData() {
     if (!mounted || !_scrollController.hasClients || _isLoadingMore) return;
     if (_scrollController.position.maxScrollExtent <= 100) {
-      final data =
-          ref.read(employeeDashboardAttendanceProvider(widget.employeeId)).valueOrNull;
+      final data = ref
+          .read(employeeDashboardAttendanceProvider(widget.employeeId))
+          .valueOrNull;
       if (data == null) return;
       final hasMorePages = data.totalPages > 0
           ? _currentPage < data.totalPages
           : (data.totalItems > 0
-              ? data.data.length < data.totalItems
-              : data.data.length >= _currentPage * _limit);
+                ? data.data.length < data.totalItems
+                : data.data.length >= _currentPage * _limit);
       if (hasMorePages) {
         _loadNextPage();
       }
@@ -105,14 +109,15 @@ class _EmployeeDashboardAttendanceTabState
 
     if (currentScroll < maxScroll - 150) return;
 
-    final data =
-        ref.read(employeeDashboardAttendanceProvider(widget.employeeId)).valueOrNull;
+    final data = ref
+        .read(employeeDashboardAttendanceProvider(widget.employeeId))
+        .valueOrNull;
     if (data == null) return;
     final hasMorePages = data.totalPages > 0
         ? _currentPage < data.totalPages
         : (data.totalItems > 0
-            ? data.data.length < data.totalItems
-            : data.data.length >= _currentPage * _limit);
+              ? data.data.length < data.totalItems
+              : data.data.length >= _currentPage * _limit);
     if (!hasMorePages) return;
     _loadNextPage();
   }
@@ -135,8 +140,9 @@ class _EmployeeDashboardAttendanceTabState
         _currentPage = nextPage;
         _isLoadingMore = false;
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
@@ -159,12 +165,13 @@ class _EmployeeDashboardAttendanceTabState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final state =
-        ref.watch(employeeDashboardAttendanceProvider(widget.employeeId));
+    final state = ref.watch(
+      employeeDashboardAttendanceProvider(widget.employeeId),
+    );
 
     return state.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: AppTheme.PrimaryColor),
+        child: CircularProgressIndicator(color: AppVisuals.of(context).accent),
       ),
       error: (err, _) => _emptyState(
         isDark,
@@ -184,7 +191,7 @@ class _EmployeeDashboardAttendanceTabState
         }
         final extra = _isLoadingMore ? 1 : 0;
         return RefreshIndicator(
-          color: AppTheme.PrimaryColor,
+          color: AppVisuals.of(context).accent,
           onRefresh: () => _load(reset: true),
           child: ListView.separated(
             controller: _scrollController,
@@ -217,29 +224,27 @@ class _EmployeeDashboardAttendanceTabState
     // "No Update" = empty/null description, or attendanceTypeId == 0,
     // or description explicitly says "no update" / "n/a", or no check-in at all
     final descLower = item.attendanceDescription.toLowerCase().trim();
-    final isNoUpdate = item.attendanceDescription.trim().isEmpty ||
+    final isNoUpdate =
+        item.attendanceDescription.trim().isEmpty ||
         item.attendanceTypeId == 0 ||
         descLower == 'no update' ||
         descLower == 'n/a' ||
         descLower == 'na' ||
-        (item.checkinTime == null && item.checkoutTime == null &&
+        (item.checkinTime == null &&
+            item.checkoutTime == null &&
             !descLower.contains('absent') &&
             !descLower.contains('leave') &&
             !descLower.contains('holiday') &&
             !descLower.contains('half'));
     final statusLabel = isNoUpdate ? 'No Update' : item.attendanceDescription;
-    final statusColor = _statusColor(isNoUpdate ? '' : item.attendanceDescription);
+    final statusColor = _statusColor(
+      isNoUpdate ? '' : item.attendanceDescription,
+    );
     final isAbsent = descLower.contains('absent');
     final hideDetails = isAbsent || isNoUpdate;
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-        ),
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -258,8 +263,7 @@ class _EmployeeDashboardAttendanceTabState
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -280,11 +284,7 @@ class _EmployeeDashboardAttendanceTabState
             Row(
               children: [
                 Expanded(
-                  child: _timeTile(
-                    isDark,
-                    'Check-in',
-                    item.checkinTime ?? '—',
-                  ),
+                  child: _timeTile(isDark, 'Check-in', item.checkinTime ?? '—'),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -311,12 +311,9 @@ class _EmployeeDashboardAttendanceTabState
   }
 
   Widget _timeTile(bool isDark, String label, String value) {
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.bgDark : AppTheme.bgLight,
-        borderRadius: BorderRadius.circular(10),
-      ),
+      inset: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -351,7 +348,7 @@ class _EmployeeDashboardAttendanceTabState
     VoidCallback? retry,
   }) {
     return RefreshIndicator(
-      color: AppTheme.PrimaryColor,
+      color: AppVisuals.of(context).accent,
       onRefresh: () => _load(reset: true),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -381,8 +378,9 @@ class _EmployeeDashboardAttendanceTabState
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
-                      color:
-                          isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
+                      color: isDark
+                          ? AppTheme.textMutedDark
+                          : AppTheme.textMutedLight,
                     ),
                   ),
                   if (retry != null) ...[
@@ -392,8 +390,10 @@ class _EmployeeDashboardAttendanceTabState
                       icon: const Icon(Icons.refresh_rounded, size: 16),
                       label: const Text('Retry'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.PrimaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppVisuals.of(context).accent,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
                       ),
                     ),
                   ],

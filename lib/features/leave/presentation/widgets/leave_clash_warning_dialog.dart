@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -15,8 +16,9 @@ class LeaveClashWarningDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     final isHigh = clash.percentage >= 50;
-    final severityColor =
-        isHigh ? AppTheme.statusError : AppTheme.statusWarning;
+    final severityColor = isHigh
+        ? AppTheme.statusError
+        : AppTheme.statusWarning;
     final formattedDate = DateFormat('EEEE, d MMMM yyyy').format(clash.date);
     final countLabel =
         '${clash.leaveCount} ${clash.leaveCount == 1 ? 'employee' : 'employees'} on leave';
@@ -55,7 +57,9 @@ class LeaveClashWarningDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isHigh ? 'High Leave Volume' : 'Leave Availability Notice',
+                        isHigh
+                            ? 'High Leave Volume'
+                            : 'Leave Availability Notice',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 17,
@@ -84,9 +88,7 @@ class LeaveClashWarningDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 color: severityColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: severityColor.withOpacity(0.2),
-                ),
+                border: Border.all(color: severityColor.withOpacity(0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +104,9 @@ class LeaveClashWarningDialog extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: severityColor,
                           borderRadius: BorderRadius.circular(12),
@@ -152,12 +156,15 @@ class LeaveClashWarningDialog extends StatelessWidget {
                     runSpacing: 8,
                     children: clash.leaveDetails.map((item) {
                       final name = item.employeeName.trim();
-                      final initial =
-                          name.isNotEmpty ? name[0].toUpperCase() : '?';
+                      final initial = name.isNotEmpty
+                          ? name[0].toUpperCase()
+                          : '?';
 
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.white.withOpacity(0.06)
@@ -178,10 +185,10 @@ class LeaveClashWarningDialog extends StatelessWidget {
                                   AppTheme.PrimaryColor.withOpacity(0.25),
                               child: Text(
                                 initial,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.PrimaryColor,
+                                  color: AppVisuals.of(context).accent,
                                 ),
                               ),
                             ),
@@ -223,7 +230,7 @@ class LeaveClashWarningDialog extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: const Text('Change Date'),
@@ -237,7 +244,7 @@ class LeaveClashWarningDialog extends StatelessWidget {
                       backgroundColor: severityColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: const Text('Select Date'),
@@ -251,4 +258,3 @@ class LeaveClashWarningDialog extends StatelessWidget {
     );
   }
 }
-

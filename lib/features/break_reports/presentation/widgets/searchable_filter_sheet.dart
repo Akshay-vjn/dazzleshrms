@@ -1,7 +1,8 @@
+import 'dart:math' as math;
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/app_theme/app_theme.dart';
 
 Future<Map<String, dynamic>?> showSearchableFilterSheet<T>({
   required BuildContext context,
@@ -55,7 +56,9 @@ class AsyncSearchableFilterSheet<T> extends ConsumerWidget {
       loading: () => FilterSheetScaffold(
         title: title,
         child: Center(
-          child: CircularProgressIndicator(color: AppTheme.PrimaryColor),
+          child: CircularProgressIndicator(
+            color: AppVisuals.of(context).accent,
+          ),
         ),
       ),
       error: (err, _) => FilterSheetScaffold(
@@ -79,10 +82,9 @@ class AsyncSearchableFilterSheet<T> extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -111,48 +113,61 @@ class FilterSheetScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.75,
-      child: Material(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
+    final colors = AppVisuals.of(context);
+    final theme = Theme.of(context);
+    final media = MediaQuery.of(context);
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: AppSurface(
+        sheet: true,
+        height: math.min(
+          media.size.height * .75,
+          math.max(
+            0,
+            media.size.height - media.viewInsets.bottom - media.padding.top,
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Select $title',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        child: DecoratedBox(
+          decoration: colors.backdrop,
+          child: Material(
+            type: MaterialType.transparency,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.muted.withValues(alpha: .4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Select $title',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Close',
+                          icon: Icon(Icons.close_rounded, color: colors.text),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: child),
+                ],
+              ),
             ),
           ),
-          Expanded(child: child),
-        ],
         ),
       ),
     );
@@ -203,14 +218,17 @@ class _SearchableFilterSheetState<T> extends State<SearchableFilterSheet<T>> {
       _filteredItems = query.isEmpty
           ? widget.items
           : widget.items
-              .where((item) =>
-                  widget.getItemName(item).toLowerCase().contains(query))
-              .toList();
+                .where(
+                  (item) =>
+                      widget.getItemName(item).toLowerCase().contains(query),
+                )
+                .toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppVisuals.of(context);
     return FilterSheetScaffold(
       title: widget.title,
       child: Column(
@@ -222,11 +240,12 @@ class _SearchableFilterSheetState<T> extends State<SearchableFilterSheet<T>> {
               autofocus: false,
               decoration: InputDecoration(
                 hintText: 'Search...',
-                prefixIcon: const Icon(Icons.search_rounded),
+                prefixIcon: Icon(Icons.search_rounded, color: colors.muted),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
+                fillColor: colors.inset,
+                hintStyle: TextStyle(color: colors.muted),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
@@ -237,33 +256,37 @@ class _SearchableFilterSheetState<T> extends State<SearchableFilterSheet<T>> {
             ),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            title: Text('All ${widget.title}s'),
-            trailing: widget.selectedId == null
-                ? Icon(
-                    Icons.check_rounded,
-                    color: AppTheme.accent(
-                      Theme.of(context).brightness == Brightness.dark,
-                    ),
-                  )
-                : null,
-            onTap: () => Navigator.pop(context, {'id': null, 'name': null}),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: ListTile(
+              title: Text(
+                'All ${widget.title}s',
+                style: TextStyle(
+                  color: colors.text,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              trailing: widget.selectedId == null
+                  ? Icon(Icons.check_rounded, color: colors.accent)
+                  : null,
+              onTap: () => Navigator.pop(context, {'id': null, 'name': null}),
+            ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, thickness: .5, color: colors.border),
           Expanded(
             child: _filteredItems.isEmpty
                 ? Center(
                     child: Text(
                       'No results found',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                   )
                 : ListView.builder(
+                    padding: const EdgeInsets.all(12),
                     itemCount: _filteredItems.length,
                     itemBuilder: (context, index) {
                       final item = _filteredItems[index];
@@ -271,6 +294,9 @@ class _SearchableFilterSheetState<T> extends State<SearchableFilterSheet<T>> {
                       final itemName = widget.getItemName(item);
                       final isSelected = itemId == widget.selectedId;
                       return ListTile(
+                        selected: isSelected,
+                        selectedColor: colors.accent,
+                        selectedTileColor: colors.accentSurface,
                         title: Text(
                           itemName,
                           style: TextStyle(
@@ -280,13 +306,7 @@ class _SearchableFilterSheetState<T> extends State<SearchableFilterSheet<T>> {
                           ),
                         ),
                         trailing: isSelected
-                            ? Icon(
-                                Icons.check_rounded,
-                                color: AppTheme.accent(
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark,
-                                ),
-                              )
+                            ? Icon(Icons.check_rounded, color: colors.accent)
                             : null,
                         onTap: () => Navigator.pop(context, {
                           'id': itemId,

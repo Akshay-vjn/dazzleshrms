@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,10 +17,12 @@ class EmployeeDashboardScreen extends ConsumerStatefulWidget {
   const EmployeeDashboardScreen({super.key, required this.employee});
 
   @override
-  ConsumerState<EmployeeDashboardScreen> createState() => _EmployeeDashboardScreenState();
+  ConsumerState<EmployeeDashboardScreen> createState() =>
+      _EmployeeDashboardScreenState();
 }
 
-class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScreen>
+class _EmployeeDashboardScreenState
+    extends ConsumerState<EmployeeDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -39,37 +45,28 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final permissions = ref.watch(permissionProvider);
-    
-    return Scaffold(
-      appBar: AppBar(
-        // title: Text(widget.employee.name),
-        // centerTitle: true,
-      ),
+
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Employee'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             // Simplified Profile Card
-            Container(
+            AppSurface(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.brightness == Brightness.dark 
-                    ? AppTheme.surfaceDark 
-                    : AppTheme.surfaceLight,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: AppTheme.PrimaryColor.withValues(alpha: 0.1),
-                ),
-              ),
+
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.1),
+                    backgroundColor: AppTheme.PrimaryColor.withValues(
+                      alpha: 0.1,
+                    ),
                     child: Text(
                       widget.employee.name[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: AppTheme.PrimaryColor,
+                      style: TextStyle(
+                        color: AppVisuals.of(context).accent,
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
                       ),
@@ -89,24 +86,24 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
                         Text(
                           widget.employee.designation,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
                           ),
                         ),
                         Text(
                           "ID: ${widget.employee.employeeCode}",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.PrimaryColor,
+                            color: AppVisuals.of(context).accent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           "Store: ${widget.employee.store}",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.PrimaryColor,
+                            color: AppVisuals.of(context).accent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                       ],
                     ),
                   ),
@@ -114,69 +111,70 @@ class _EmployeeDashboardScreenState extends ConsumerState<EmployeeDashboardScree
               ),
             ),
             const SizedBox(height: 32),
-            
+
             DashboardGrid(
-              animation: _controller,
+              staggerStart: 0.1,
+              staggerStep: 0.1,
               items: [
                 if (permissions.contains(Permissions.viewEmployeeAttendance))
                   DashboardGridItem(
                     icon: Icons.calendar_today_rounded,
                     label: "Attendance",
+                    tone: ActionTone.blue,
                     onTap: () => context.pushNamed(
                       'employee_attendance',
-                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      pathParameters: {
+                        'id': widget.employee.employeeId.toString(),
+                      },
                       extra: widget.employee,
                     ),
                     animation: _controller,
                     intervalStart: 0.1,
-                    gradientStart: AppTheme.gridGradient1Start,
-                    gradientEnd: AppTheme.gridGradient1End,
-                    iconColor: AppTheme.gridIconColor,
                   ),
                 if (permissions.contains(Permissions.viewEmployeeLeaves))
                   DashboardGridItem(
                     icon: Icons.calendar_month,
                     label: "Leaves",
+                    tone: ActionTone.teal,
                     onTap: () => context.pushNamed(
                       'employee_leaves',
-                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      pathParameters: {
+                        'id': widget.employee.employeeId.toString(),
+                      },
                       extra: widget.employee,
                     ),
                     animation: _controller,
                     intervalStart: 0.2,
-                    gradientStart: AppTheme.dTeal,
-                    gradientEnd: AppTheme.dGreen,
-                    iconColor: AppTheme.gridIconColor,
                   ),
                 if (permissions.contains(Permissions.viewEmployeeApprovals))
                   DashboardGridItem(
                     icon: Icons.fact_check_outlined,
                     label: "Approvals",
+                    tone: ActionTone.purple,
                     onTap: () => context.pushNamed(
                       'employee_pending_leaves',
-                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      pathParameters: {
+                        'id': widget.employee.employeeId.toString(),
+                      },
                       extra: widget.employee,
                     ),
                     animation: _controller,
                     intervalStart: 0.3,
-                    gradientStart: AppTheme.gridGradient2Start,
-                    gradientEnd: AppTheme.gridGradient2End,
-                    iconColor: AppTheme.gridIconColor,
                   ),
                 if (permissions.contains(Permissions.viewEmployeeUpcoming))
                   DashboardGridItem(
                     icon: Icons.next_plan_outlined,
                     label: "Upcoming Leaves",
+                    tone: ActionTone.orange,
                     onTap: () => context.pushNamed(
                       'employee_upcoming_leaves',
-                      pathParameters: {'id': widget.employee.employeeId.toString()},
+                      pathParameters: {
+                        'id': widget.employee.employeeId.toString(),
+                      },
                       extra: widget.employee,
                     ),
                     animation: _controller,
                     intervalStart: 0.4,
-                    gradientStart: AppTheme.dTeal,
-                    gradientEnd: AppTheme.gridGradient1Start,
-                    iconColor: AppTheme.gridIconColor,
                   ),
               ],
             ),

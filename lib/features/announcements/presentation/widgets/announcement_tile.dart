@@ -1,5 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
 import 'package:flutter/material.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
 class AnnouncementTile extends StatelessWidget {
   final IconData icon;
@@ -24,20 +24,11 @@ class AnnouncementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final effectiveIconColor = iconColor ?? theme.colorScheme.primary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return GlassSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? AppTheme.surfaceDark
-            : AppTheme.surfaceLight,
 
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.PrimaryColor.withOpacity(0.1),
-        ),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,18 +40,13 @@ class AnnouncementTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.brightness == Brightness.dark
-                      ? AppTheme.PrimaryColor.withOpacity(0.15)
-                      : (iconColor ?? AppTheme.iconPrimary).withOpacity(0.12),
-
+                  color: iconColor == null
+                      ? theme.colorScheme.primaryContainer
+                      : effectiveIconColor.withValues(alpha: 0.12),
 
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor ?? AppTheme.iconPrimary,
-                  size: 24,
-                ),
+                child: Icon(icon, color: effectiveIconColor, size: 24),
               ),
               const SizedBox(width: 12),
 
@@ -80,10 +66,7 @@ class AnnouncementTile extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          date,
-                          style: theme.textTheme.bodySmall,
-                        ),
+                        Text(date, style: theme.textTheme.bodySmall),
                       ],
                     ),
 
@@ -102,15 +85,9 @@ class AnnouncementTile extends StatelessWidget {
             ],
           ),
 
-          if (extra != null) ...[
-            const SizedBox(height: 8),
-            extra!,
-          ],
+          if (extra != null) ...[const SizedBox(height: 8), extra!],
 
-          if (footer != null) ...[
-            const SizedBox(height: 12),
-            footer!,
-          ],
+          if (footer != null) ...[const SizedBox(height: 12), footer!],
         ],
       ),
     );

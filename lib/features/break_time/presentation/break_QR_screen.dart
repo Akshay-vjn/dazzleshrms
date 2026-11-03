@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -38,12 +39,11 @@ class BreakQR {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      final BreakStatusResponse statusResponse = await _repository.getBreakStatus();
+      final BreakStatusResponse statusResponse = await _repository
+          .getBreakStatus();
       final String currentAction = statusResponse.data.currentAction;
       final bool isBreakOut = currentAction == 'BREAK_OUT';
 
@@ -62,8 +62,10 @@ class BreakQR {
       if (permission == LocationPermission.deniedForever) {
         if (context.mounted) {
           Navigator.pop(context);
-          _showError(context,
-              'Location permission is permanently denied. Please enable it in settings.');
+          _showError(
+            context,
+            'Location permission is permanently denied. Please enable it in settings.',
+          );
         }
         return;
       }
@@ -233,12 +235,14 @@ class _QrDialogState extends State<_QrDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withOpacity(0.12),
+                    color: AppVisuals.of(context).accent.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    widget.isBreakOut ? Icons.free_breakfast : Icons.check_circle,
-                    color: AppTheme.PrimaryColor,
+                    widget.isBreakOut
+                        ? Icons.free_breakfast
+                        : Icons.check_circle,
+                    color: AppVisuals.of(context).accent,
                     size: 24,
                   ),
                 ),
@@ -256,8 +260,9 @@ class _QrDialogState extends State<_QrDialog> {
                       Text(
                         "Show QR to scanner",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.textTheme.bodyMedium?.color
-                              ?.withOpacity(0.6),
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                            0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -272,10 +277,7 @@ class _QrDialogState extends State<_QrDialog> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.grey.shade200,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.grey.shade200, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),

@@ -1,20 +1,22 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
 import '../../dashboard/data/providers/dashboard_provider.dart';
+import '../../break_reports/presentation/widgets/searchable_filter_sheet.dart'
+    show FilterSheetScaffold;
 import '../data/models/applied_leave_model.dart';
 import '../data/providers/approvals_provider.dart';
 import 'widgets/approval_sheet.dart';
 import 'widgets/rejection_sheet.dart';
 import 'package:intl/intl.dart';
 
-
 class AppliedLeavesTab extends ConsumerStatefulWidget {
   const AppliedLeavesTab({super.key});
 
   @override
-  ConsumerState<AppliedLeavesTab> createState() =>
-      _LeaveAppliedTabState();
+  ConsumerState<AppliedLeavesTab> createState() => _LeaveAppliedTabState();
 }
 
 class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
@@ -28,12 +30,14 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
   @override
   void initState() {
     super.initState();
-    ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
-      page: _page,
-      limit: _limit,
-      designationId: _selectedDesignationId,
-      storeId: _selectedStoreId,
-    );
+    ref
+        .read(leaveApprovalProvider.notifier)
+        .loadAppliedLeaves(
+          page: _page,
+          limit: _limit,
+          designationId: _selectedDesignationId,
+          storeId: _selectedStoreId,
+        );
   }
 
   void _showPartialApprovalSheet(AppliedLeaveItem item) {
@@ -49,17 +53,23 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
         onSubmitted: (decisions, reason) async {
           Navigator.pop(context);
 
-          final apiDecisions = decisions.entries.map((e) => {
-            "date": DateFormat('yyyy-MM-dd').format(e.key),
-            "action": e.value ? "APPROVE" : "REJECT"
-          }).toList();
+          final apiDecisions = decisions.entries
+              .map(
+                (e) => {
+                  "date": DateFormat('yyyy-MM-dd').format(e.key),
+                  "action": e.value ? "APPROVE" : "REJECT",
+                },
+              )
+              .toList();
 
           try {
-            final res = await ref.read(leaveApprovalRepositoryProvider).approveLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              decisions: apiDecisions,
-              reason: reason,
-            );
+            final res = await ref
+                .read(leaveApprovalRepositoryProvider)
+                .approveLeave(
+                  leaveRoasterId: item.leaveRoasterId,
+                  decisions: apiDecisions,
+                  reason: reason,
+                );
             _handleSuccess(res.message);
           } catch (e) {
             _handleError(e);
@@ -109,9 +119,9 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
             final res = await ref
                 .read(leaveApprovalRepositoryProvider)
                 .rejectLeave(
-              leaveRoasterId: item.leaveRoasterId,
-              reason: reason,
-            );
+                  leaveRoasterId: item.leaveRoasterId,
+                  reason: reason,
+                );
 
             _handleSuccess(res.message);
           } catch (e) {
@@ -142,22 +152,26 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
 
   Future<void> _refresh() async {
     _page = 1;
-    await ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
-      page: _page,
-      limit: _limit,
-      designationId: _selectedDesignationId,
-      storeId: _selectedStoreId,
-    );
+    await ref
+        .read(leaveApprovalProvider.notifier)
+        .loadAppliedLeaves(
+          page: _page,
+          limit: _limit,
+          designationId: _selectedDesignationId,
+          storeId: _selectedStoreId,
+        );
   }
 
   void _onFilterChanged() {
     _page = 1;
-    ref.read(leaveApprovalProvider.notifier).loadAppliedLeaves(
-      page: _page,
-      limit: _limit,
-      designationId: _selectedDesignationId,
-      storeId: _selectedStoreId,
-    );
+    ref
+        .read(leaveApprovalProvider.notifier)
+        .loadAppliedLeaves(
+          page: _page,
+          limit: _limit,
+          designationId: _selectedDesignationId,
+          storeId: _selectedStoreId,
+        );
   }
 
   void _clearFilters() {
@@ -180,7 +194,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (context) => _SearchableListSheet(
-            title: "Select Designation",
+            title: "Designation",
             items: designations,
             selectedId: _selectedDesignationId,
             getItemId: (item) => item.designationId,
@@ -211,7 +225,7 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (context) => _SearchableListSheet(
-            title: "Select Store",
+            title: "Store",
             items: stores,
             selectedId: _selectedStoreId,
             getItemId: (item) => item.storeId,
@@ -233,22 +247,13 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
   }
 
   Widget _buildFilters() {
-    final hasActiveFilters = _selectedDesignationId != null || _selectedStoreId != null;
+    final hasActiveFilters =
+        _selectedDesignationId != null || _selectedStoreId != null;
 
-    return Container(
+    return AppSurface(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -278,7 +283,10 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                   icon: const Icon(Icons.clear_rounded, size: 16),
                   label: const Text("Clear All"),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -295,12 +303,12 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                   onTap: _showDesignationPicker,
                   onClear: _selectedDesignationId != null
                       ? () {
-                    setState(() {
-                      _selectedDesignationId = null;
-                      _selectedDesignationName = null;
-                    });
-                    _onFilterChanged();
-                  }
+                          setState(() {
+                            _selectedDesignationId = null;
+                            _selectedDesignationName = null;
+                          });
+                          _onFilterChanged();
+                        }
                       : null,
                 ),
               ),
@@ -312,12 +320,12 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                   onTap: _showStorePicker,
                   onClear: _selectedStoreId != null
                       ? () {
-                    setState(() {
-                      _selectedStoreId = null;
-                      _selectedStoreName = null;
-                    });
-                    _onFilterChanged();
-                  }
+                          setState(() {
+                            _selectedStoreId = null;
+                            _selectedStoreName = null;
+                          });
+                          _onFilterChanged();
+                        }
                       : null,
                 ),
               ),
@@ -374,12 +382,9 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                   itemBuilder: (context, i) {
                     final item = items[i];
 
-                    return Container(
+                    return AppSurface(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -391,23 +396,32 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                           if (item.store != null)
                             Text(
                               "STORE: ${item.store}",
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
                             ),
                           if (item.empCode != null)
                             Text(
                               "EmpCode: ${item.empCode}",
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
                             ),
                           if (item.designation != null)
                             Text(
                               "Designation:${item.designation}",
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
                             ),
                           const SizedBox(height: 6),
                           Text(
@@ -428,7 +442,8 @@ class _LeaveAppliedTabState extends ConsumerState<AppliedLeavesTab> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: () => _showPartialApprovalSheet(item),
+                                  onPressed: () =>
+                                      _showPartialApprovalSheet(item),
                                   child: const Text("Approve"),
                                 ),
                               ),
@@ -492,7 +507,9 @@ class _FilterChip extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 11,
                     ),
                   ),
@@ -500,7 +517,9 @@ class _FilterChip extends StatelessWidget {
                   Text(
                     selectedValue ?? "All",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                       color: isSelected
                           ? Theme.of(context).colorScheme.onPrimaryContainer
                           : Theme.of(context).colorScheme.onSurface,
@@ -549,7 +568,8 @@ class _SearchableListSheet<T> extends StatefulWidget {
   });
 
   @override
-  State<_SearchableListSheet<T>> createState() => _SearchableListSheetState<T>();
+  State<_SearchableListSheet<T>> createState() =>
+      _SearchableListSheetState<T>();
 }
 
 class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
@@ -576,8 +596,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
         _filteredItems = widget.items;
       } else {
         _filteredItems = widget.items
-            .where((item) =>
-            widget.getItemName(item).toLowerCase().contains(query))
+            .where(
+              (item) => widget.getItemName(item).toLowerCase().contains(query),
+            )
             .toList();
       }
     });
@@ -585,147 +606,96 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    final colors = AppVisuals.of(context);
+    return FilterSheetScaffold(
+      title: widget.title,
       child: Column(
         children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-
-          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _searchController,
+              autofocus: false,
               decoration: InputDecoration(
-                hintText: "Search...",
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear_rounded),
-                  onPressed: () {
-                    _searchController.clear();
-                  },
-                )
-                    : null,
+                hintText: 'Search...',
+                prefixIcon: Icon(Icons.search_rounded, color: colors.muted),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
+                fillColor: colors.inset,
+                hintStyle: TextStyle(color: colors.muted),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // "All" option
-          ListTile(
-            leading: Radio<int?>(
-              value: null,
-              groupValue: widget.selectedId,
-              onChanged: (_) {
-                Navigator.pop(context, {'id': null, 'name': null});
-              },
-            ),
-            title: Text(
-              "All ${widget.title}s",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: widget.selectedId == null ? FontWeight.w600 : FontWeight.normal,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: ListTile(
+              title: Text(
+                'All ${widget.title}s',
+                style: TextStyle(
+                  color: colors.text,
+                  fontWeight: FontWeight.normal,
+                ),
               ),
+              trailing: widget.selectedId == null
+                  ? Icon(Icons.check_rounded, color: colors.accent)
+                  : null,
+              onTap: () => Navigator.pop(context, {'id': null, 'name': null}),
             ),
-            onTap: () {
-              Navigator.pop(context, {'id': null, 'name': null});
-            },
           ),
-
-          const Divider(height: 1),
-
-          // List
+          Divider(height: 1, thickness: 0.5, color: colors.border),
           Expanded(
             child: _filteredItems.isEmpty
                 ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off_rounded,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "No results found",
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    child: Text(
+                      'No results found',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            )
+                  )
                 : ListView.builder(
-              itemCount: _filteredItems.length,
-              itemBuilder: (context, index) {
-                final item = _filteredItems[index];
-                final itemId = widget.getItemId(item);
-                final itemName = widget.getItemName(item);
-                final isSelected = itemId == widget.selectedId;
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _filteredItems[index];
+                      final itemId = widget.getItemId(item);
+                      final itemName = widget.getItemName(item);
+                      final isSelected = itemId == widget.selectedId;
 
-                return ListTile(
-                  leading: Radio<int>(
-                    value: itemId,
-                    groupValue: widget.selectedId,
-                    onChanged: (_) {
-                      Navigator.pop(context, {'id': itemId, 'name': itemName});
+                      return ListTile(
+                        selected: isSelected,
+                        selectedColor: colors.accent,
+                        selectedTileColor: colors.accentSurface,
+                        title: Text(
+                          itemName,
+                          style: TextStyle(
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(Icons.check_rounded, color: colors.accent)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(context, {
+                            'id': itemId,
+                            'name': itemName,
+                          });
+                        },
+                      );
                     },
                   ),
-                  title: Text(
-                    itemName,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context, {'id': itemId, 'name': itemName});
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),

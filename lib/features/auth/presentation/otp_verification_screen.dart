@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -70,15 +73,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
       return;
     }
 
-    ref.read(verifyOtpProvider.notifier).verifyOtp(
-      mobileNumber: widget.mobileNumber,
-      otp: otp,
-    );
+    ref
+        .read(verifyOtpProvider.notifier)
+        .verifyOtp(mobileNumber: widget.mobileNumber, otp: otp);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = AppVisuals.of(context);
     final verifyState = ref.watch(verifyOtpProvider);
 
     ref.listen(verifyOtpProvider, (previous, next) {
@@ -108,7 +111,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               permissions: res.data.permissions,
             );
 
-            ref.read(permissionProvider.notifier)
+            ref
+                .read(permissionProvider.notifier)
                 .setPermissions(res.data.permissions);
           }
 
@@ -125,9 +129,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           }
         },
         error: (err, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
         },
       );
     });
@@ -135,25 +139,23 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final defaultPinTheme = PinTheme(
       width: 52,
       height: 60,
-      textStyle: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      textStyle: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: colors.text,
+      ),
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? AppTheme.surfaceDarkVariant
-            : AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.transparent),
+        color: colors.dark ? colors.inset : colors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colors.dark ? colors.border : colors.muted,
+          width: .5,
+        ),
       ),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
+    return AppScaffold(
+      appBar: const AppPageBar(title: '', backgroundColor: Colors.transparent),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -163,8 +165,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               const SizedBox(height: 20),
               Text(
                 "Verification Code",
-                style: theme.textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -183,7 +186,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                   focusedPinTheme: defaultPinTheme.copyWith(
                     decoration: defaultPinTheme.decoration!.copyWith(
                       border: Border.all(
-                          color: AppTheme.PrimaryColor, width: 2),
+                        color: colors.accent,
+                        width: 2,
+                      ),
                     ),
                   ),
                   submittedPinTheme: defaultPinTheme,
@@ -201,14 +206,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                   onPressed: verifyState.isLoading ? null : _onVerify,
                   child: verifyState.isLoading
                       ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                      : const Text("Verify",
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Verify",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
 
@@ -228,22 +239,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Didn't receive code? ",
-                  style: theme.textTheme.bodyMedium),
+              Text("Didn't receive code? ", style: theme.textTheme.bodyMedium),
               TextButton(
                 onPressed: _canResend
                     ? () {
-                  ref
-                      .read(sendOtpProvider.notifier)
-                      .sendOtp(widget.mobileNumber);
-                  _startTimer();
-                }
+                        ref
+                            .read(sendOtpProvider.notifier)
+                            .sendOtp(widget.mobileNumber);
+                        _startTimer();
+                      }
                     : null,
                 child: Text(
                   "Resend",
                   style: TextStyle(
-                    color:
-                    _canResend ? AppTheme.PrimaryColor : Colors.grey,
+                    color: _canResend ? AppTheme.PrimaryColor : Colors.grey,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -253,8 +262,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
           if (!_canResend)
             Text(
               "Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}",
-              style:
-              theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
         ],
       ),

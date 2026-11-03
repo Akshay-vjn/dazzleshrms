@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -131,9 +135,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       LocationPermission permission = await Geolocator.checkPermission();
@@ -151,8 +153,10 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       if (permission == LocationPermission.deniedForever) {
         if (context.mounted) {
           Navigator.pop(context);
-          _showError(context,
-              'Location permission is permanently denied. Please enable it in settings.');
+          _showError(
+            context,
+            'Location permission is permanently denied. Please enable it in settings.',
+          );
         }
         return;
       }
@@ -231,6 +235,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       lastDate: DateTime.now(),
       builder: (context, child) {
         final theme = Theme.of(context);
+        final colors = AppVisuals.of(context);
         final actionColor = theme.brightness == Brightness.light
             ? AppTheme.textPrimaryLight
             : AppTheme.PrimaryColor;
@@ -239,6 +244,14 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
           data: theme.copyWith(
             colorScheme: theme.colorScheme.copyWith(
               primary: AppTheme.PrimaryColor,
+            ),
+            dialogTheme: theme.dialogTheme.copyWith(
+              backgroundColor: colors.surface,
+              surfaceTintColor: Colors.transparent,
+            ),
+            datePickerTheme: theme.datePickerTheme.copyWith(
+              backgroundColor: colors.surface,
+              surfaceTintColor: Colors.transparent,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(foregroundColor: actionColor),
@@ -269,28 +282,18 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
 
   Widget _buildBreakActionButton(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
-    final textColor = isDark ? Colors.white : Colors.black.withValues(alpha: 0.85);
-    final buttonColor = _isOnBreak ? AppTheme.statusWarning : AppTheme.statusSuccess;
+    final textColor = isDark
+        ? Colors.white
+        : Colors.black.withValues(alpha: 0.85);
+    final buttonColor = _isOnBreak
+        ? AppTheme.statusWarning
+        : AppTheme.statusSuccess;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
-      child: Container(
+      child: AppSurface(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: AppTheme.PrimaryColor.withValues(alpha: isDark ? 0.35 : 0.18),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -300,12 +303,14 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
+                    color: AppVisuals.of(
+                      context,
+                    ).accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.coffee,
-                    color: AppTheme.PrimaryColor,
+                    color: AppVisuals.of(context).accent,
                     size: 28,
                   ),
                 ),
@@ -364,12 +369,11 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
             SizedBox(
               width: double.infinity,
               child: _TonalButton(
-                onPressed:
-                    _loadingBreakStatus ? null : () => _handleBreak(context),
+                onPressed: _loadingBreakStatus
+                    ? null
+                    : () => _handleBreak(context),
                 color: buttonColor,
-                icon: _isOnBreak
-                    ? Icons.input
-                    : Icons.output,
+                icon: _isOnBreak ? Icons.input : Icons.output,
                 label: _loadingBreakStatus
                     ? "Loading..."
                     : (_isOnBreak ? "Break Out" : "Break In"),
@@ -387,13 +391,8 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
       onPressed: _pickDate,
       icon: const Icon(Icons.calendar_month_rounded, size: 20),
       label: Text(
-        _isToday
-            ? 'Today'
-            : DateFormat('dd MMM').format(_selectedDate),
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        _isToday ? 'Today' : DateFormat('dd MMM').format(_selectedDate),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
       ),
       style: TextButton.styleFrom(
         foregroundColor: theme.brightness == Brightness.light
@@ -404,9 +403,7 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
             : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         minimumSize: const Size(0, 40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -518,10 +515,8 @@ class _BreakDashboardScreenState extends State<BreakDashboardScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(''),
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Break Time'),
       body: _buildBody(theme),
     );
   }
@@ -643,14 +638,16 @@ class _BreakQrDialogState extends State<BreakQrDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withValues(alpha: 0.12),
+                    color: AppVisuals.of(
+                      context,
+                    ).accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     widget.isBreakOut
                         ? Icons.logout_rounded
                         : Icons.login_rounded,
-                    color: AppTheme.PrimaryColor,
+                    color: AppVisuals.of(context).accent,
                     size: 24,
                   ),
                 ),
@@ -763,30 +760,49 @@ class _BreakHistoryTile extends StatelessWidget {
     required this.minutesFormat,
   });
 
+  Color _statusColor(String status) {
+    final normalized = status.trim().toUpperCase();
+    if (normalized == 'ON_BREAK' || normalized == 'ACTIVE') {
+      return AppTheme.statusWarning;
+    }
+    if (normalized == 'COMPLETED' ||
+        normalized == 'CLOSED' ||
+        normalized == 'ENDED') {
+      return AppTheme.statusSuccess;
+    }
+    if (normalized == 'MISSED' ||
+        normalized == 'CANCELLED' ||
+        normalized == 'EXCEEDED') {
+      return AppTheme.statusError;
+    }
+    return AppTheme.statusInfo;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final durationColor = item.hasDurationColorRule
+        ? (item.isOverLimit ? AppTheme.statusError : AppTheme.statusSuccess)
+        : (isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight);
+    final statusColor = _statusColor(item.breakStatus);
 
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 7),
+                Text(
+                  item.displayBreakType,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Text('Date: ${item.date}', style: theme.textTheme.bodyMedium),
                 Text(
                   'Time: ${timeFormat(item.breakOutTime)} - ${timeFormat(item.breakInTime)}',
@@ -795,20 +811,50 @@ class _BreakHistoryTile extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.statusSuccess.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              minutesFormat(item.totalMinutes),
-              style: const TextStyle(
-                color: AppTheme.statusSuccess,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (item.displayBreakStatus.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    item.displayBreakStatus,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: durationColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  minutesFormat(item.totalMinutes),
+                  style: TextStyle(
+                    color: durationColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -836,11 +882,13 @@ class _TonalButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool disabled = onPressed == null;
-    final Color effectiveColor = disabled ? color.withValues(alpha: 0.4) : color;
+    final Color effectiveColor = disabled
+        ? color.withValues(alpha: 0.4)
+        : color;
     final Color foregroundColor =
         Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : effectiveColor;
+        ? Colors.white
+        : effectiveColor;
 
     return Material(
       color: color.withValues(alpha: disabled ? 0.18 : 0.36),
@@ -867,8 +915,9 @@ class _TonalButton extends StatelessWidget {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(effectiveColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          effectiveColor,
+                        ),
                       ),
                     )
                   : Icon(icon, size: 20, color: foregroundColor),

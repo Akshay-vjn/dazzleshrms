@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -76,22 +78,24 @@ class _EmployeeDashboardBreaksTabState
           append: append,
         );
     if (mounted) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
   void _checkIfNeedMoreData() {
     if (!mounted || !_scrollController.hasClients || _isLoadingMore) return;
     if (_scrollController.position.maxScrollExtent <= 100) {
-      final data =
-          ref.read(employeeDashboardBreaksProvider(widget.employeeId)).valueOrNull;
+      final data = ref
+          .read(employeeDashboardBreaksProvider(widget.employeeId))
+          .valueOrNull;
       if (data == null) return;
       final hasMorePages = data.totalPages > 0
           ? _currentPage < data.totalPages
           : (data.totalItems > 0
-              ? data.data.length < data.totalItems
-              : data.data.length >= _currentPage * _limit);
+                ? data.data.length < data.totalItems
+                : data.data.length >= _currentPage * _limit);
       if (hasMorePages) {
         _loadNextPage();
       }
@@ -105,14 +109,15 @@ class _EmployeeDashboardBreaksTabState
 
     if (currentScroll < maxScroll - 150) return;
 
-    final data =
-        ref.read(employeeDashboardBreaksProvider(widget.employeeId)).valueOrNull;
+    final data = ref
+        .read(employeeDashboardBreaksProvider(widget.employeeId))
+        .valueOrNull;
     if (data == null) return;
     final hasMorePages = data.totalPages > 0
         ? _currentPage < data.totalPages
         : (data.totalItems > 0
-            ? data.data.length < data.totalItems
-            : data.data.length >= _currentPage * _limit);
+              ? data.data.length < data.totalItems
+              : data.data.length >= _currentPage * _limit);
     if (!hasMorePages) return;
     _loadNextPage();
   }
@@ -135,8 +140,9 @@ class _EmployeeDashboardBreaksTabState
         _currentPage = nextPage;
         _isLoadingMore = false;
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
@@ -153,7 +159,7 @@ class _EmployeeDashboardBreaksTabState
 
     return state.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: AppTheme.PrimaryColor),
+        child: CircularProgressIndicator(color: AppVisuals.of(context).accent),
       ),
       error: (err, _) => _emptyState(
         isDark,
@@ -173,7 +179,7 @@ class _EmployeeDashboardBreaksTabState
         }
         final extra = _isLoadingMore ? 1 : 0;
         return RefreshIndicator(
-          color: AppTheme.PrimaryColor,
+          color: AppVisuals.of(context).accent,
           onRefresh: () => _load(reset: true),
           child: ListView.separated(
             controller: _scrollController,
@@ -204,15 +210,9 @@ class _EmployeeDashboardBreaksTabState
 
   Widget _dayCard(bool isDark, EmployeeDashboardBreakDay day) {
     final accent = AppTheme.accent(isDark);
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-        ),
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -249,17 +249,15 @@ class _EmployeeDashboardBreaksTabState
 
   Widget _breakRow(bool isDark, EmployeeDashboardBreakItem item) {
     final muted = isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight;
-    final primary =
-        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final primary = isDark
+        ? AppTheme.textPrimaryDark
+        : AppTheme.textPrimaryLight;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
+      child: AppSurface(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.bgDark : AppTheme.bgLight,
-          borderRadius: BorderRadius.circular(10),
-        ),
+        inset: true,
         child: Row(
           children: [
             Container(
@@ -338,7 +336,7 @@ class _EmployeeDashboardBreaksTabState
     VoidCallback? retry,
   }) {
     return RefreshIndicator(
-      color: AppTheme.PrimaryColor,
+      color: AppVisuals.of(context).accent,
       onRefresh: () => _load(reset: true),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -368,8 +366,9 @@ class _EmployeeDashboardBreaksTabState
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
-                      color:
-                          isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
+                      color: isDark
+                          ? AppTheme.textMutedDark
+                          : AppTheme.textMutedLight,
                     ),
                   ),
                   if (retry != null) ...[
@@ -379,8 +378,10 @@ class _EmployeeDashboardBreaksTabState
                       icon: const Icon(Icons.refresh_rounded, size: 16),
                       label: const Text('Retry'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.PrimaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppVisuals.of(context).accent,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
                       ),
                     ),
                   ],

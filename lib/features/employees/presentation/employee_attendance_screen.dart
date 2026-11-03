@@ -1,3 +1,7 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
@@ -16,10 +20,12 @@ class EmployeeAttendanceScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EmployeeAttendanceScreen> createState() => _EmployeeAttendanceScreenState();
+  ConsumerState<EmployeeAttendanceScreen> createState() =>
+      _EmployeeAttendanceScreenState();
 }
 
-class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScreen> {
+class _EmployeeAttendanceScreenState
+    extends ConsumerState<EmployeeAttendanceScreen> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   final int _limit = 10;
@@ -39,10 +45,9 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
   void _loadData() {
     _items.clear();
     _currentPage = 1;
-    ref.read(employeeAttendanceProvider(widget.employeeId).notifier).loadAttendance(
-          page: _currentPage,
-          limit: _limit,
-        );
+    ref
+        .read(employeeAttendanceProvider(widget.employeeId).notifier)
+        .loadAttendance(page: _currentPage, limit: _limit);
   }
 
   void _onScroll() {
@@ -85,14 +90,13 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
 
   @override
   Widget build(BuildContext context) {
-    final attendanceState = ref.watch(employeeAttendanceProvider(widget.employeeId));
+    final attendanceState = ref.watch(
+      employeeAttendanceProvider(widget.employeeId),
+    );
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar
-        (title: Text("Attendance"),
-        centerTitle: true,),
+    return AppScaffold(
+      appBar: const AppPageBar(title: 'Attendance'),
       body: attendanceState.when(
         loading: () => ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -111,7 +115,8 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
           ),
         ),
         data: (attendanceData) {
-          if (attendanceData == null) return const Center(child: Text("No records found"));
+          if (attendanceData == null)
+            return const Center(child: Text("No records found"));
 
           for (final item in attendanceData.data.data) {
             if (!_items.any((e) => e.date == item.date)) {
@@ -119,75 +124,56 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
             }
           }
 
-          if (_items.isEmpty) return const Center(child: Text("No records found"));
+          if (_items.isEmpty)
+            return const Center(child: Text("No records found"));
 
           return RefreshIndicator(
             onRefresh: _onRefresh,
-            child: Container(
-              color: theme.scaffoldBackgroundColor,
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _items.length + (_isLoadingMore ? 1 : 0) + 1,
-                separatorBuilder: (_, __) => const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return _buildSummaryCard(context, attendanceData);
-                  }
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _items.length + (_isLoadingMore ? 1 : 0) + 1,
+              separatorBuilder: (_, __) => const SizedBox(height: 20),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _buildSummaryCard(context, attendanceData);
+                }
 
-                  final listIndex = index - 1;
-                  if (listIndex == _items.length) {
-                    return const AttendanceShimmerItem();
-                  }
+                final listIndex = index - 1;
+                if (listIndex == _items.length) {
+                  return const AttendanceShimmerItem();
+                }
 
-                  final item = _items[listIndex];
-                  final statusColor = _statusColor(item.attendanceDescription);
+                final item = _items[listIndex];
+                final statusColor = _statusColor(item.attendanceDescription);
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                        color: theme.dividerColor.withOpacity(0.1),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                          spreadRadius: 0,
-                        ),
-                      ],
+                return AppSurface(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                    leading: Icon(
+                      Icons.fingerprint,
+                      color: statusColor,
+                    ),
+                    title: Text(
+                      item.date,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      leading: Icon(
-                        Icons.calendar_today_outlined,
+                    ),
+                    trailing: Text(
+                      item.attendanceDescription,
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: statusColor,
-                      ),
-                      title: Text(
-                        item.date,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      trailing: Text(
-                        item.attendanceDescription,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: statusColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           );
         },
@@ -200,27 +186,12 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
     EmployeeAttendanceResponse attendanceData,
   ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final summaryCounts = attendanceData.data.summary.counts;
     final sortedCounts = summaryCounts.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return AppSurface(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
@@ -234,7 +205,9 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                       Text(
                         "Total ",
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(
+                            0.7,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -242,7 +215,7 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                         attendanceData.data.totalItems.toString(),
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.PrimaryColor,
+                          color: AppVisuals.of(context).accent,
                         ),
                       ),
                     ],
@@ -256,7 +229,10 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                     });
                   },
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 4,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -273,7 +249,7 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                           _isSummaryExpanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: AppTheme.PrimaryColor,
+                          color: AppVisuals.of(context).accent,
                         ),
                       ],
                     ),
@@ -291,7 +267,9 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                   child: Text(
                     "No attendance counts available",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                        0.7,
+                      ),
                     ),
                   ),
                 )
@@ -313,7 +291,7 @@ class _EmployeeAttendanceScreenState extends ConsumerState<EmployeeAttendanceScr
                                 entry.value.toString(),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: AppTheme.PrimaryColor,
+                                  color: AppVisuals.of(context).accent,
                                 ),
                               ),
                             ],

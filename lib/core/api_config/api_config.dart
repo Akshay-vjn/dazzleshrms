@@ -7,10 +7,9 @@ import '../../features/auth/data/models/refresh_token_model.dart';
 import '../api_constants/api_constants.dart';
 
 class ApiConfig {
-  static const String _baseUrl = "http://192.168.2.189:7907/api";
+  // static const String _baseUrl = "http://192.168.2.189:7907/api";
   // static const String _baseUrl = "https://testhrms.dazzles.in/api/api/";
-  // static const String _baseUrl = "https://hrms.dazzles.in/api/api/";
-
+  static const String _baseUrl = "https://hrms.dazzles.in/api/api/";
 
   static const Duration _connectTimeout = Duration(seconds: 20);
   static const Duration _receiveTimeout = Duration(seconds: 20);
@@ -18,205 +17,271 @@ class ApiConfig {
   static bool _handlingUnauthorized = false;
   static bool _isRefreshing = false;
   static final List<_PendingRequest> _pendingRequests = [];
+  static int _sessionInvalidationVersion = 0;
+  static const _inactiveAccountMessage =
+      'Your account is inactive or no longer exists. Please log in again.';
 
-  static final Dio dio = Dio(
+  // Keep refresh requests separate so they cannot trigger the auth interceptor.
+  static final Dio refreshDio = Dio(
     BaseOptions(
       baseUrl: _baseUrl,
       connectTimeout: _connectTimeout,
       receiveTimeout: _receiveTimeout,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: {"Content-Type": "application/json"},
     ),
-  )
-    ..interceptors.add(
-      QueuedInterceptorsWrapper(
-        onRequest: (options, handler) async {
-          if (!_isRefreshTokenRequest(options)) {
-            final token = await SessionStorage.getToken();
-            if (token != null && token.isNotEmpty) {
-              options.headers['Authorization'] = 'Bearer $token';
-            }
-          }
-          handler.next(options);
-        },
-        onError: (error, handler) async {
-          final statusCode = error.response?.statusCode;
-          if (statusCode == 401 &&
-              !_handlingUnauthorized && 
-              !_isRefreshTokenRequest(error.requestOptions)) {
-            _handlingUnauthorized = true;
+  )..interceptors.add(_inactiveAccountInterceptor());
 
-            try {
-              final refreshToken = await SessionStorage.getRefreshToken();
-              
-              if (refreshToken != null && refreshToken.isNotEmpty) {
-                if (_isRefreshing) {
-                  developer.log(
-                    'Token refresh in progress, queueing request: ${error.requestOptions.path}',
-                    name: 'ApiConfig',
-                  );
-                  _pendingRequests.add(_PendingRequest(
-                    requestOptions: error.requestOptions,
-                    handler: handler,
-                  ));
-                  _handlingUnauthorized = false;
-                  return;
+  static final Dio dio =
+      Dio(
+          BaseOptions(
+            baseUrl: _baseUrl,
+            connectTimeout: _connectTimeout,
+            receiveTimeout: _receiveTimeout,
+            headers: {"Content-Type": "application/json"},
+          ),
+        )
+        ..interceptors.add(_inactiveAccountInterceptor())
+        ..interceptors.add(
+          QueuedInterceptorsWrapper(
+            onRequest: (options, handler) async {
+              if (!_isRefreshTokenRequest(options)) {
+                final token = await SessionStorage.getToken();
+                if (token != null && token.isNotEmpty) {
+                  options.headers['Authorization'] = 'Bearer $token';
                 }
-
-                _isRefreshing = true;
-                developer.log(
-                  'Access token expired, attempting to refresh token',
-                  name: 'ApiConfig',
-                );
-
-                final refreshDio = Dio(
-                  BaseOptions(
-                    baseUrl: _baseUrl,
-                    connectTimeout: _connectTimeout,
-                    receiveTimeout: _receiveTimeout,
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  ),
-                );
+              }
+              handler.next(options);
+            },
+            onError: (error, handler) async {
+              final statusCode = error.response?.statusCode;
+              if (statusCode == 401 &&
+                  !_handlingUnauthorized &&
+                  !_isRefreshTokenRequest(error.requestOptions)) {
+                _handlingUnauthorized = true;
 
                 try {
-                  final refreshResponse = await refreshDio.post(
-                    ApiConstants.refreshToken,
-                    data: {
-                      "refreshToken": refreshToken,
-                    },
-                  );
+                  final refreshToken = await SessionStorage.getRefreshToken();
 
-                  if (refreshResponse.data == null) {
-                    throw Exception("Refresh response is null");
-                  }
+                  if (refreshToken != null && refreshToken.isNotEmpty) {
+                    if (_isRefreshing) {
+                      developer.log(
+                        'Token refresh in progress, queueing request: ${error.requestOptions.path}',
+                        name: 'ApiConfig',
+                      );
+                      _pendingRequests.add(
+                        _PendingRequest(
+                          requestOptions: error.requestOptions,
+                          handler: handler,
+                        ),
+                      );
+                      _handlingUnauthorized = false;
+                      return;
+                    }
 
-                  final refreshTokenModel = RefreshTokenModel.fromJson(refreshResponse.data);
-
-                  if (refreshTokenModel.error == false &&
-                      refreshTokenModel.data.token.isNotEmpty) {
+                    _isRefreshing = true;
                     developer.log(
-                      'Token refresh successful',
+                      'Access token expired, attempting to refresh token',
                       name: 'ApiConfig',
                     );
 
-                    await SessionStorage.updateTokens(
-                      token: refreshTokenModel.data.token,
-                      refreshToken: refreshTokenModel.data.refreshToken,
-                    );
-
-                    final opts = error.requestOptions;
-                    opts.headers['Authorization'] = 'Bearer ${refreshTokenModel.data.token}';
-
                     try {
-                      final response = await dio.fetch(opts);
-                      
-                      _processPendingRequests(refreshTokenModel.data.token);
-                      
-                      _isRefreshing = false;
-                      _handlingUnauthorized = false;
-                      handler.resolve(response);
-                      return;
-                    } catch (retryError) {
-                      developer.log(
-                        'Request retry failed after token refresh: ${retryError.toString()}',
-                        name: 'ApiConfig',
-                        error: retryError,
+                      final sessionVersion = _sessionInvalidationVersion;
+                      final refreshResponse = await refreshDio.post(
+                        ApiConstants.refreshToken,
+                        data: {"refreshToken": refreshToken},
                       );
+
+                      if (sessionVersion != _sessionInvalidationVersion) {
+                        throw StateError('Session ended while refreshing');
+                      }
+
+                      if (refreshResponse.data == null) {
+                        throw Exception("Refresh response is null");
+                      }
+
+                      final refreshTokenModel = RefreshTokenModel.fromJson(
+                        refreshResponse.data,
+                      );
+
+                      if (refreshTokenModel.error == false &&
+                          refreshTokenModel.data.token.isNotEmpty) {
+                        developer.log(
+                          'Token refresh successful',
+                          name: 'ApiConfig',
+                        );
+
+                        await SessionStorage.updateTokens(
+                          token: refreshTokenModel.data.token,
+                          refreshToken: refreshTokenModel.data.refreshToken,
+                        );
+
+                        if (sessionVersion != _sessionInvalidationVersion) {
+                          await SessionStorage.clearSession();
+                          throw StateError('Session ended while saving tokens');
+                        }
+
+                        final opts = error.requestOptions;
+                        opts.headers['Authorization'] =
+                            'Bearer ${refreshTokenModel.data.token}';
+
+                        try {
+                          final response = await dio.fetch(opts);
+
+                          _processPendingRequests(refreshTokenModel.data.token);
+
+                          _isRefreshing = false;
+                          _handlingUnauthorized = false;
+                          handler.resolve(response);
+                          return;
+                        } catch (retryError) {
+                          developer.log(
+                            'Request retry failed after token refresh: ${retryError.toString()}',
+                            name: 'ApiConfig',
+                            error: retryError,
+                          );
+                          _isRefreshing = false;
+                          _handlingUnauthorized = false;
+                          _clearPendingRequests();
+
+                          final dioError = retryError is DioException
+                              ? retryError
+                              : DioException(
+                                  requestOptions: error.requestOptions,
+                                  error: retryError,
+                                  type: DioExceptionType.unknown,
+                                );
+                          handler.reject(dioError);
+                          return;
+                        }
+                      } else {
+                        throw Exception(
+                          "Invalid refresh response: error=${refreshTokenModel.error}, "
+                          "tokenEmpty=${refreshTokenModel.data.token.isEmpty}",
+                        );
+                      }
+                    } catch (refreshError) {
+                      developer.log(
+                        'Token refresh failed: ${refreshError.toString()}',
+                        name: 'ApiConfig',
+                        error: refreshError,
+                      );
+
                       _isRefreshing = false;
                       _handlingUnauthorized = false;
-                      _clearPendingRequests();
-                      
-                      final dioError = retryError is DioException
-                          ? retryError
-                          : DioException(
-                              requestOptions: error.requestOptions,
-                              error: retryError,
-                              type: DioExceptionType.unknown,
-                            );
-                      handler.reject(dioError);
+                      final refreshFailure = _requestFailure(
+                        refreshError,
+                        error.requestOptions,
+                      );
+                      _clearPendingRequests(refreshFailure);
+
+                      // Only an explicit rejection from the refresh endpoint ends
+                      // the session. Timeouts, server errors and parsing failures
+                      // leave the saved tokens available for the next attempt.
+                      if (refreshError is DioException &&
+                          refreshError.type == DioExceptionType.badResponse &&
+                          (refreshError.response?.statusCode == 401 ||
+                              refreshError.response?.statusCode == 403)) {
+                        await SessionStorage.clearSession();
+                        final ctx = rootNavigatorKey.currentContext;
+                        if (ctx != null && ctx.mounted) {
+                          GoRouter.of(ctx).goNamed('login');
+                        }
+                      }
+
+                      handler.reject(refreshFailure);
                       return;
                     }
                   } else {
-                    throw Exception(
-                      "Invalid refresh response: error=${refreshTokenModel.error}, "
-                      "tokenEmpty=${refreshTokenModel.data.token.isEmpty}",
+                    developer.log(
+                      'No refresh token available, redirecting to login',
+                      name: 'ApiConfig',
                     );
+                    await SessionStorage.clearSession();
+                    _handlingUnauthorized = false;
+
+                    final ctx = rootNavigatorKey.currentContext;
+                    if (ctx != null && ctx.mounted) {
+                      GoRouter.of(ctx).goNamed('login');
+                    }
                   }
-                } catch (refreshError) {
+                } catch (e, stackTrace) {
                   developer.log(
-                    'Token refresh failed: ${refreshError.toString()}',
+                    'Error during token refresh process: ${e.toString()}',
                     name: 'ApiConfig',
-                    error: refreshError,
+                    error: e,
+                    stackTrace: stackTrace,
                   );
-                  
-                  await SessionStorage.clearSession();
+
                   _isRefreshing = false;
                   _handlingUnauthorized = false;
-                  _clearPendingRequests();
+                  final failure = _requestFailure(e, error.requestOptions);
+                  _clearPendingRequests(failure);
 
-                  final ctx = rootNavigatorKey.currentContext;
-                  if (ctx != null) {
-                    GoRouter.of(ctx).goNamed('login');
-                  }
-                  
-                  handler.reject(error);
+                  handler.reject(failure);
                   return;
                 }
-              } else {
-                developer.log(
-                  'No refresh token available, redirecting to login',
-                  name: 'ApiConfig',
-                );
-                await SessionStorage.clearSession();
-                _handlingUnauthorized = false;
-
-                final ctx = rootNavigatorKey.currentContext;
-                if (ctx != null) {
-                  GoRouter.of(ctx).goNamed('login');
-                }
               }
-            } catch (e, stackTrace) {
-              developer.log(
-                'Error during token refresh process: ${e.toString()}',
-                name: 'ApiConfig',
-                error: e,
-                stackTrace: stackTrace,
-              );
-              
-              await SessionStorage.clearSession();
-              _handlingUnauthorized = false;
-              _clearPendingRequests();
 
-              final ctx = rootNavigatorKey.currentContext;
-              if (ctx != null) {
-                GoRouter.of(ctx).goNamed('login');
-              }
-              
-              handler.reject(error);
-              return;
-            }
-          }
+              handler.next(error);
+            },
+          ),
+        )
+        ..interceptors.add(
+          LogInterceptor(requestBody: true, responseBody: true),
+        );
 
+  static bool _isInactiveAccount(Response<dynamic>? response) {
+    final data = response?.data;
+    return data is Map &&
+        data['error'] == true &&
+        (response?.statusCode == 401 || data['status'] == 401) &&
+        data['message'] == _inactiveAccountMessage;
+  }
+
+  // Run before the queued refresh interceptor, including on retried requests.
+  static Interceptor _inactiveAccountInterceptor() {
+    return InterceptorsWrapper(
+      onResponse: (response, handler) async {
+        if (!_isInactiveAccount(response)) {
+          handler.next(response);
+          return;
+        }
+        final error = DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+          message: _inactiveAccountMessage,
+        );
+        await _logoutInactiveAccount(error);
+        handler.reject(error);
+      },
+      onError: (error, handler) async {
+        if (!_isInactiveAccount(error.response)) {
           handler.next(error);
-        },
-      ),
-    )
-    ..interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-      ),
+          return;
+        }
+        await _logoutInactiveAccount(error);
+        handler.reject(error);
+      },
     );
+  }
+
+  static Future<void> _logoutInactiveAccount(DioException error) async {
+    _sessionInvalidationVersion++;
+    await SessionStorage.clearSession();
+    _clearPendingRequests(error);
+    final ctx = rootNavigatorKey.currentContext;
+    if (ctx != null && ctx.mounted) {
+      GoRouter.of(ctx).goNamed('login');
+    }
+  }
 
   static bool _isRefreshTokenRequest(RequestOptions options) {
     final path = options.path;
     final normalizedPath = path.split('?').first;
-    
+
     return normalizedPath == ApiConstants.refreshToken ||
-           normalizedPath.contains(ApiConstants.refreshToken);
+        normalizedPath.contains(ApiConstants.refreshToken);
   }
 
   static void _processPendingRequests(String newToken) {
@@ -227,41 +292,49 @@ class ApiConfig {
         name: 'ApiConfig',
       );
     }
-    
+
     final requestsToProcess = List<_PendingRequest>.from(_pendingRequests);
     _pendingRequests.clear();
-    
+
     for (var pendingRequest in requestsToProcess) {
       final opts = pendingRequest.requestOptions;
       opts.headers['Authorization'] = 'Bearer $newToken';
-      dio.fetch(opts).then(
-        (response) {
-          developer.log(
-            'Pending request succeeded: ${opts.path}',
-            name: 'ApiConfig',
+      dio
+          .fetch(opts)
+          .then(
+            (response) {
+              developer.log(
+                'Pending request succeeded: ${opts.path}',
+                name: 'ApiConfig',
+              );
+              pendingRequest.handler.resolve(response);
+            },
+            onError: (error) {
+              developer.log(
+                'Pending request failed: ${opts.path} - ${error.toString()}',
+                name: 'ApiConfig',
+                error: error,
+              );
+              final dioError = error is DioException
+                  ? error
+                  : DioException(
+                      requestOptions: opts,
+                      error: error,
+                      type: DioExceptionType.unknown,
+                    );
+              pendingRequest.handler.reject(dioError);
+            },
           );
-          pendingRequest.handler.resolve(response);
-        },
-        onError: (error) {
-          developer.log(
-            'Pending request failed: ${opts.path} - ${error.toString()}',
-            name: 'ApiConfig',
-            error: error,
-          );
-          final dioError = error is DioException
-              ? error
-              : DioException(
-                  requestOptions: opts,
-                  error: error,
-                  type: DioExceptionType.unknown,
-                );
-          pendingRequest.handler.reject(dioError);
-        },
-      );
     }
   }
 
-  static void _clearPendingRequests() {
+  static DioException _requestFailure(Object error, RequestOptions options) {
+    return error is DioException
+        ? error.copyWith(requestOptions: options)
+        : DioException(requestOptions: options, error: error);
+  }
+
+  static void _clearPendingRequests([DioException? failure]) {
     final pendingCount = _pendingRequests.length;
     if (pendingCount > 0) {
       developer.log(
@@ -269,17 +342,18 @@ class ApiConfig {
         name: 'ApiConfig',
       );
     }
-    
+
     final requestsToClear = List<_PendingRequest>.from(_pendingRequests);
     _pendingRequests.clear();
-    
+
     for (var pendingRequest in requestsToClear) {
       pendingRequest.handler.reject(
-        DioException(
-          requestOptions: pendingRequest.requestOptions,
-          error: Exception("Token refresh failed"),
-          type: DioExceptionType.unknown,
-        ),
+        failure?.copyWith(requestOptions: pendingRequest.requestOptions) ??
+            DioException(
+              requestOptions: pendingRequest.requestOptions,
+              error: Exception("Token refresh failed"),
+              type: DioExceptionType.unknown,
+            ),
       );
     }
   }
@@ -289,8 +363,5 @@ class _PendingRequest {
   final RequestOptions requestOptions;
   final ErrorInterceptorHandler handler;
 
-  _PendingRequest({
-    required this.requestOptions,
-    required this.handler,
-  });
+  _PendingRequest({required this.requestOptions, required this.handler});
 }

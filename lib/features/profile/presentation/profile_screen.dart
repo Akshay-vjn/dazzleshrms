@@ -1,5 +1,9 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/glass_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dazzleshrms/core/api_constants/api_constants.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
@@ -41,7 +45,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       await CachedNetworkImage.evictFromCache(url);
       await CachedNetworkImageProvider(url).evict();
       PaintingBinding.instance.imageCache.evict(NetworkImage(url));
-      PaintingBinding.instance.imageCache.clearLiveImages();
     } catch (_) {}
   }
 
@@ -102,6 +105,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         .toList();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref.read(profileProvider.notifier).loadProfile();
       _runEntranceSequence();
     });
@@ -111,14 +115,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     _animationController.forward();
     for (int i = 0; i < _cardControllers.length; i++) {
       await Future.delayed(const Duration(milliseconds: 120));
-      if (mounted) _cardControllers[i].forward();
+      if (!mounted) return;
+      _cardControllers[i].forward();
     }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    for (final c in _cardControllers) c.dispose();
+    for (final c in _cardControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -127,6 +134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Widget _buildAvatar(ProfileData data) {
+    final colors = AppVisuals.of(context);
     final name = data.name;
     final profileImage = data.profileImage;
     final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
@@ -144,16 +152,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: hasImage
-                  ? null
-                  : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppTheme.dTeal, AppTheme.dGreen],
-                    ),
+              color: colors.accentSurface,
+              border: Border.all(
+                color: colors.accent.withValues(alpha: .25),
+                width: .5,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.dTeal.withOpacity(0.3),
+                  color: colors.accent.withValues(alpha: .08),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -168,39 +174,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       width: 100,
                       height: 100,
                       placeholder: (context, url) => Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppTheme.dTeal, AppTheme.dGreen],
-                          ),
-                        ),
-                        child: const Center(
+                        decoration: BoxDecoration(color: colors.accentSurface),
+                        child: Center(
                           child: SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: colors.accent,
                             ),
                           ),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppTheme.dTeal, AppTheme.dGreen],
-                          ),
-                        ),
+                        decoration: BoxDecoration(color: colors.accentSurface),
                         child: Center(
                           child: Text(
                             letter,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: colors.accent,
                             ),
                           ),
                         ),
@@ -210,10 +204,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 : Center(
                     child: Text(
                       letter,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colors.accent,
                       ),
                     ),
                   ),
@@ -227,9 +221,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppTheme.PrimaryColor,
+                  color: AppVisuals.of(context).accent,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: colors.surface, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
@@ -243,7 +237,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       ? Icons.lock_reset_rounded
                       : Icons.camera_alt_rounded,
                   size: 14,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
             ),
@@ -257,7 +251,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 shape: BoxShape.circle,
                 color: Colors.black.withOpacity(0.5),
               ),
-              child: const Center(
+              child: Center(
                 child: SizedBox(
                   width: 28,
                   height: 28,
@@ -269,6 +263,90 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(ProfileData data) {
+    final theme = Theme.of(context);
+    final colors = AppVisuals.of(context);
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: GlassSurface(
+          margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          padding: const EdgeInsets.all(20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked =
+                  constraints.maxWidth < 280 ||
+                  MediaQuery.textScalerOf(context).scale(16) > 22;
+              final identity = Column(
+                crossAxisAlignment: stacked
+                    ? CrossAxisAlignment.center
+                    : CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.name.isNotEmpty ? data.name : '—',
+                    textAlign: stacked ? TextAlign.center : TextAlign.start,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.text,
+                      letterSpacing: -.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.accentSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colors.accent.withValues(alpha: .25),
+                        width: .5,
+                      ),
+                    ),
+                    child: Text(
+                      data.role.isNotEmpty ? data.role : 'N/A',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colors.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+              final avatar = ScaleTransition(
+                scale: _scaleAnimation,
+                child: _buildAvatar(data),
+              );
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (stacked)
+                    Column(
+                      children: [avatar, const SizedBox(height: 16), identity],
+                    )
+                  else
+                    Row(
+                      children: [
+                        avatar,
+                        const SizedBox(width: 20),
+                        Expanded(child: identity),
+                      ],
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -327,12 +405,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.PrimaryColor.withOpacity(0.1),
+                    color: AppVisuals.of(context).accent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.camera_alt_rounded,
-                    color: AppTheme.PrimaryColor,
+                    color: AppVisuals.of(context).accent,
                   ),
                 ),
                 title: const Text('Take a Photo'),
@@ -350,12 +428,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.dTeal.withOpacity(0.1),
+                    color: AppTheme.primaryOnLight.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.photo_library_rounded,
-                    color: AppTheme.dTeal,
+                    color: AppTheme.primaryOnLight,
                   ),
                 ),
                 title: const Text('Choose from Gallery'),
@@ -377,113 +455,128 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   void _showChangeRequestSheet({String? message}) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = AppVisuals.of(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .85,
       ),
       builder: (sheetContext) {
         var submitting = false;
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: theme.dividerColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppTheme.PrimaryColor.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.lock_reset_rounded,
-                        color: AppTheme.PrimaryColor,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Request Photo Change',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      message ??
-                          'Profile image change is not allowed. Please request permission from HR/Admin.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: theme.hintColor,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: submitting
-                            ? null
-                            : () async {
-                                setSheetState(() => submitting = true);
-                                final success =
-                                    await _submitProfileImageChangeRequest();
-                                if (!sheetContext.mounted) return;
-                                if (success) {
-                                  Navigator.pop(sheetContext);
-                                } else {
-                                  setSheetState(() => submitting = false);
-                                }
-                              },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.PrimaryColor,
-                          disabledBackgroundColor:
-                              AppTheme.PrimaryColor.withOpacity(0.6),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+            return Material(
+              color: Colors.transparent,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: DecoratedBox(
+                decoration: colors.backdrop,
+                child: SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: colors.muted.withValues(alpha: .4),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                        ),
-                        child: submitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: colors.accentSurface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.lock_reset_rounded,
+                              color: colors.accent,
+                              size: 28,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Request Photo Change',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            message ??
+                                'Profile image change is not allowed. Please request permission from HR/Admin.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.muted,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: submitting
+                                  ? null
+                                  : () async {
+                                      setSheetState(() => submitting = true);
+                                      final success =
+                                          await _submitProfileImageChangeRequest();
+                                      if (!sheetContext.mounted) return;
+                                      if (success) {
+                                        Navigator.pop(sheetContext);
+                                      } else {
+                                        setSheetState(() => submitting = false);
+                                      }
+                                    },
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
                                 ),
-                              )
-                            : const Text(
-                                'Submit Request',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                               ),
+                              child: submitting
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colors.muted,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Submit Request',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: submitting
+                                ? null
+                                : () => Navigator.pop(sheetContext),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: submitting
-                          ? null
-                          : () => Navigator.pop(sheetContext),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );
@@ -504,7 +597,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: AppTheme.dGreen,
+          backgroundColor: AppTheme.statusSuccess,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -553,7 +646,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Profile image updated successfully'),
-            backgroundColor: AppTheme.dGreen,
+            backgroundColor: AppTheme.statusSuccess,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -625,22 +718,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       position: _cardSlideAnimations[index],
       child: FadeTransition(
         opacity: _cardFadeAnimations[index],
-        child: Card(
-          margin: const EdgeInsets.only(bottom: 12),
+        child: GlassSurface(
+          margin: const EdgeInsets.only(bottom: 20),
           child: ListTile(
-            leading: Icon(icon, color: AppTheme.PrimaryColor),
-            title: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.6),
-                fontSize: 12,
-              ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
-            subtitle: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            leading: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppVisuals.of(context).accent.withValues(alpha: .13),
+                borderRadius: BorderRadius.circular(15),
               ),
+              child: Icon(icon, color: AppVisuals.of(context).accent),
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: .6,
+                    ),
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -652,38 +765,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeNotifier = ref.read(themeModeProvider.notifier);
-    final profileState = ref.watch(profileProvider);
+    final colors = AppVisuals.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          "Profile",
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: Icon(
-                themeNotifier.isDarkMode
-                    ? Icons.light_mode_rounded
-                    : Icons.dark_mode_rounded,
-              ),
-              onPressed: () {
-                themeNotifier.toggleTheme();
-              },
-              tooltip: themeNotifier.isDarkMode
-                  ? 'Switch to Light Mode'
-                  : 'Switch to Dark Mode',
-            ),
-          ),
-        ],
-      ),
+    final profileState = ref.watch(profileProvider);
+    return AppScaffold(
+      appBar: const AppPageBar(title: 'Profile'),
       body: profileState.when(
         data: (data) {
           if (data == null) {
@@ -719,212 +805,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           _lastAvatarImageUrl = currentAvatarUrl;
 
           return SingleChildScrollView(
+            // extendBody supplies the floating navigation height as bottom padding.
+            // Include it in the scroll extent so Logout can clear the bar.
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.paddingOf(context).bottom,
+            ),
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: Container(
-                            height: 140,
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppTheme.dTeal,
-                                  AppTheme.dGreen,
-                                  AppTheme.dTeal,
-                                ],
-                                stops: [0.0, 0.5, 1.0],
-                              ),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
-                              ),
-                            ),
-                            child: Stack(
-                              children: [
-                                // Animated floating circles
-                                Positioned(
-                                  right: -20,
-                                  top: -20,
-                                  child: TweenAnimationBuilder(
-                                    tween: Tween<double>(begin: 0, end: 1),
-                                    duration: const Duration(seconds: 2),
-                                    builder: (context, double value, child) {
-                                      return Transform.translate(
-                                        offset: Offset(
-                                          math.sin(value * 2 * math.pi) * 10,
-                                          math.cos(value * 2 * math.pi) * 10,
-                                        ),
-                                        child: Container(
-                                          width: 80,
-                                          height: 80,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                Positioned(
-                                  left: 20,
-                                  bottom: 10,
-                                  child: TweenAnimationBuilder(
-                                    tween: Tween<double>(begin: 0, end: 1),
-                                    duration: const Duration(
-                                      milliseconds: 2500,
-                                    ),
-                                    builder: (context, double value, child) {
-                                      return Transform.translate(
-                                        offset: Offset(
-                                          math.cos(value * 2 * math.pi) * 8,
-                                          math.sin(value * 2 * math.pi) * 8,
-                                        ),
-                                        child: Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                // Shimmer effect
-                                Positioned.fill(
-                                  child: TweenAnimationBuilder(
-                                    tween: Tween<double>(begin: -1, end: 2),
-                                    duration: const Duration(seconds: 3),
-                                    builder: (context, double value, child) {
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            stops: [
-                                              (value - 0.3).clamp(0.0, 1.0),
-                                              value.clamp(0.0, 1.0),
-                                              (value + 0.3).clamp(0.0, 1.0),
-                                            ],
-                                            colors: [
-                                              Colors.transparent,
-                                              Colors.white.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                              Colors.transparent,
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SlideTransition(
-                          position: _slideAnimation,
-                          child: Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.fromLTRB(16, 100, 16, 0),
-                            padding: const EdgeInsets.fromLTRB(16, 56, 16, 20),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppTheme.surfaceDark
-                                  : AppTheme.surfaceLight,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: theme.dividerColor.withOpacity(0.1),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                FadeTransition(
-                                  opacity: _fadeAnimation,
-                                  child: Text(
-                                    data.name.isNotEmpty ? data.name : "—",
-                                    style: theme.textTheme.headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.black,
-                                        ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                if (data.hasProfileImage &&
-                                    !data.profileImageChangeAllowed)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                  ),
-                                ScaleTransition(
-                                  scale: _scaleAnimation,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.PrimaryColor.withOpacity(
-                                        0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      data.role.isNotEmpty ? data.role : "N/A",
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: AppTheme.PrimaryColor,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 56,
-                          child: Center(
-                            child: ScaleTransition(
-                              scale: _scaleAnimation,
-                              child: _buildAvatar(data),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                _buildProfileHeader(data),
 
                 const SizedBox(height: 24),
 
@@ -990,7 +879,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                GlassSurface(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    title: Text(
+                      'Dark mode',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    secondary: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: colors.accentSurface,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Icon(
+                        isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        color: colors.accent,
+                      ),
+                    ),
+                    value: isDark,
+                    onChanged: (_) => themeNotifier.toggleTheme(),
+                    activeTrackColor: colors.accent,
+                    activeThumbColor: theme.colorScheme.onPrimary,
+                    inactiveTrackColor: colors.accentSurface,
+                    inactiveThumbColor: colors.muted,
+                  ),
+                ),
+                const SizedBox(height: 12),
 
                 //  LOGOUT
                 Padding(
@@ -1010,14 +934,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
                             ),
-                            child: Container(
+                            child: AppSurface(
                               padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppTheme.surfaceDark
-                                    : AppTheme.surfaceLight,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
+
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -1076,7 +995,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                             ),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(12),
+                                                  BorderRadius.circular(20),
                                             ),
                                           ),
                                           child: Text(
@@ -1104,7 +1023,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                             ),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(12),
+                                                  BorderRadius.circular(20),
                                             ),
                                           ),
                                           child: const Text(
@@ -1176,7 +1095,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: AppTheme.PrimaryColor),
+              CircularProgressIndicator(color: AppVisuals.of(context).accent),
               const SizedBox(height: 16),
               Text("Loading profile...", style: theme.textTheme.bodyMedium),
             ],
@@ -1429,7 +1348,7 @@ class _ProfileImageViewerState extends State<_ProfileImageViewer>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.dTeal, AppTheme.dGreen],
+          colors: [AppTheme.primaryOnLight, AppTheme.PrimaryColor],
         ),
       ),
       child: Center(

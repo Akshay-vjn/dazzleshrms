@@ -1,5 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 
 class BalanceBox extends StatefulWidget {
   final String label;
@@ -25,15 +25,7 @@ class _BalanceBoxState extends State<BalanceBox> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final surfaceColor =
-    isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight;
-
-    final textColor =
-    isDark ? Colors.white : Colors.black.withOpacity(0.85);
-
-    final borderColor = AppTheme.PrimaryColor.withOpacity(
-      isDark ? 0.35 : 0.18,
-    );
+    final textColor = isDark ? Colors.white : Colors.black.withOpacity(0.85);
 
     return Expanded(
       child: Material(
@@ -59,23 +51,7 @@ class _BalanceBoxState extends State<BalanceBox> {
               ..translate(0.0, _pressed ? 3.0 : -5.0)
               ..scale(_pressed ? 0.97 : 1.0),
             padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(16),
-
-              border: Border.all(
-                color: borderColor,
-                width: 1,
-              ),
-
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.45 : 0.12),
-                  blurRadius: _pressed ? 6 : 16,
-                  offset: Offset(0, _pressed ? 3 : 8),
-                ),
-              ],
-            ),
+            decoration: AppVisuals.of(context).panel(),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -83,7 +59,7 @@ class _BalanceBoxState extends State<BalanceBox> {
                   widget.value,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.PrimaryColor,
+                    color: AppVisuals.of(context).accent,
                   ),
                 ),
                 const SizedBox(height: 6),

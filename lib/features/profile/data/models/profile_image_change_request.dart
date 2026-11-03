@@ -31,20 +31,33 @@ class ProfileImageRequestEmployee {
   final String code;
   final String mobile;
   final String profileImage;
+  final int? storeId;
+  final String storeName;
 
   const ProfileImageRequestEmployee({
     required this.name,
     required this.code,
     required this.mobile,
     required this.profileImage,
+    required this.storeId,
+    required this.storeName,
   });
 
   factory ProfileImageRequestEmployee.fromJson(Map<String, dynamic> json) {
+    final store = json['store'] is Map
+        ? Map<String, dynamic>.from(json['store'] as Map)
+        : const <String, dynamic>{};
+    final rawStoreId = store['storeId'];
+
     return ProfileImageRequestEmployee(
       name: json['employeeName']?.toString() ?? '',
       code: json['employeeCode']?.toString() ?? '',
       mobile: json['employeeMobileNumber']?.toString() ?? '',
       profileImage: json['profileImage']?.toString() ?? '',
+      storeId: rawStoreId is num
+          ? rawStoreId.toInt()
+          : int.tryParse(rawStoreId?.toString() ?? ''),
+      storeName: store['storeName']?.toString() ?? '',
     );
   }
 }

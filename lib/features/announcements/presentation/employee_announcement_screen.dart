@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
+import 'package:dazzleshrms/core/app_theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dazzleshrms/features/announcements/data/providers/announcement_provider.dart';
@@ -9,10 +12,12 @@ class EmployeeAnnouncementScreen extends ConsumerStatefulWidget {
   const EmployeeAnnouncementScreen({super.key});
 
   @override
-  ConsumerState<EmployeeAnnouncementScreen> createState() => _EmployeeAnnouncementScreenState();
+  ConsumerState<EmployeeAnnouncementScreen> createState() =>
+      _EmployeeAnnouncementScreenState();
 }
 
-class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncementScreen> {
+class _EmployeeAnnouncementScreenState
+    extends ConsumerState<EmployeeAnnouncementScreen> {
   @override
   void initState() {
     super.initState();
@@ -24,10 +29,8 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
     final theme = Theme.of(context);
     final announcementsState = ref.watch(employeeAnnouncementsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Announcements"),
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Announcements'),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(employeeAnnouncementsProvider.future),
         child: announcementsState.when(
@@ -56,14 +59,15 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
                     e.toString(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.textTheme.bodyMedium?.color
-                          ?.withValues(alpha: 0.7),
+                      color: theme.textTheme.bodyMedium?.color?.withValues(
+                        alpha: 0.7,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () =>
-                                ref.refresh(employeeAnnouncementsProvider.future),
+                        ref.refresh(employeeAnnouncementsProvider.future),
                     icon: const Icon(Icons.refresh_rounded),
                     label: const Text("Try Again"),
                   ),
@@ -92,11 +96,13 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
                 return Card(
                   elevation: 0,
                   color: theme.brightness == Brightness.dark
-                      ? AppTheme.surfaceDark
+                      ? AppColors.surfaceDarkVariant
                       : AppTheme.surfaceLight,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                    borderRadius: BorderRadius.circular(26),
+                    side: BorderSide(
+                      color: theme.dividerColor.withOpacity(0.1),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -144,26 +150,36 @@ class _EmployeeAnnouncementScreenState extends ConsumerState<EmployeeAnnouncemen
                                 announcement.attachment!.isNotEmpty)
                               InkWell(
                                 onTap: () async {
-                                  final url = Uri.parse(announcement.attachment!);
+                                  final url = Uri.parse(
+                                    announcement.attachment!,
+                                  );
                                   if (await canLaunchUrl(url)) {
-                                    await launchUrl(url,
-                                        mode: LaunchMode.externalApplication);
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
                                   }
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.red.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Colors.red.withOpacity(0.3)),
+                                      color: Colors.red.withOpacity(0.3),
+                                    ),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.picture_as_pdf,
-                                          size: 14, color: Colors.red),
+                                      Icon(
+                                        Icons.picture_as_pdf,
+                                        size: 14,
+                                        color: Colors.red,
+                                      ),
                                       SizedBox(width: 4),
                                       Text(
                                         "PDF",

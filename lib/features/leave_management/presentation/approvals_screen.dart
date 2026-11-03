@@ -1,7 +1,9 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/core/permissions/permission.dart';
 import 'package:dazzleshrms/core/permissions/permission_provider.dart';
 import '../../dashboard/presentation/widgets/fade_slide_item.dart';
@@ -40,76 +42,43 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen>
     super.dispose();
   }
 
-  Widget _buildHeader(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(
-          bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.15)),
-        ),
-      ),
-      child: FadeSlideItem(
-        animation: _controller,
-        intervalStart: 0.0,
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: theme.iconTheme.color,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Approvals",
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildHeader(ThemeData theme) => FadeSlideItem(
+    animation: _controller,
+    intervalStart: 0.0,
+    child: const AppPageHeader(title: 'Approvals'),
+  );
 
   Widget _buildGrid(Set<String> permissions) {
     return DashboardGrid(
-      animation: _controller,
+      staggerStart: 0.15,
+      staggerStep: 0.025,
       items: [
         if (permissions.contains(Permissions.viewApprovals))
           DashboardGridItem(
             icon: Icons.check_circle_outline_rounded,
             label: "Leave Approvals",
+            tone: ActionTone.blue,
             onTap: () => context.pushNamed('leave_approvals'),
             animation: _controller,
             intervalStart: 0.15,
-            gradientStart: AppTheme.gridGradient1Start,
-            gradientEnd: AppTheme.gridGradient1End,
-            iconColor: AppTheme.gridIconColor,
           ),
         if (permissions.contains(Permissions.viewImageApprovalIcon))
           DashboardGridItem(
             icon: Icons.add_a_photo_outlined,
             label: "Image Approval",
+            tone: ActionTone.purple,
             onTap: () => context.pushNamed('image_approvals'),
             animation: _controller,
             intervalStart: 0.18,
-            gradientStart: AppTheme.dGrid1,
-            gradientEnd: AppTheme.dGrid1,
-            iconColor: AppTheme.gridIconColor,
           ),
         if (permissions.contains(Permissions.viewAllTeamApproval))
           DashboardGridItem(
             icon: Icons.groups_rounded,
             label: "Employee Approvals",
+            tone: ActionTone.teal,
             onTap: () => context.pushNamed('employee_approvals'),
             animation: _controller,
             intervalStart: 0.2,
-            gradientStart: AppTheme.dGrid1,
-            gradientEnd: AppTheme.dGrid1,
-            iconColor: AppTheme.gridIconColor,
           ),
       ],
     );
@@ -120,7 +89,7 @@ class _ApprovalsScreenState extends ConsumerState<ApprovalsScreen>
     final theme = Theme.of(context);
     final permissionState = ref.watch(permissionProvider);
 
-    return Scaffold(
+    return AppScaffold(
       body: SafeArea(
         child: Column(
           children: [

@@ -25,17 +25,21 @@ class DashboardData {
   final String name;
   final String role;
   final String store;
+  final String? checkinTime;
+  final String? checkoutTime;
   final double totalLeaves;
   final double usedLeaves;
   final double availableLeaves;
+
   /// Attendance status coming from backend (e.g. ACTIVE / OFFLINE).
   final String attendanceStatus;
-
 
   DashboardData({
     required this.name,
     required this.role,
     required this.store,
+    this.checkinTime,
+    this.checkoutTime,
     required this.totalLeaves,
     required this.usedLeaves,
     required this.availableLeaves,
@@ -46,6 +50,8 @@ class DashboardData {
     String? name,
     String? role,
     String? store,
+    String? checkinTime,
+    String? checkoutTime,
     double? totalLeaves,
     double? usedLeaves,
     double? availableLeaves,
@@ -55,6 +61,8 @@ class DashboardData {
       name: name ?? this.name,
       role: role ?? this.role,
       store: store ?? this.store,
+      checkinTime: checkinTime ?? this.checkinTime,
+      checkoutTime: checkoutTime ?? this.checkoutTime,
       totalLeaves: totalLeaves ?? this.totalLeaves,
       usedLeaves: usedLeaves ?? this.usedLeaves,
       availableLeaves: availableLeaves ?? this.availableLeaves,
@@ -67,13 +75,12 @@ class DashboardData {
       name: json['name'],
       role: json['role'],
       store: json['store'],
+      checkinTime: json['checkinTime'] as String?,
+      checkoutTime: json['checkoutTime'] as String?,
       totalLeaves: (json['totalLeaves'] as num).toDouble(),
       usedLeaves: (json['usedLeaves'] as num).toDouble(),
       availableLeaves: (json['availableLeaves'] as num).toDouble(),
       attendanceStatus: (json['status'] ?? 'OFFLINE').toString(),
-
     );
   }
 }
-
-

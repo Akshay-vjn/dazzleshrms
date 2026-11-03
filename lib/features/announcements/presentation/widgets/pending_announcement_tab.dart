@@ -1,3 +1,4 @@
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,6 +40,7 @@ class _PendingAnnouncementsTabState
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppVisuals.of(context);
     final state = ref.watch(pendingAnnouncementsProvider);
 
     return state.when(
@@ -70,37 +72,44 @@ class _PendingAnnouncementsTabState
                   _infoText(context, "Designation", item.designationName),
                   _infoText(context, "Employee", item.employeeName),
                   _infoText(context, "Created By", item.createdByName),
-                  if (item.attachment != null &&
-                      item.attachment!.isNotEmpty)
+                  if (item.attachment != null && item.attachment!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: InkWell(
                         onTap: () async {
                           final url = Uri.parse(item.attachment!);
                           if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.red.withOpacity(0.3)),
+                              color: colors.red.withValues(alpha: 0.3),
+                            ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.picture_as_pdf,
-                                  size: 16, color: Colors.red),
+                              Icon(
+                                Icons.picture_as_pdf,
+                                size: 16,
+                                color: colors.red,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 "View Attachment PDF",
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color: colors.red,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -122,11 +131,11 @@ class _PendingAnnouncementsTabState
                             .reject(item.announcementId);
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: colors.red,
+                        side: BorderSide(color: colors.red, width: .5),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                       child: const Text("Reject"),
@@ -134,18 +143,16 @@ class _PendingAnnouncementsTabState
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: () {
                         ref
                             .read(pendingAnnouncementsProvider.notifier)
                             .approve(item.announcementId);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
+                      style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                       child: const Text("Approve"),

@@ -1,9 +1,16 @@
-import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/storage/session_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dazzleshrms/core/app_theme/app_theme.dart';
-import 'package:dazzleshrms/core/storage/session_storage.dart';
 
+/// Minimal luxury splash: just the "D".
+///
+/// The letter first appears as a fine outline, turning slowly toward you in
+/// 3D. Then the solid letter opens from its center like an iris, filling the
+/// outline completely.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -12,221 +19,169 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _mainController;
-  late final AnimationController _shimmerController;
-
-  late final Animation<double> _containerFade;
-  late final Animation<double> _logoExpand;
-  late final Animation<double> _logoFade;
-  late final Animation<double> _textOpacity;
-  late final Animation<double> _textScale;
-  late final Animation<double> _shimmerPosition;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _outline;
+  late final Animation<double> _turn;
+  late final Animation<double> _iris;
+  late final Animation<double> _text;
 
   @override
   void initState() {
     super.initState();
 
-    // Main animation controller
-    _mainController = AnimationController(
+    _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 3400),
     );
 
-    // Shimmer effect controller
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-
-    // Container fades in quickly
-    _containerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
-      ),
+    _outline = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.0, 0.28, curve: Curves.easeOut),
+    );
+    _turn = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.0, 0.70, curve: Curves.easeOutCubic),
+    );
+    _iris = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.32, 0.70, curve: Curves.easeInOutCubic),
+    );
+    _text = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.68, 1.0, curve: Curves.easeOutCubic),
     );
 
-    // Logo expands from center
-    _logoExpand = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.15, 0.65, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    // Logo fades in with expand
-    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.15, 0.5, curve: Curves.easeIn),
-      ),
-    );
-
-    // Text appears with scale
-    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.55, 0.85, curve: Curves.easeIn),
-      ),
-    );
-
-    _textScale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.55, 0.85, curve: Curves.easeOutBack),
-      ),
-    );
-
-    // Shimmer moves across
-    _shimmerPosition = Tween<double>(begin: -2.0, end: 2.0).animate(
-      CurvedAnimation(
-        parent: _shimmerController,
-        curve: Curves.linear,
-      ),
-    );
-
-    _mainController.forward();
+    _c.forward();
     _startSplashFlow();
   }
 
-  void _startSplashFlow() {
-    Timer(const Duration(milliseconds: 2500), () async {
-      final token = await SessionStorage.getToken();
-      final role = await SessionStorage.getRole();
+  Future<void> _startSplashFlow() async {
+    final results = await Future.wait([
+      SessionStorage.getToken(),
+      SessionStorage.getRole(),
+      Future<void>.delayed(const Duration(milliseconds: 3700)),
+    ]);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (token != null && token.isNotEmpty) {
-        final normalizedRole = (role ?? '').toLowerCase();
-        if (normalizedRole == 'store') {
-          context.goNamed('store_qr');
-        } else {
-          context.goNamed('home');
-        }
-      } else {
-        context.goNamed('login');
-      }
-    });
+    final token = results[0] as String?;
+    final role = ((results[1] as String?) ?? '').toLowerCase();
+
+    if (token != null && token.isNotEmpty) {
+      context.goNamed(role == 'store' ? 'store_qr' : 'home');
+    } else {
+      context.goNamed('login');
+    }
   }
 
   @override
   void dispose() {
-    _mainController.dispose();
-    _shimmerController.dispose();
+    _c.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final accent = AppVisuals.of(context).accent;
+
+    const double size = 170;
+
+    final outlineD = Text(
+      'D',
+      style: TextStyle(
+        fontFamily: 'Dazzles',
+        fontSize: size,
+        height: 1.0,
+        foreground: Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..strokeJoin = StrokeJoin.round
+          ..color = accent,
+      ),
+    );
+
+    final solidD = Text(
+      'D',
+      style: TextStyle(
+        fontFamily: 'Dazzles',
+        fontSize: size,
+        height: 1.0,
+        color: accent,
+      ),
+    );
+
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppScaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Animated Logo Container
-            AnimatedBuilder(
-              animation: Listenable.merge([_mainController, _shimmerController]),
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _containerFade.value,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Container with shimmer overlay
-                      Container(
-                        height: 230,
-                        width: 230,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppTheme.PrimaryColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(36),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(36),
-                          child: AnimatedBuilder(
-                            animation: _shimmerController,
-                            builder: (context, child) {
-                              return ShaderMask(
-                                shaderCallback: (bounds) {
-                                  return LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.white.withOpacity(0.15),
-                                      Colors.transparent,
-                                    ],
-                                    stops: [
-                                      _shimmerPosition.value - 0.3,
-                                      _shimmerPosition.value,
-                                      _shimmerPosition.value + 0.3,
-                                    ],
-                                  ).createShader(bounds);
-                                },
-                                child: Container(
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (context, _) {
+            // Turns from 40 degrees away to facing front.
+            final double angle = 0.7 * (1.0 - _turn.value);
 
-                      // Expanding and fading logo
-                      Transform.scale(
-                        scale: _logoExpand.value,
-                        child: Opacity(
-                          opacity: _logoFade.value,
-                          child: Text(
-                            "D",
-                            style: TextStyle(
-                              fontFamily: 'Dazzles',
-                              fontSize: 150,
-                              color: AppTheme.PrimaryColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Animated Text with scale
-            AnimatedBuilder(
-              animation: _mainController,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _textScale.value,
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.0012)
+                    ..rotateY(angle),
                   child: Opacity(
-                    opacity: _textOpacity.value,
-                    child: Column(
+                    opacity: _outline.value,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Text(
-                          "DAZZLES HRMS",
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Human Resource Management",
-                          style: Theme.of(context).textTheme.bodySmall,
+                        outlineD,
+                        ClipPath(
+                          clipper: _IrisClipper(progress: _iris.value),
+                          child: solidD,
                         ),
                       ],
                     ),
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+                const SizedBox(height: 28),
+                Opacity(
+                  opacity: _text.value,
+                  child: Transform.translate(
+                    offset: Offset(0, 12 * (1.0 - _text.value)),
+                    child: Text(
+                      'DAZZLES HRMS',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 8 - 5 * _text.value,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
+
+/// Circular reveal that grows from the center of the child until it covers it.
+class _IrisClipper extends CustomClipper<Path> {
+  _IrisClipper({required this.progress});
+
+  final double progress;
+
+  @override
+  Path getClip(Size size) {
+    final Offset center = size.center(Offset.zero);
+    final double maxRadius = math.sqrt(
+      size.width * size.width + size.height * size.height,
+    ) / 2;
+    return Path()
+      ..addOval(Rect.fromCircle(center: center, radius: maxRadius * progress));
+  }
+
+  @override
+  bool shouldReclip(_IrisClipper old) => old.progress != progress;
 }

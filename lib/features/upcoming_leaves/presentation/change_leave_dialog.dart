@@ -12,12 +12,10 @@ class ChangeLeaveDialog extends ConsumerStatefulWidget {
   const ChangeLeaveDialog({super.key, required this.logId});
 
   @override
-  ConsumerState<ChangeLeaveDialog> createState() =>
-      _ChangeLeaveDialogState();
+  ConsumerState<ChangeLeaveDialog> createState() => _ChangeLeaveDialogState();
 }
 
-class _ChangeLeaveDialogState
-    extends ConsumerState<ChangeLeaveDialog> {
+class _ChangeLeaveDialogState extends ConsumerState<ChangeLeaveDialog> {
   String? selectedType;
   int? selectedTypeId;
 
@@ -69,9 +67,7 @@ class _ChangeLeaveDialogState
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Stack(
         children: [
           Padding(
@@ -125,7 +121,9 @@ class _ChangeLeaveDialogState
                       data: (types) {
                         return DropdownButtonFormField<LeaveType>(
                           value: types.any((t) => t.leaveId == selectedTypeId)
-                              ? types.firstWhere((t) => t.leaveId == selectedTypeId)
+                              ? types.firstWhere(
+                                  (t) => t.leaveId == selectedTypeId,
+                                )
                               : null,
                           decoration: InputDecoration(
                             hintText: "Select new leave type",
@@ -163,8 +161,8 @@ class _ChangeLeaveDialogState
                   onPressed: state.isLoading
                       ? null
                       : () => ref
-                      .read(changeLeaveProvider.notifier)
-                      .cancelLeave(widget.logId),
+                            .read(changeLeaveProvider.notifier)
+                            .cancelLeave(widget.logId),
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   label: const Text(
                     "Cancel Leave",
@@ -188,12 +186,12 @@ class _ChangeLeaveDialogState
                         onPressed: state.isLoading || selectedType == null
                             ? null
                             : () => ref
-                            .read(changeLeaveProvider.notifier)
-                            .changeLeaveType(
-                          logId: widget.logId,
-                          newType: selectedType!,
-                          newTypeId: selectedTypeId!,
-                        ),
+                                  .read(changeLeaveProvider.notifier)
+                                  .changeLeaveType(
+                                    logId: widget.logId,
+                                    newType: selectedType!,
+                                    newTypeId: selectedTypeId!,
+                                  ),
                         child: const Text("Submit"),
                       ),
                     ),
@@ -210,9 +208,7 @@ class _ChangeLeaveDialogState
                   color: Colors.black.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
             ),
         ],

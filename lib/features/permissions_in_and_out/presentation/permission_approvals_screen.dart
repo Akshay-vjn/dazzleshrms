@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:dio/dio.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
 import 'package:dazzleshrms/features/permissions_in_and_out/data/models/attendance_permission_pending_model.dart';
@@ -21,10 +24,9 @@ class _PermissionApprovalsScreenState
   int? _processingId;
   late final TabController _tabController;
 
-  PermissionApprovalType get _selectedType =>
-      _tabController.index == 0
-          ? PermissionApprovalType.inOut
-          : PermissionApprovalType.lateEarly;
+  PermissionApprovalType get _selectedType => _tabController.index == 0
+      ? PermissionApprovalType.inOut
+      : PermissionApprovalType.lateEarly;
 
   String get _emptyText => _selectedType == PermissionApprovalType.inOut
       ? 'No pending in/out permissions'
@@ -94,7 +96,8 @@ class _PermissionApprovalsScreenState
       await _refresh(ref);
     } on DioException catch (e) {
       if (!mounted) return;
-      final message = e.response?.data?['message']?.toString() ??
+      final message =
+          e.response?.data?['message']?.toString() ??
           'Failed to update attendance permission';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -123,20 +126,62 @@ class _PermissionApprovalsScreenState
     }
   }
 
+  PreferredSizeWidget _buildTabBar(ThemeData theme) {
+    final primary = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.all(4),
+          child: TabBar(
+            controller: _tabController,
+            dividerColor: Colors.transparent,
+            indicatorSize: TabBarIndicatorSize.tab,
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStateProperty.all(Colors.transparent),
+            indicator: BoxDecoration(
+              color: primary.withValues(alpha: isDark ? 0.28 : 0.16),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: primary.withValues(alpha: 0.7),
+                width: 1,
+              ),
+            ),
+            labelColor: isDark ? Colors.white : primary,
+            unselectedLabelColor: theme.colorScheme.onSurface.withValues(
+              alpha: 0.6,
+            ),
+            labelStyle: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            unselectedLabelStyle: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+            tabs: const [
+              Tab(text: 'In / Out'),
+              Tab(text: 'Late / Early'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pendingState = ref.watch(attendancePermissionPendingProvider(_selectedType));
+    final theme = Theme.of(context);
+    final pendingState = ref.watch(
+      attendancePermissionPendingProvider(_selectedType),
+    );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Permission Approvals'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'In / Out'),
-            Tab(text: 'Late / Early'),
-          ],
-        ),
+    return AppScaffold(
+      appBar: AppPageBar(
+        title: 'Permission Approvals',
+        bottom: _buildTabBar(theme),
       ),
       body: pendingState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -152,7 +197,9 @@ class _PermissionApprovalsScreenState
                   child: Text(
                     e.toString(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ),
               ),
@@ -167,9 +214,7 @@ class _PermissionApprovalsScreenState
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: SizedBox(
                   height: MediaQuery.of(context).size.height * 0.7,
-                  child: Center(
-                    child: Text(_emptyText),
-                  ),
+                  child: Center(child: Text(_emptyText)),
                 ),
               ),
             );
@@ -189,19 +234,9 @@ class _PermissionApprovalsScreenState
                     ? AppTheme.statusWarning
                     : AppTheme.statusInfo;
 
-                return Container(
+                return AppSurface(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -209,10 +244,10 @@ class _PermissionApprovalsScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              item.employeeName ?? 'Employee #${item.employeeId}',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                              item.employeeName ??
+                                  'Employee #${item.employeeId}',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                           Container(
@@ -239,7 +274,8 @@ class _PermissionApprovalsScreenState
                       if (_selectedType == PermissionApprovalType.lateEarly)
                         Text(
                           item.typeLabel,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -247,7 +283,8 @@ class _PermissionApprovalsScreenState
                       else
                         Text(
                           'In / Out',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -274,8 +311,8 @@ class _PermissionApprovalsScreenState
                       Text(
                         'Reason: ${item.reason}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -284,12 +321,15 @@ class _PermissionApprovalsScreenState
                             child: OutlinedButton(
                               onPressed: isProcessing
                                   ? null
-                                  : () => _runAction(item: item, approve: false),
+                                  : () =>
+                                        _runAction(item: item, approve: false),
                               child: isProcessing
                                   ? const SizedBox(
                                       height: 18,
                                       width: 18,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Text('Reject'),
                             ),
@@ -304,7 +344,9 @@ class _PermissionApprovalsScreenState
                                   ? const SizedBox(
                                       height: 18,
                                       width: 18,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Text('Approve'),
                             ),

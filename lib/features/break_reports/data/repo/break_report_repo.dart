@@ -14,24 +14,22 @@ class BreakReportRepo {
   final Dio _dio = ApiConfig.dio;
 
   Future<BreakDashboardEmployeeData> getDashboardEmployees({
-    int storeId = 4,
-    int designationId = 19,
+    int? storeId,
+    int? designationId,
     int page = 1,
     int limit = 10,
-    String? fromDate,
-    String? toDate,
+    String? search,
   }) async {
     try {
       final response = await _dio.get(
-        ApiConstants.employeeByStoreAndDesignation(
-          storeId: storeId,
-          designationId: designationId,
-        ),
+        ApiConstants.employee,
         queryParameters: {
+          'storeId': ?storeId,
+          'designationId': ?designationId,
           'page': page,
           'limit': limit,
-          if (fromDate != null && fromDate.isNotEmpty) 'fromDate': fromDate,
-          if (toDate != null && toDate.isNotEmpty) 'toDate': toDate,
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
         },
       );
 

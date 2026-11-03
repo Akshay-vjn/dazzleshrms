@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -70,7 +72,8 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
     return days;
   }
 
-  bool get _hasRejectedDays => daySelections.values.any((isApproved) => !isApproved);
+  bool get _hasRejectedDays =>
+      daySelections.values.any((isApproved) => !isApproved);
 
   void _onReasonTextChanged() {
     if (_selectedQuickReasonIndex != null) {
@@ -98,10 +101,9 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
 
   @override
   Widget build(BuildContext context) {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
 
-    return Container(
+    return AppSurface(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
@@ -111,10 +113,7 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      sheet: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,12 +130,12 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppTheme.PrimaryColor.withOpacity(0.12),
+                  color: AppVisuals.of(context).accent.withOpacity(0.12),
                 ),
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
-                  color: AppTheme.PrimaryColor,
+                  color: AppVisuals.of(context).accent,
                   splashRadius: 22,
                 ),
               ),
@@ -163,7 +162,9 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
                               child: SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -179,7 +180,10 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: allDays.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: theme.dividerColor.withOpacity(0.1),
+                    ),
                     itemBuilder: (context, index) {
                       final day = allDays[index];
                       final isApproved = daySelections[day]!;
@@ -195,15 +199,20 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
                         subtitle: Text(
                           isApproved ? "Approved" : "Rejected",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: isApproved ? AppTheme.statusSuccess : AppTheme.statusError,
+                            color: isApproved
+                                ? AppTheme.statusSuccess
+                                : AppTheme.statusError,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         value: isApproved,
                         activeColor: AppTheme.statusSuccess,
                         inactiveThumbColor: AppTheme.statusError,
-                        inactiveTrackColor: AppTheme.statusError.withOpacity(0.2),
-                        onChanged: (val) => setState(() => daySelections[day] = val),
+                        inactiveTrackColor: AppTheme.statusError.withOpacity(
+                          0.2,
+                        ),
+                        onChanged: (val) =>
+                            setState(() => daySelections[day] = val),
                       );
                     },
                   ),
@@ -256,7 +265,10 @@ class _ApprovalSheetState extends ConsumerState<ApprovalSheet> {
                       );
                       return;
                     }
-                    widget.onSubmitted(daySelections, _hasRejectedDays ? reasonCtrl.text.trim() : null);
+                    widget.onSubmitted(
+                      daySelections,
+                      _hasRejectedDays ? reasonCtrl.text.trim() : null,
+                    );
                   },
                   child: const Text("Submit"),
                 ),

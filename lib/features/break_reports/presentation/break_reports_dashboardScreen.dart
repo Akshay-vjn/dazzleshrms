@@ -1,3 +1,9 @@
+import 'dart:async';
+
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -9,46 +15,39 @@ import '../../approvals/data/providers/approvals_provider.dart';
 import '../data/models/break_dashboard_employee_response.dart';
 import '../data/providers/break_report_provider.dart';
 import 'widgets/employee_avatar.dart';
-import 'widgets/employee_avatar.dart';
+import 'widgets/break_report_date_range_picker.dart';
 import 'widgets/searchable_filter_sheet.dart';
 import 'employee_break_summary_screen.dart';
 
-class BreakReportsDashboardscreen extends ConsumerStatefulWidget {
-  const BreakReportsDashboardscreen({super.key});
+const double _filterControlHeight = 46;
+
+class EmployeeDashboardscreen extends ConsumerStatefulWidget {
+  const EmployeeDashboardscreen({super.key});
 
   @override
-  ConsumerState<BreakReportsDashboardscreen> createState() =>
+  ConsumerState<EmployeeDashboardscreen> createState() =>
       _BreakReportsDashboardscreenState();
 }
 
 class _BreakReportsDashboardscreenState
-    extends ConsumerState<BreakReportsDashboardscreen> {
+    extends ConsumerState<EmployeeDashboardscreen> {
+  static const int _limit = 10;
+
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _employeeSearchController =
+      TextEditingController();
 
   int? _selectedStoreId;
   int? _selectedDesignationId;
   String? _selectedStoreName;
   String? _selectedDesignationName;
   DateTimeRange? _selectedRange;
-  final _dateFormat = DateFormat('yyyy-MM-dd');
   final _displayDateFormat = DateFormat('dd MMM yyyy');
-
-  String? get _fromDate =>
-      _selectedRange == null ? null : _dateFormat.format(_selectedRange!.start);
-  String? get _toDate =>
-      _selectedRange == null ? null : _dateFormat.format(_selectedRange!.end);
 
   int _currentPage = 1;
   bool _isLoadingMore = false;
-
-  int get _limit {
-    try {
-      final size = MediaQuery.of(context).size;
-      return (size.shortestSide >= 600 || size.height >= 900) ? 25 : 15;
-    } catch (_) {
-      return 20;
-    }
-  }
+  String? _submittedSearch;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -57,29 +56,33 @@ class _BreakReportsDashboardscreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(storeProvider);
       ref.read(designationProvider);
+      _loadEmployees();
     });
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _scrollController.dispose();
+    _employeeSearchController.dispose();
     super.dispose();
   }
 
   Future<void> _loadEmployees({bool append = false}) async {
-    if (_selectedStoreId == null || _selectedDesignationId == null) return;
-    await ref.read(breakDashboardEmployeesProvider.notifier).fetchEmployees(
-          storeId: _selectedStoreId!,
-          designationId: _selectedDesignationId!,
+    await ref
+        .read(breakDashboardEmployeesProvider.notifier)
+        .fetchEmployees(
+          storeId: _selectedStoreId,
+          designationId: _selectedDesignationId,
           page: _currentPage,
           limit: _limit,
           append: append,
-          fromDate: _fromDate,
-          toDate: _toDate,
+          search: _submittedSearch,
         );
     if (mounted) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
@@ -91,8 +94,8 @@ class _BreakReportsDashboardscreenState
       final hasMorePages = data.totalPages > 0
           ? _currentPage < data.totalPages
           : (data.totalItems > 0
-              ? data.data.length < data.totalItems
-              : data.data.length >= _currentPage * _limit);
+                ? data.data.length < data.totalItems
+                : data.data.length >= _currentPage * _limit);
       if (hasMorePages) {
         _loadNextPage();
       }
@@ -109,12 +112,12 @@ class _BreakReportsDashboardscreenState
     }
     final data = ref.read(breakDashboardEmployeesProvider).valueOrNull;
     if (data == null) return;
-    
+
     final hasMorePages = data.totalPages > 0
         ? _currentPage < data.totalPages
         : (data.totalItems > 0
-            ? data.data.length < data.totalItems
-            : data.data.length >= _currentPage * _limit);
+              ? data.data.length < data.totalItems
+              : data.data.length >= _currentPage * _limit);
 
     if (!hasMorePages) return;
     _loadNextPage();
@@ -124,26 +127,30 @@ class _BreakReportsDashboardscreenState
     if (_isLoadingMore) return;
     setState(() => _isLoadingMore = true);
     final nextPage = _currentPage + 1;
-    await ref.read(breakDashboardEmployeesProvider.notifier).fetchEmployees(
-          storeId: _selectedStoreId!,
-          designationId: _selectedDesignationId!,
+    await ref
+        .read(breakDashboardEmployeesProvider.notifier)
+        .fetchEmployees(
+          storeId: _selectedStoreId,
+          designationId: _selectedDesignationId,
           page: nextPage,
           limit: _limit,
           append: true,
-          fromDate: _fromDate,
-          toDate: _toDate,
+          search: _submittedSearch,
         );
     if (mounted) {
       setState(() {
         _currentPage = nextPage;
         _isLoadingMore = false;
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _checkIfNeedMoreData());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _checkIfNeedMoreData(),
+      );
     }
   }
 
   void _clearFilters() {
+    _searchDebounce?.cancel();
+    final search = _employeeSearchController.text.trim();
     setState(() {
       _selectedStoreId = null;
       _selectedDesignationId = null;
@@ -152,37 +159,60 @@ class _BreakReportsDashboardscreenState
       _selectedRange = null;
       _currentPage = 1;
       _isLoadingMore = false;
+      _submittedSearch = search.isEmpty ? null : search;
     });
+    _loadEmployees();
   }
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
+    final picked = await showBreakReportDateRangePicker(
       context: context,
       firstDate: DateTime(2024),
       lastDate: now,
-      initialDateRange: _selectedRange ??
+      initialDateRange:
+          _selectedRange ??
           DateTimeRange(start: DateTime(now.year, now.month, 1), end: now),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.PrimaryColor,
-              ),
-        ),
-        child: child!,
-      ),
     );
     if (picked == null || !mounted) return;
     setState(() => _selectedRange = picked);
-    _onFilterChanged();
   }
 
-  void _onFilterChanged() {
+  void _onEmployeeFiltersChanged() {
+    _searchDebounce?.cancel();
+    final search = _employeeSearchController.text.trim();
     setState(() {
       _currentPage = 1;
       _isLoadingMore = false;
+      _submittedSearch = search.isEmpty ? null : search;
     });
     _loadEmployees();
+  }
+
+  void _onEmployeeSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    setState(() {});
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+
+      _applyEmployeeSearch(value);
+    });
+  }
+
+  void _applyEmployeeSearch(String value) {
+    _searchDebounce?.cancel();
+    final query = value.trim();
+    setState(() {
+      _currentPage = 1;
+      _isLoadingMore = false;
+      _submittedSearch = query.isEmpty ? null : query;
+    });
+    _loadEmployees();
+  }
+
+  void _clearEmployeeSearch() {
+    _employeeSearchController.clear();
+    _applyEmployeeSearch('');
   }
 
   void _showStorePicker() async {
@@ -199,7 +229,7 @@ class _BreakReportsDashboardscreenState
         _selectedStoreId = result['id'];
         _selectedStoreName = result['name'];
       });
-      _onFilterChanged();
+      _onEmployeeFiltersChanged();
     }
   }
 
@@ -217,7 +247,7 @@ class _BreakReportsDashboardscreenState
         _selectedDesignationId = result['id'];
         _selectedDesignationName = result['name'];
       });
-      _onFilterChanged();
+      _onEmployeeFiltersChanged();
     }
   }
 
@@ -225,19 +255,17 @@ class _BreakReportsDashboardscreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final colors = AppVisuals.of(context);
     final hasFilters =
-        _selectedStoreId != null || _selectedDesignationId != null ||
+        _selectedStoreId != null ||
+        _selectedDesignationId != null ||
         _selectedRange != null;
-    final bothSelected =
-        _selectedStoreId != null && _selectedDesignationId != null;
     ref.watch(storeProvider);
     ref.watch(designationProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Break Dashboard'),
-        centerTitle: true,
-        elevation: 0,
+    return AppScaffold(
+      appBar: AppPageBar(
+        title: 'Employee Dashboard',
         actions: [
           IconButton(
             onPressed: _pickDateRange,
@@ -248,16 +276,89 @@ class _BreakReportsDashboardscreenState
               Icons.calendar_month_outlined,
               color: _selectedRange == null
                   ? null
-                  : AppTheme.PrimaryColor,
+                  : AppVisuals.of(context).accent,
             ),
           ),
         ],
       ),
       body: Column(
         children: [
-          // ── Filter Row ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: SizedBox(
+              height: _filterControlHeight,
+              child: TextField(
+                key: const Key('break-dashboard-employee-search'),
+                controller: _employeeSearchController,
+                textInputAction: TextInputAction.search,
+                textAlignVertical: TextAlignVertical.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.text,
+                ),
+                onChanged: _onEmployeeSearchChanged,
+                onSubmitted: _applyEmployeeSearch,
+                decoration: InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: colors.inset,
+                  hintText: 'Search employees ',
+                  hintStyle: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: colors.muted,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    size: 20,
+                    color: colors.accent,
+                  ),
+                  suffixIcon: _employeeSearchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear search',
+                          onPressed: _clearEmployeeSearch,
+                          icon: const Icon(Icons.close_rounded, size: 19),
+                        ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: _filterControlHeight,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colors.dark
+                          ? colors.border.withValues(alpha: .65)
+                          : colors.muted.withValues(alpha: .25),
+                      width: colors.dark ? 1 : .5,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colors.dark
+                          ? colors.border.withValues(alpha: .65)
+                          : colors.muted.withValues(alpha: .25),
+                      width: colors.dark ? 1 : .5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: colors.accent),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Filter Row ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Row(
               children: [
                 Expanded(
@@ -271,7 +372,7 @@ class _BreakReportsDashboardscreenState
                               _selectedStoreId = null;
                               _selectedStoreName = null;
                             });
-                            _onFilterChanged();
+                            _onEmployeeFiltersChanged();
                           }
                         : null,
                   ),
@@ -288,7 +389,7 @@ class _BreakReportsDashboardscreenState
                               _selectedDesignationId = null;
                               _selectedDesignationName = null;
                             });
-                            _onFilterChanged();
+                            _onEmployeeFiltersChanged();
                           }
                         : null,
                   ),
@@ -307,72 +408,8 @@ class _BreakReportsDashboardscreenState
           ),
 
           // ── Body ────────────────────────────────────────────────────────
-          Expanded(
-            child: !bothSelected
-                ? _buildGuideText(isDark)
-                : _buildEmployeeContent(isDark),
-          ),
+          Expanded(child: _buildEmployeeContent(isDark)),
         ],
-      ),
-    );
-  }
-
-  // ── Guide text shown when store or designation is not yet selected ──────
-  Widget _buildGuideText(bool isDark) {
-    final storeSelected = _selectedStoreId != null;
-    final designationSelected = _selectedDesignationId != null;
-
-    String message;
-    if (!storeSelected && !designationSelected) {
-      message = 'Select a Store and Designation\nto view employees';
-    } else if (!storeSelected) {
-      message = 'Select a Store to continue';
-    } else {
-      message = 'Select a Designation to continue';
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.accent(isDark).withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.filter_list_rounded,
-                size: 40,
-                color: AppTheme.accent(isDark),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color:
-                    isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Text(
-            //   'Use the filters above to get started',
-            //   textAlign: TextAlign.center,
-            //   style: TextStyle(
-            //     fontSize: 12.5,
-            //     color: (isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight)
-            //         .withValues(alpha: 0.6),
-            //   ),
-            // ),
-          ],
-        ),
       ),
     );
   }
@@ -382,7 +419,7 @@ class _BreakReportsDashboardscreenState
     final state = ref.watch(breakDashboardEmployeesProvider);
     return state.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: AppTheme.PrimaryColor),
+        child: CircularProgressIndicator(color: AppVisuals.of(context).accent),
       ),
       error: (err, _) => _buildErrorWidget(isDark, err.toString()),
       data: (data) {
@@ -398,7 +435,7 @@ class _BreakReportsDashboardscreenState
     final extra = _isLoadingMore ? 1 : 0;
 
     return RefreshIndicator(
-      color: AppTheme.PrimaryColor,
+      color: AppVisuals.of(context).accent,
       onRefresh: () async {
         setState(() {
           _currentPage = 1;
@@ -525,7 +562,7 @@ class _BreakReportsDashboardscreenState
 
   Widget _buildErrorWidget(bool isDark, String message) {
     return RefreshIndicator(
-      color: AppTheme.PrimaryColor,
+      color: AppVisuals.of(context).accent,
       onRefresh: () async {
         setState(() {
           _currentPage = 1;
@@ -543,8 +580,11 @@ class _BreakReportsDashboardscreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      size: 48, color: AppTheme.statusError),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: AppTheme.statusError,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'Failed to load employees',
@@ -562,7 +602,9 @@ class _BreakReportsDashboardscreenState
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
-                      color: isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
+                      color: isDark
+                          ? AppTheme.textMutedDark
+                          : AppTheme.textMutedLight,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -577,10 +619,10 @@ class _BreakReportsDashboardscreenState
                     icon: const Icon(Icons.refresh_rounded, size: 16),
                     label: const Text('Retry'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.PrimaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppVisuals.of(context).accent,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
@@ -595,7 +637,7 @@ class _BreakReportsDashboardscreenState
 
   Widget _buildEmptyWidget(bool isDark) {
     return RefreshIndicator(
-      color: AppTheme.PrimaryColor,
+      color: AppVisuals.of(context).accent,
       onRefresh: () async {
         setState(() {
           _currentPage = 1;
@@ -613,9 +655,13 @@ class _BreakReportsDashboardscreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.people_outline_rounded,
-                      size: 52,
-                      color: isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight),
+                  Icon(
+                    Icons.people_outline_rounded,
+                    size: 52,
+                    color: isDark
+                        ? AppTheme.textMutedDark
+                        : AppTheme.textMutedLight,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'No Employees Found',
@@ -629,11 +675,13 @@ class _BreakReportsDashboardscreenState
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'No employees match the selected filters.',
+                    'No employees match your search or filters.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.5,
-                      color: isDark ? AppTheme.textMutedDark : AppTheme.textMutedLight,
+                      color: isDark
+                          ? AppTheme.textMutedDark
+                          : AppTheme.textMutedLight,
                     ),
                   ),
                 ],
@@ -664,55 +712,60 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = selectedValue != null;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AppTheme.accent(isDark);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accent.withValues(alpha: isDark ? 0.12 : 0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? accent.withValues(alpha: isDark ? 0.5 : 0.45)
-                : Theme.of(context).dividerColor,
-            width: 1,
+    final colors = AppVisuals.of(context);
+    return SizedBox(
+      height: _filterControlHeight,
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: colors.inset,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colors.dark
+                  ? colors.border.withValues(alpha: .65)
+                  : colors.muted.withValues(alpha: .25),
+              width: colors.dark ? 1 : .5,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                selectedValue ?? label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? accent
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedValue ?? label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: colors.text,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  if (isSelected && onClear != null)
+                    GestureDetector(
+                      onTap: onClear,
+                      child: Icon(
+                        Icons.cancel_rounded,
+                        size: 20,
+                        color: colors.accent,
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: colors.accent,
+                    ),
+                ],
               ),
             ),
-            const SizedBox(width: 4),
-            if (isSelected && onClear != null)
-              GestureDetector(
-                onTap: onClear,
-                child: Icon(Icons.cancel_rounded, size: 18, color: accent),
-              )
-            else
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color:
-                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -764,20 +817,19 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
       _filteredItems = query.isEmpty
           ? widget.items
           : widget.items
-              .where((item) =>
-                  widget.getItemName(item).toLowerCase().contains(query))
-              .toList();
+                .where(
+                  (item) =>
+                      widget.getItemName(item).toLowerCase().contains(query),
+                )
+                .toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppSurface(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      sheet: true,
       child: Column(
         children: [
           Container(
@@ -785,10 +837,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -799,10 +850,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                 Expanded(
                   child: Text(
                     'Select ${widget.title}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -826,7 +876,9 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -849,11 +901,10 @@ class _SearchableListSheetState<T> extends State<_SearchableListSheet<T>> {
                     child: Text(
                       'No results found',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                   )
                 : ListView.builder(

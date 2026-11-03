@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,8 +16,7 @@ class UpcomingLeaveScreen extends ConsumerStatefulWidget {
       _UpcomingLeaveScreenState();
 }
 
-class _UpcomingLeaveScreenState
-    extends ConsumerState<UpcomingLeaveScreen> {
+class _UpcomingLeaveScreenState extends ConsumerState<UpcomingLeaveScreen> {
   final ScrollController _controller = ScrollController();
 
   int _page = 1;
@@ -29,16 +31,15 @@ class _UpcomingLeaveScreenState
     _controller.addListener(_onScroll);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(upcomingLeaveProvider.notifier).loadUpcomingLeaves(
-        page: _page,
-        limit: _limit,
-      );
+      ref
+          .read(upcomingLeaveProvider.notifier)
+          .loadUpcomingLeaves(page: _page, limit: _limit);
     });
   }
 
   void _onScroll() {
     if (_controller.position.pixels >=
-        _controller.position.maxScrollExtent - 120 &&
+            _controller.position.maxScrollExtent - 120 &&
         !_isLoadingMore) {
       final state = ref.read(upcomingLeaveProvider);
       state.whenOrNull(
@@ -55,10 +56,9 @@ class _UpcomingLeaveScreenState
     _isLoadingMore = true;
     _page++;
 
-    await ref.read(upcomingLeaveProvider.notifier).loadUpcomingLeaves(
-      page: _page,
-      limit: _limit,
-    );
+    await ref
+        .read(upcomingLeaveProvider.notifier)
+        .loadUpcomingLeaves(page: _page, limit: _limit);
 
     _isLoadingMore = false;
   }
@@ -69,20 +69,17 @@ class _UpcomingLeaveScreenState
 
     ref.invalidate(upcomingLeaveProvider);
 
-    await ref.read(upcomingLeaveProvider.notifier).loadUpcomingLeaves(
-      page: _page,
-      limit: _limit,
-    );
+    await ref
+        .read(upcomingLeaveProvider.notifier)
+        .loadUpcomingLeaves(page: _page, limit: _limit);
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(upcomingLeaveProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Upcoming Leaves'),
-      ),
+    return AppScaffold(
+      appBar: AppPageBar(title: 'Upcoming Leaves'),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -120,29 +117,25 @@ class _UpcomingLeaveScreenState
                     controller: _controller,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
-                    itemCount:
-                    _items.length + (_isLoadingMore ? 1 : 0),
-                    separatorBuilder: (_, __) =>
-                    const SizedBox(height: 12),
+                    itemCount: _items.length + (_isLoadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       if (index >= _items.length) {
                         return const Padding(
-                          padding:
-                          EdgeInsets.symmetric(vertical: 12),
-                          child:
-                          Center(child: CircularProgressIndicator()),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Center(child: CircularProgressIndicator()),
                         );
                       }
 
                       final item = _items[index];
-                      final isPending =
-                          item.status.toLowerCase() == 'pending';
+                      final isPending = item.status.toLowerCase() == 'pending';
 
                       return InkWell(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(26),
                         onTap: () async {
                           if (item.status.toLowerCase() == 'rejected' ||
-                              item.status.toLowerCase() == 'cancelled by employee') {
+                              item.status.toLowerCase() ==
+                                  'cancelled by employee') {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -158,9 +151,7 @@ class _UpcomingLeaveScreenState
                           if (item.type.toLowerCase() == 'present') {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  "This leave can't be modified.",
-                                ),
+                                content: Text("This leave can't be modified."),
                                 backgroundColor: Colors.redAccent,
                                 behavior: SnackBarBehavior.floating,
                               ),
@@ -171,89 +162,80 @@ class _UpcomingLeaveScreenState
                           final changed = await showDialog<bool>(
                             context: context,
                             builder: (_) =>
-                                ChangeLeaveDialog(
-                                    logId: item.leaveId),
+                                ChangeLeaveDialog(logId: item.leaveId),
                           );
 
                           if (changed == true) {
                             _page = 1;
                             _items.clear();
 
-                            ref.invalidate(
-                                upcomingLeaveProvider);
+                            ref.invalidate(upcomingLeaveProvider);
 
                             await ref
                                 .read(upcomingLeaveProvider.notifier)
-                                .loadUpcomingLeaves(
-                              page: _page,
-                              limit: _limit,
-                            );
+                                .loadUpcomingLeaves(page: _page, limit: _limit);
                           }
                         },
-                        child: Container(
+                        child: AppSurface(
                           padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            borderRadius:
-                            BorderRadius.circular(14),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .dividerColor
-                                  .withOpacity(0.2),
-                            ),
-                          ),
+
                           child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     item.date,
                                     style: const TextStyle(
                                       fontSize: 16,
-                                      fontWeight:
-                                      FontWeight.w600,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                   const SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                   Text(
                                     item.type,
                                     style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
                                     ),
                                   ),
                                 ],
                               ),
                               Container(
-                                padding:
-                                const EdgeInsets.symmetric(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: (item.status.toLowerCase() == 'rejected' ||
-                                          item.status.toLowerCase() == 'cancelled by employee')
+                                  color:
+                                      (item.status.toLowerCase() ==
+                                              'rejected' ||
+                                          item.status.toLowerCase() ==
+                                              'cancelled by employee')
                                       ? Colors.red.withOpacity(0.15)
                                       : (isPending ||
-                                              item.status.toLowerCase() == 'applied')
-                                          ? Colors.amber.withOpacity(0.15)
-                                          : Colors.green.withOpacity(0.15),
+                                            item.status.toLowerCase() ==
+                                                'applied')
+                                      ? Colors.amber.withOpacity(0.15)
+                                      : Colors.green.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   item.status,
                                   style: TextStyle(
-                                    color: (item.status.toLowerCase() == 'rejected' ||
-                                            item.status.toLowerCase() == 'cancelled by employee')
+                                    color:
+                                        (item.status.toLowerCase() ==
+                                                'rejected' ||
+                                            item.status.toLowerCase() ==
+                                                'cancelled by employee')
                                         ? Colors.red
                                         : (isPending ||
-                                                item.status.toLowerCase() == 'applied')
-                                            ? Colors.orange[800]
-                                            : Colors.green,
+                                              item.status.toLowerCase() ==
+                                                  'applied')
+                                        ? Colors.orange[800]
+                                        : Colors.green,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

@@ -1,6 +1,13 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dazzleshrms/core/api_constants/api_constants.dart';
 import 'package:dazzleshrms/core/app_theme/app_theme.dart';
+import 'package:dazzleshrms/features/break_reports/presentation/widgets/searchable_filter_sheet.dart';
+import 'package:dazzleshrms/features/announcements/data/models/store_model.dart';
+import 'package:dazzleshrms/features/approvals/data/providers/approvals_provider.dart';
 import 'package:dazzleshrms/features/profile/data/models/profile_image_change_request.dart';
 import 'package:dazzleshrms/features/profile/data/providers/profile_image_change_request_provider.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +24,8 @@ class ProfileImageApprovalsScreen extends ConsumerStatefulWidget {
 class _ProfileImageApprovalsScreenState
     extends ConsumerState<ProfileImageApprovalsScreen> {
   int? _updatingRequestId;
+  int? _selectedStoreId;
+  String? _selectedStoreName;
 
   @override
   void initState() {
@@ -91,17 +100,70 @@ class _ProfileImageApprovalsScreenState
     return 'Requested $date at $time';
   }
 
+  Future<void> _showStoreFilter() async {
+    late final List<Store> stores;
+    try {
+      stores = await ref.refresh(storeProvider.future);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load stores: $error')));
+      return;
+    }
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SearchableFilterSheet<Store>(
+        title: 'Store',
+        items: stores,
+        selectedId: _selectedStoreId,
+        getItemId: (store) => store.storeId,
+        getItemName: (store) => store.storeName,
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _selectedStoreId = result['id'] as int?;
+      _selectedStoreName = result['name'] as String?;
+    });
+    await ref
+        .read(profileImageChangeRequestsProvider.notifier)
+        .load(storeId: _selectedStoreId);
+  }
+
+  Future<void> _refreshRequests() => ref
+      .read(profileImageChangeRequestsProvider.notifier)
+      .load(storeId: _selectedStoreId);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final requests = ref.watch(profileImageChangeRequestsProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Image Approval')),
+    return AppScaffold(
+      appBar: AppPageBar(
+        title: 'Image Approval',
+        actions: [
+          AppPageActionButton(
+            tooltip: _selectedStoreName == null
+                ? 'Filter by store'
+                : 'Store: $_selectedStoreName',
+            icon: Icons.filter_list_rounded,
+            iconColor: _selectedStoreId == null
+                ? null
+                : AppVisuals.of(context).accent,
+            onPressed: _showStoreFilter,
+          ),
+        ],
+      ),
       body: requests.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => RefreshIndicator(
-          onRefresh: () =>
-              ref.read(profileImageChangeRequestsProvider.notifier).load(),
+          onRefresh: _refreshRequests,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: SizedBox(
@@ -115,36 +177,43 @@ class _ProfileImageApprovalsScreenState
             ),
           ),
         ),
-        data: (items) => RefreshIndicator(
-          onRefresh: () =>
-              ref.read(profileImageChangeRequestsProvider.notifier).load(),
-          child: items.isEmpty
-              ? SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: const Center(
-                      child: Text('No pending image change requests'),
+        data: (items) {
+          return RefreshIndicator(
+            onRefresh: _refreshRequests,
+            child: items.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: Center(
+                        child: Text(
+                          _selectedStoreId == null
+                              ? 'No pending image change requests'
+                              : 'No pending requests for $_selectedStoreName',
+                        ),
+                      ),
                     ),
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final request = items[index];
+                      return _RequestCard(
+                        key: ValueKey(request.requestId),
+                        request: request,
+                        isUpdating: _updatingRequestId == request.requestId,
+                        theme: theme,
+                        onApprove: () => _updateRequest(request, approve: true),
+                        onReject: () => _updateRequest(request, approve: false),
+                        requestedAt: _requestedAt(request.requestedAt),
+                      );
+                    },
                   ),
-                )
-              : ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) => _RequestCard(
-                    request: items[index],
-                    isUpdating: _updatingRequestId == items[index].requestId,
-                    theme: theme,
-                    onApprove: () =>
-                        _updateRequest(items[index], approve: true),
-                    onReject: () =>
-                        _updateRequest(items[index], approve: false),
-                    requestedAt: _requestedAt(items[index].requestedAt),
-                  ),
-                ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -152,6 +221,7 @@ class _ProfileImageApprovalsScreenState
 
 class _RequestCard extends StatelessWidget {
   const _RequestCard({
+    super.key,
     required this.request,
     required this.isUpdating,
     required this.theme,
@@ -177,24 +247,28 @@ class _RequestCard extends StatelessWidget {
     final statusColor = request.status.toUpperCase() == 'PENDING'
         ? AppTheme.statusWarning
         : AppTheme.statusInfo;
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.15),
+                backgroundImage: imageUrl.isEmpty
+                    ? null
+                    : CachedNetworkImageProvider(imageUrl),
+                child: imageUrl.isEmpty
+                    ? Text(
+                        initials,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   employee.name.isEmpty
@@ -205,6 +279,7 @@ class _RequestCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -226,34 +301,6 @@ class _RequestCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: AppTheme.PrimaryColor.withValues(alpha: 0.15),
-                backgroundImage: imageUrl.isEmpty
-                    ? null
-                    : CachedNetworkImageProvider(imageUrl),
-                child: imageUrl.isEmpty
-                    ? Text(
-                        initials,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Profile Image Change',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
           if (employee.code.isNotEmpty)
             Text('EmpCode: ${employee.code}', style: theme.textTheme.bodySmall),
           if (employee.mobile.isNotEmpty)
@@ -261,6 +308,16 @@ class _RequestCard extends StatelessWidget {
               'Mobile: ${employee.mobile}',
               style: theme.textTheme.bodySmall,
             ),
+          if (employee.storeId != null)
+            // Text(
+            //   'Store ID: ${employee.storeId}',
+            //   style: theme.textTheme.bodySmall,
+            // ),
+            if (employee.storeName.isNotEmpty)
+              Text(
+                'Store Name: ${employee.storeName}',
+                style: theme.textTheme.bodySmall,
+              ),
           Text(requestedAt, style: theme.textTheme.bodySmall),
           const SizedBox(height: 12),
           if (isUpdating)

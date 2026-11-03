@@ -1,3 +1,6 @@
+import 'package:dazzleshrms/core/app_theme/app_page_bar.dart';
+import 'package:dazzleshrms/core/app_theme/app_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_scaffold.dart';
 import 'package:dazzleshrms/features/leave/presentation/widgets/balance_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,11 +34,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
     ref.read(leaveProvider.notifier).reset();
     _page = 1;
 
-    await ref.read(leaveProvider.notifier).loadLeaves(
-      page: _page,
-      limit: _limit,
-      forceRefresh: true,
-    );
+    await ref
+        .read(leaveProvider.notifier)
+        .loadLeaves(page: _page, limit: _limit, forceRefresh: true);
   }
 
   Future<void> _refresh() async {
@@ -69,9 +70,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
       context: context,
       barrierDismissible: true,
       builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: Container(
           constraints: const BoxConstraints(maxHeight: 400),
           padding: const EdgeInsets.all(20),
@@ -102,9 +101,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                   builder: (context, ref, child) {
                     final state = ref.watch(usedLeavesProvider);
                     return state.when(
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -112,7 +110,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                             Text(
                               "Error: ${e.toString()}",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Theme.of(context).colorScheme.error),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             FilledButton(
@@ -129,9 +129,10 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                           return Center(
                             child: Text(
                               "No used leaves found",
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).hintColor,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context).hintColor,
+                                  ),
                             ),
                           );
                         }
@@ -145,7 +146,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                               contentPadding: EdgeInsets.zero,
                               title: Text(
                                 item.leaveType,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               subtitle: Text(item.date),
                               trailing: Container(
@@ -184,16 +187,14 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   Widget build(BuildContext context) {
     final leaveState = ref.watch(leaveProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        // title: const Text("Leave"),
-      ),
+    return AppScaffold(
+      appBar:
+      AppPageBar(title: ''),
 
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 20),
         child: FloatingActionButton(
-          backgroundColor: AppTheme.PrimaryColor,
-          child: const Icon(Icons.add, color: Colors.black),
+          child: const Icon(Icons.add),
           onPressed: () {
             showModalBottomSheet(
               context: context,
@@ -255,8 +256,12 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
+              padding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 0,
+                bottom: 16,
+              ),              children: [
                 Center(
                   child: Text(
                     "Leave Balance",
@@ -265,7 +270,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
                 Row(
                   children: [
@@ -289,9 +294,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                 ),
 
                 const SizedBox(height: 20),
-                Divider(
-                  color: Theme.of(context).dividerColor.withOpacity(0.2),
-                ),
+                Divider(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                 const SizedBox(height: 12),
 
                 Row(
@@ -307,9 +310,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                 ),
 
                 const SizedBox(height: 12),
-                Divider(
-                  color: Theme.of(context).dividerColor.withOpacity(0.2),
-                ),
+                Divider(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                 const SizedBox(height: 12),
 
                 if (leaveData.records.isEmpty)
@@ -317,26 +318,14 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
 
                 ...leaveData.records.map((leave) {
                   final color = _statusColor(leave.status);
-                  final hasRejectInfo = (leave.rejectReason != null &&
-                      leave.rejectReason!.trim().isNotEmpty) ||
+                  final hasRejectInfo =
+                      (leave.rejectReason != null &&
+                          leave.rejectReason!.trim().isNotEmpty) ||
                       leave.rejectedDates.isNotEmpty;
-                  final isDark = Theme.of(context).brightness == Brightness.dark;
 
-                  return Container(
+                  return AppSurface(
                     margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context)
-                              .shadowColor
-                              .withOpacity(0.08),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+
                     child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
@@ -376,10 +365,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                               Icon(
                                 Icons.calendar_today_rounded,
                                 size: 15,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .outline
-                                    .withOpacity(0.7),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outline.withOpacity(0.7),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -387,9 +375,9 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                                   "${leave.fromDate} → ${leave.toDate}",
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -406,7 +394,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                                 if (leave.rejectReason != null &&
                                     leave.rejectReason!.trim().isNotEmpty) ...[
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Icon(
                                         Icons.info_outline,
@@ -419,7 +408,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                                           leave.rejectReason!,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: AppTheme.statusError.withOpacity(0.9),
+                                            color: AppTheme.statusError
+                                                .withOpacity(0.9),
                                             height: 1.3,
                                           ),
                                         ),
@@ -432,7 +422,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                                       leave.rejectReason!.trim().isNotEmpty)
                                     const SizedBox(height: 6),
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Icon(
                                         Icons.event_busy,
@@ -445,7 +436,8 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                                           "Rejected: ${leave.rejectedDates.join(', ')}",
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: AppTheme.statusError.withOpacity(0.85),
+                                            color: AppTheme.statusError
+                                                .withOpacity(0.85),
                                             height: 1.3,
                                           ),
                                         ),

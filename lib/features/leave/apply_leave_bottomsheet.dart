@@ -1,3 +1,5 @@
+import 'package:dazzleshrms/features/leave/presentation/widgets/leave_form_surface.dart';
+import 'package:dazzleshrms/core/app_theme/app_visuals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -189,11 +191,11 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                                       .copyWith(fontWeight: FontWeight.w600),
                                   leftChevronIcon: Icon(
                                     Icons.chevron_left_rounded,
-                                    color: AppTheme.PrimaryColor,
+                                    color: AppVisuals.of(context).accent,
                                   ),
                                   rightChevronIcon: Icon(
                                     Icons.chevron_right_rounded,
-                                    color: AppTheme.PrimaryColor,
+                                    color: AppVisuals.of(context).accent,
                                   ),
                                   headerPadding: const EdgeInsets.symmetric(
                                     vertical: 8,
@@ -227,21 +229,21 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                                     ),
                                   ),
                                   todayDecoration: BoxDecoration(
-                                    color: AppTheme.PrimaryColor.withOpacity(
-                                      0.12,
-                                    ),
+                                    color: AppVisuals.of(
+                                      context,
+                                    ).accent.withOpacity(0.12),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppTheme.PrimaryColor,
+                                      color: AppVisuals.of(context).accent,
                                       width: 1.2,
                                     ),
                                   ),
-                                  todayTextStyle: const TextStyle(
-                                    color: AppTheme.PrimaryColor,
+                                  todayTextStyle: TextStyle(
+                                    color: AppVisuals.of(context).accent,
                                     fontWeight: FontWeight.w700,
                                   ),
                                   selectedDecoration: BoxDecoration(
-                                    color: AppTheme.PrimaryColor,
+                                    color: AppVisuals.of(context).accent,
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
@@ -291,8 +293,9 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                                     }
                                     final clash = clashMap[d];
                                     if (clash != null) {
-                                      final color =
-                                          _leaveClashColor(clash.percentage);
+                                      final color = _leaveClashColor(
+                                        clash.percentage,
+                                      );
                                       if (color != null) {
                                         return Container(
                                           margin: const EdgeInsets.all(4),
@@ -335,8 +338,8 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                                       child: Text(
                                         '${day.day}',
                                         style: TextStyle(
-                                          color: theme
-                                              .textTheme.bodyMedium?.color,
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
                                           fontWeight: FontWeight.w500,
                                           fontSize: 13,
                                         ),
@@ -378,7 +381,8 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                                     final clashColor = clash != null
                                         ? _leaveClashColor(clash.percentage)
                                         : null;
-                                    final color = clashColor ?? AppTheme.PrimaryColor;
+                                    final color =
+                                        clashColor ?? AppTheme.PrimaryColor;
 
                                     return Container(
                                       margin: const EdgeInsets.all(4),
@@ -490,13 +494,16 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
 
                                   final clash = clashMap[d];
                                   if (clash != null && clash.percentage >= 30) {
-                                    final shouldContinue = await showDialog<bool>(
-                                      context: context,
-                                      builder: (_) => LeaveClashWarningDialog(
-                                        clash: clash,
-                                      ),
-                                    );
-                                    if (shouldContinue != true || !context.mounted) {
+                                    final shouldContinue =
+                                        await showDialog<bool>(
+                                          context: context,
+                                          builder: (_) =>
+                                              LeaveClashWarningDialog(
+                                                clash: clash,
+                                              ),
+                                        );
+                                    if (shouldContinue != true ||
+                                        !context.mounted) {
                                       return;
                                     }
                                   }
@@ -598,12 +605,8 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
+      child: LeaveFormSurface(
         height: MediaQuery.of(context).size.height * 0.6,
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
         child: ScaffoldMessenger(
           key: _messengerKey,
           child: Scaffold(
@@ -617,7 +620,7 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                     width: 48,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.dividerColor,
+                      color: AppVisuals.of(context).muted.withValues(alpha: .4),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -655,11 +658,10 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                             return DropdownButtonFormField<int>(
                               value: selectedLeaveTypeId,
                               hint: const Text("Select leave type"),
-                              decoration: InputDecoration(
-                                fillColor: theme.brightness == Brightness.dark
-                                    ? AppTheme.surfaceDark
-                                    : null,
-                              ),
+                              isExpanded: true,
+                              dropdownColor: AppVisuals.of(context).surface,
+                              iconEnabledColor: AppVisuals.of(context).accent,
+                              style: theme.textTheme.bodyLarge,
                               items: types
                                   .map(
                                     (LeaveType e) => DropdownMenuItem<int>(
@@ -738,11 +740,8 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                         TextField(
                           controller: reasonCtrl,
                           maxLines: 2,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: "Enter reason",
-                            fillColor: theme.brightness == Brightness.dark
-                                ? AppTheme.surfaceDark
-                                : null,
                           ),
                         ),
                       ],
@@ -760,12 +759,12 @@ class _ApplyLeaveFormSheetState extends ConsumerState<ApplyLeaveFormSheet> {
                           ? null
                           : _submitLeave,
                       child: applyLeaveState.isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.black,
+                                color: AppVisuals.of(context).muted,
                               ),
                             )
                           : const Text("Submit Leave"),
